@@ -11,21 +11,21 @@ public enum SSHWireError: Error, Sendable, Equatable {
 ///
 /// The reader does not own its bytes: use it only inside the `withUnsafeBytes` scope that
 /// produced the buffer.
-struct SSHWireReader {
+public struct SSHWireReader {
     private let bytes: UnsafeRawBufferPointer
-    private(set) var offset = 0
+    public private(set) var offset = 0
     /// Upper bound for a single `string` field, as a guard against hostile length prefixes.
     private let maxFieldLength: Int
 
-    init(_ bytes: UnsafeRawBufferPointer, maxFieldLength: Int = 64 * 1024) {
+    public init(_ bytes: UnsafeRawBufferPointer, maxFieldLength: Int = 64 * 1024) {
         self.bytes = bytes
         self.maxFieldLength = maxFieldLength
     }
 
-    var isAtEnd: Bool { offset >= bytes.count }
-    var remaining: Int { bytes.count - offset }
+    public var isAtEnd: Bool { offset >= bytes.count }
+    public var remaining: Int { bytes.count - offset }
 
-    mutating func readUInt32() throws -> UInt32 {
+    public mutating func readUInt32() throws -> UInt32 {
         guard remaining >= 4 else { throw SSHWireError.truncated }
         var value: UInt32 = 0
         for index in 0..<4 {
@@ -36,13 +36,13 @@ struct SSHWireReader {
     }
 
     /// Reads a length-prefixed `string` and returns a copy of its bytes. Use only for public data.
-    mutating func readBytes() throws -> [UInt8] {
+    public mutating func readBytes() throws -> [UInt8] {
         let range = try readStringRange()
         return Array(bytes[range])
     }
 
     /// Reads a length-prefixed `string` as UTF-8 text.
-    mutating func readUTF8() throws -> String {
+    public mutating func readUTF8() throws -> String {
         let range = try readStringRange()
         guard let text = String(bytes: bytes[range], encoding: .utf8) else {
             throw SSHWireError.invalidEncoding
@@ -51,12 +51,12 @@ struct SSHWireReader {
     }
 
     /// Skips a length-prefixed `string` without copying it.
-    mutating func skipString() throws {
+    public mutating func skipString() throws {
         _ = try readStringRange()
     }
 
     /// Reads an `mpint` and returns its size in bits (ignoring leading zero bytes).
-    mutating func readMPIntBitLength() throws -> Int {
+    public mutating func readMPIntBitLength() throws -> Int {
         let range = try readStringRange()
         var index = range.lowerBound
         while index < range.upperBound, bytes[index] == 0 {
@@ -68,7 +68,8 @@ struct SSHWireReader {
         return (range.upperBound - index - 1) * 8 + leadingBits
     }
 
-    private mutating func readStringRange() throws -> Range<Int> {
+    /// Reads a length-prefixed `string` and returns its byte range without copying it.
+    public mutating func readStringRange() throws -> Range<Int> {
         let length = Int(try readUInt32())
         guard length <= maxFieldLength else { throw SSHWireError.fieldTooLarge }
         guard remaining >= length else { throw SSHWireError.truncated }

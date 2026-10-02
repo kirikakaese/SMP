@@ -178,4 +178,56 @@ Private-MAC: 0000000000000000000000000000000000000000
     ]
     public static let dsaBits = 1024
     public static let ed25519EncryptedPassphrase = "fixture-passphrase"
+
+    // Valid, unencrypted PuTTY files built from the keys above (same public keys).
+    public static let ed25519PuTTYv2 = #"""
+PuTTY-User-Key-File-2: ssh-ed25519
+Encryption: none
+Comment: putty-v2
+Public-Lines: 2
+AAAAC3NzaC1lZDI1NTE5AAAAIM1ygjOI699y2CQg3h+CKrO1azIuWWp7UNmnImxp
+Hh2P
+Private-Lines: 1
+AAAAIIi9Ks6NrDKeMzfvq4yZq5D/pXNK97yQH7jHx3l9rSlJ
+Private-MAC: 59a2169da13a43b8d9d37019736214428bed3aa4
+"""#
+    public static let ed25519PuTTYv3 = #"""
+PuTTY-User-Key-File-3: ssh-ed25519
+Encryption: none
+Comment: putty-v3
+Public-Lines: 2
+AAAAC3NzaC1lZDI1NTE5AAAAIM1ygjOI699y2CQg3h+CKrO1azIuWWp7UNmnImxp
+Hh2P
+Private-Lines: 1
+AAAAIIi9Ks6NrDKeMzfvq4yZq5D/pXNK97yQH7jHx3l9rSlJ
+Private-MAC: c0741511d5faf26b1bee6bf4f6efd01c8405d571ad14788bc213f18495396949
+"""#
+    public static let rsa2048PuTTYv2 = #"""
+PuTTY-User-Key-File-2: ssh-rsa
+Encryption: none
+Comment: putty-rsa
+Public-Lines: 6
+AAAAB3NzaC1yc2EAAAADAQABAAABAQDR8tp4QbIML4GTLxIXSJnX82WMXHGtvgbT
+oXzUPzrB03cIpbaP3UP9cfoRUSR1MPtWETFsegUn3ThaITwNnjBf4lUDr2GZCHBu
+L2dqFlMI1zt6eGrICMSXSxUS3PxDw4gr2Qt8czWj5YwyrxZAAjUSF53jErkhWN5j
+NcIJx4kz2XWkXnNh/LgQ8s96t1sTdSz1PKy7HyLeUWWgsJSOgmYozmG5mx8yNXsD
+9Coh84Dbutex6vjNmt3a340+P448mOrM+H5e0aijUd8K5RQZZ0t0r8jK0Jv4CbC+
+Wmvn7qO9GLu0Q4UM5fe52m1/9o7lNehoti8w2R2JH2hUeXBa3+Hx
+Private-Lines: 14
+AAABABXWNRv59UtoK4mEBVUvo3S/J6pEOTyxfaNIciPfWbysQn6/QbBP+tDjKHfh
+oTGhQRsQGbxnKp8dVs2lFEp0UCLA90e1V6jjpFIJky+JF+TdAh44ZR7eLphv4ka+
+fmyL619oKVYt43/jEcR5yo4ozJ1PoIfsPB44UJUwE7kRrHcccHGa+lUvQrQKusCd
+ENjy8dzQMaYJvvwhwIY7BeByUPl6yCLki/Y6nc3l7JmvMwZwSXnfiHBCt10jB33W
+oIObOltEddAYFZWbLhB8pxuACabXfiUm5KnclDC8WPSDB4HlNQQCXKEYPoKGcLaC
+k10CsbgIivi1LaoBNN4/Vah1EHsAAACBAOqUjzz1XjpYyUywme8xPoDYNUYwjL7w
+doY19IZxEf5iuu/sFgLBgd/TzlX/HY3Ol481s2KI7wvwlMVKNqGO85eX+8uiAaqj
+xS+ICOCoXPjGyMuqy3uonAzdSRQxJI3UipEX7rjdxOzxVhfNs8b1aPsDXNE30bn7
+xv2I96JSAq17AAAAgQDlHoP4u4oVakreSBpmTlhKvW2cRm45HrTSnGtX6d4XJhjK
+uowe6JiQjyfbUu8CmCOuQXq03YSbXuhEXLyA9YmcMnV+a4uYm92+YIagT3qIzUsr
+ceP4pEIN9n3yfL9OagV3WRxYiEEJLVGk4oc2cRp4weVWfV7OHDaHGFbAIMKUgwAA
+AIEAn5ubH4YMkYfF5EvcJuEQp2oqVbduWGr7i6RKAhLGHUxjpNqAvgX4NzySdCCd
+eE6+8vihIBJV7Csl4//HGAXMox7f117kRworI1aKbpdFnaG54s3lNMVDhx6k/atP
+Q1MMtAsp7mtRpFQD/yT6eFsIEHJg0gwMyFwpVOe73tcbH84=
+Private-MAC: 30e35b7c5574cd09fadf391325005bbd2e595147
+"""#
 }
