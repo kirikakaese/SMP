@@ -4,8 +4,8 @@
 deploying, auditing and deleting SSH keys and SSH host configurations. It aims to feel like a
 first-party Apple utility: fast, safe and keyboard-friendly.
 
-> **Status:** early development. Milestone 1 (project skeleton, architecture, CI, tool runner,
-> Keychain service) is in progress. Features below describe the planned scope.
+> **Status:** early development. The key library (discovery, live folder watching, details,
+> search, tags and groups) works; the remaining features below are planned.
 
 ## Features (planned)
 
@@ -58,7 +58,8 @@ The Xcode project is generated from `project.yml` and is not checked in.
 App/                 App target (entry point, Info.plist, entitlements)
 Packages/SMPKit/     All logic, as a Swift package
   Sources/SMPCore      Models, errors, secret-handling primitives
-  Sources/SMPSSH       SSHToolRunner and everything that talks to OpenSSH
+  Sources/SMPSSH       SSHToolRunner, key parsing and everything that talks to OpenSSH
+  Sources/SMPPersistence  Metadata store (tags, groups, notes) built on GRDB
   Sources/SMPServices  Protocol-based services (Keychain, keys, agent, config, ...)
   Sources/SMPUI        SwiftUI views
 docs/                Architecture, entitlements and design notes

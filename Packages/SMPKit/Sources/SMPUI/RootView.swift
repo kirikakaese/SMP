@@ -1,32 +1,42 @@
+import SMPCore
 import SwiftUI
 
-/// The main window: sidebar / list / detail.
+/// The main window: sidebar / key list / key detail.
 public struct RootView: View {
-    @State private var selection: SidebarItem? = .allKeys
+    @Bindable private var model: LibraryModel
 
-    public init() {}
+    public init(model: LibraryModel) {
+        self.model = model
+    }
 
     public var body: some View {
         NavigationSplitView {
-            List(selection: $selection) {
-                Section("Library") {
-                    ForEach(SidebarItem.allCases) { item in
-                        Label(item.title, systemImage: item.systemImage)
-                            .tag(item)
-                    }
-                }
-            }
-            .navigationSplitViewColumnWidth(min: 180, ideal: 220)
+            SidebarView(model: model)
         } content: {
-            ContentUnavailableView(
-                "No Keys Yet",
-                systemImage: "key",
-                description: Text("Key discovery arrives in the next milestone.")
-            )
-            .navigationTitle(selection?.title ?? "SMP")
-            .navigationSplitViewColumnWidth(min: 260, ideal: 320)
+            KeyListView(model: model)
         } detail: {
-            ContentUnavailableView("No Selection", systemImage: "sidebar.right")
+            if let item = model.selectedItem {
+                KeyDetailView(model: model, item: item)
+            } else if model.selectedKeyIDs.count > 1 {
+                ContentUnavailableView(
+                    "\(model.selectedKeyIDs.count) Keys Selected",
+                    systemImage: "key.horizontal"
+                )
+            } else {
+                ContentUnavailableView("No Selection", systemImage: "key", description: Text("Select a key."))
+            }
+        }
+        .task {
+            await model.reload()
+            model.startWatching()
+        }
+        .alert(
+            isPresented: Binding(get: { model.lastError != nil }, set: { if !$0 { model.lastError = nil } }),
+            error: model.lastError
+        ) { _ in
+            Button("OK") { model.lastError = nil }
+        } message: { error in
+            Text([error.howToFix, error.details].compactMap { $0 }.joined(separator: "\n\n"))
         }
     }
 }

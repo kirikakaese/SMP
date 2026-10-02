@@ -72,6 +72,15 @@ public final class SecureBytes: @unchecked Sendable {
         return try body(UnsafeRawBufferPointer(storage))
     }
 
+    /// Gives mutable access to the secret bytes for the duration of `body`, for filling the buffer.
+    ///
+    /// Do not let the pointer escape `body`.
+    public func withUnsafeMutableBytes<R>(_ body: (UnsafeMutableRawBufferPointer) throws -> R) rethrows -> R {
+        lock.lock()
+        defer { lock.unlock() }
+        return try body(storage)
+    }
+
     /// Overwrites the buffer with zeros. The buffer keeps its size.
     public func wipe() {
         lock.lock()
