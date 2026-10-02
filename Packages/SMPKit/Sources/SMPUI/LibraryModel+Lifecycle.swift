@@ -171,7 +171,9 @@ extension LibraryModel {
                 let archived = try services.archive.archive(item.key)
                 archivedIDs.append(archived.id)
                 if let fingerprint = item.key.fingerprint {
-                    var metadata = item.metadata ?? KeyMetadata(fingerprint: fingerprint)
+                    // Read the stored record: `item` may be an older snapshot.
+                    let stored = try? services.metadata.metadata(for: fingerprint)
+                    var metadata = stored ?? item.metadata ?? KeyMetadata(fingerprint: fingerprint)
                     metadata.archivedAt = archived.archivedAt
                     try? services.metadata.save(metadata)
                 }

@@ -44,7 +44,16 @@ struct LibraryFilterTests {
             LibraryItem(key: try makeKey("yubikey", line: Fixtures.ed25519SKPublic)),
             LibraryItem(
                 key: try makeKey("retired", line: Fixtures.ecdsaP256Public),
-                metadata: KeyMetadata(fingerprint: "d", archivedAt: Date())
+                metadata: KeyMetadata(fingerprint: "d", archivedAt: Date()),
+                archive: ArchivedKey(
+                    id: UUID(),
+                    name: "retired",
+                    originalDirectory: "/keys",
+                    files: [ArchivedKey.File(name: "retired.pub", mode: 0o644, isPrivateKey: false)],
+                    publicKeyLine: Fixtures.ecdsaP256Public,
+                    fingerprint: nil,
+                    archivedAt: Date()
+                )
             ),
         ]
     }
