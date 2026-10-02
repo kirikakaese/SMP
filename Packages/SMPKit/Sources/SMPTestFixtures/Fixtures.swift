@@ -1,5 +1,4 @@
 // Generated test fixtures. These keys exist only for tests and protect nothing.
-// swiftlint:disable line_length
 
 /// Real OpenSSH keys and expected values for parser and discovery tests.
 public enum Fixtures {
