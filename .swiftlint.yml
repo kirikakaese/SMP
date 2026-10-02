@@ -1,0 +1,50 @@
+included:
+  - App
+  - Packages/SMPKit/Sources
+  - Packages/SMPKit/Tests
+excluded:
+  - Packages/SMPKit/.build
+  - build
+
+disabled_rules:
+  - trailing_comma            # swift-format owns trailing commas
+  - opening_brace             # swift-format owns brace placement
+  - todo                      # TODOs are tracked, not forbidden
+
+opt_in_rules:
+  - empty_count
+  - first_where
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - private_over_fileprivate
+  - redundant_nil_coalescing
+  - sorted_imports
+
+line_length:
+  warning: 120
+  error: 160
+  ignores_comments: true
+  ignores_urls: true
+
+identifier_name:
+  min_length: 1
+  excluded: [id, i, n, fd]
+
+type_body_length:
+  warning: 300
+  error: 500
+
+file_length:
+  warning: 600
+  error: 1000
+
+nesting:
+  type_level: 2
+
+function_parameter_count:
+  warning: 6
+  error: 8
+
+large_tuple:
+  warning: 3
+  error: 4
