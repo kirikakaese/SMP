@@ -5,8 +5,6 @@ import SMPSSH
 
 /// The set of services the app runs with. Views and view models receive it by injection,
 /// so tests and previews can swap in fakes.
-///
-/// More services (config, known_hosts, providers, audit) are added here as their milestones land.
 public struct ServiceContainer: Sendable {
     public var environment: SSHEnvironment
     public var toolRunner: any SSHToolRunning
@@ -15,6 +13,10 @@ public struct ServiceContainer: Sendable {
     public var agent: any AgentServicing
     public var metadata: any MetadataStoring
     public var fileWatcher: any FileWatching
+    public var config: any ConfigServicing
+    public var archive: any ArchiveServicing
+    public var keys: any KeyManaging
+    public var authenticator: any DeviceAuthenticating
     /// Set when a service could not start normally (for example, the metadata store could not be
     /// opened and an in-memory store is used instead). Shown to the user.
     public var startupIssue: SMPError?
@@ -27,6 +29,10 @@ public struct ServiceContainer: Sendable {
         agent: any AgentServicing,
         metadata: any MetadataStoring,
         fileWatcher: any FileWatching,
+        config: any ConfigServicing,
+        archive: any ArchiveServicing,
+        keys: any KeyManaging,
+        authenticator: any DeviceAuthenticating,
         startupIssue: SMPError? = nil
     ) {
         self.environment = environment
@@ -36,12 +42,48 @@ public struct ServiceContainer: Sendable {
         self.agent = agent
         self.metadata = metadata
         self.fileWatcher = fileWatcher
+        self.config = config
+        self.archive = archive
+        self.keys = keys
+        self.authenticator = authenticator
         self.startupIssue = startupIssue
+    }
+
+    /// Wires services together around a support directory (Application Support in the app,
+    /// a temporary folder in tests and previews).
+    public static func make(
+        environment: SSHEnvironment,
+        supportDirectory: URL,
+        keychain: any KeychainServicing,
+        metadata: any MetadataStoring,
+        authenticator: any DeviceAuthenticating,
+        startupIssue: SMPError? = nil
+    ) -> ServiceContainer {
+        let runner = SSHToolRunner(environment: environment)
+        let agent = AgentService(runner: runner)
+        let config = ConfigService(
+            environment: environment,
+            writer: SafeFileWriter(backupDirectory: supportDirectory.appending(path: "Backups"))
+        )
+        let archive = ArchiveService(directory: supportDirectory.appending(path: "Archive"), keychain: keychain)
+        return ServiceContainer(
+            environment: environment,
+            toolRunner: runner,
+            keychain: keychain,
+            keyDiscovery: KeyDiscoveryService(),
+            agent: agent,
+            metadata: metadata,
+            fileWatcher: FileWatcherService(),
+            config: config,
+            archive: archive,
+            keys: KeyService(runner: runner, environment: environment, config: config, archive: archive, agent: agent),
+            authenticator: authenticator,
+            startupIssue: startupIssue
+        )
     }
 
     /// Services wired to the real system.
     public static func live(environment: SSHEnvironment = .current) -> ServiceContainer {
-        let runner = SSHToolRunner(environment: environment)
         var issue: SMPError?
         let metadata: any MetadataStoring
         do {
@@ -54,35 +96,30 @@ public struct ServiceContainer: Sendable {
                 howToFix: "Check that ~/Library/Application Support/com.kirikakaese.smp is writable, then restart SMP.",
                 details: error.localizedDescription
             )
-            metadata = Self.inMemoryMetadata()
+            metadata = inMemoryMetadata()
         }
-        return ServiceContainer(
+        let support = (try? AppPaths.applicationSupportDirectory())
+            ?? FileManager.default.temporaryDirectory.appending(path: AppPaths.bundleIdentifier)
+        return make(
             environment: environment,
-            toolRunner: runner,
+            supportDirectory: support,
             keychain: KeychainService(),
-            keyDiscovery: KeyDiscoveryService(),
-            agent: AgentService(runner: runner),
             metadata: metadata,
-            fileWatcher: FileWatcherService(),
+            authenticator: DeviceAuthenticator(),
             startupIssue: issue
         )
     }
 
     /// Services that never touch the real `~/.ssh` or Keychain. For SwiftUI previews and UI tests.
     public static func preview() -> ServiceContainer {
-        let environment = SSHEnvironment(
-            homeDirectory: FileManager.default.temporaryDirectory.appending(path: "smp-preview-home"),
-            userName: "preview"
-        )
-        let runner = SSHToolRunner(environment: environment)
-        return ServiceContainer(
+        let root = FileManager.default.temporaryDirectory.appending(path: "smp-preview")
+        let environment = SSHEnvironment(homeDirectory: root.appending(path: "home"), userName: "preview")
+        return make(
             environment: environment,
-            toolRunner: runner,
+            supportDirectory: root.appending(path: "support"),
             keychain: InMemoryKeychainService(),
-            keyDiscovery: KeyDiscoveryService(),
-            agent: AgentService(runner: runner),
             metadata: inMemoryMetadata(),
-            fileWatcher: FileWatcherService()
+            authenticator: FakeAuthenticator()
         )
     }
 
