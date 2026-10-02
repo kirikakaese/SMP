@@ -1,4 +1,5 @@
 import AppKit
+import QuickLook
 import SMPCore
 import SMPServices
 import SMPSSH
