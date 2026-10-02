@@ -4,6 +4,7 @@ included:
   - Packages/SMPKit/Tests
 excluded:
   - Packages/SMPKit/.build
+  - Packages/SMPKit/Sources/SMPTestFixtures   # generated test data
   - build
 
 disabled_rules:
