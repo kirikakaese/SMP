@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+
+# Xcode (the project is generated from project.yml by XcodeGen)
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+DerivedData/
+build/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Packages/*/.build/
+Packages/*/.swiftpm/
+Package.resolved.orig
+
+# Release artifacts
+*.dmg
+*.zip
+dist/
+
+# Never commit key material or backups by accident
+*.pem
+*.ppk
+id_*
+!**/Fixtures/**
+*.smpbackup
