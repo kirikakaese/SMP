@@ -23,12 +23,12 @@ public final class SecureBytes: @unchecked Sendable {
     public var isEmpty: Bool { storage.isEmpty }
 
     /// Creates a zero-filled buffer of the given size.
-    public init(count: Int) {
-        precondition(count >= 0, "SecureBytes count must not be negative")
-        storage = .allocate(byteCount: count, alignment: MemoryLayout<UInt8>.alignment)
+    public init(count byteCount: Int) {
+        precondition(byteCount >= 0, "SecureBytes count must not be negative")
+        storage = .allocate(byteCount: byteCount, alignment: MemoryLayout<UInt8>.alignment)
         storage.initializeMemory(as: UInt8.self, repeating: 0)
-        if let base = storage.baseAddress, count > 0 {
-            isLocked = mlock(base, count) == 0
+        if let base = storage.baseAddress, !storage.isEmpty {
+            isLocked = mlock(base, byteCount) == 0
         } else {
             isLocked = false
         }
@@ -94,7 +94,7 @@ public final class SecureBytes: @unchecked Sendable {
     }
 
     private func zeroMemory() {
-        guard let base = storage.baseAddress, storage.count > 0 else { return }
+        guard let base = storage.baseAddress, !storage.isEmpty else { return }
         SecureMemory.zero(base, count: storage.count)
     }
 }
@@ -108,13 +108,13 @@ extension SecureBytes: CustomStringConvertible, CustomDebugStringConvertible {
 /// Helpers for zeroing memory in a way the optimizer cannot remove.
 public enum SecureMemory {
     /// Overwrites `count` bytes at `pointer` with zeros.
-    public static func zero(_ pointer: UnsafeMutableRawPointer, count: Int) {
-        guard count > 0 else { return }
+    public static func zero(_ pointer: UnsafeMutableRawPointer, count byteCount: Int) {
+        guard byteCount > 0 else { return }
         #if canImport(Darwin)
-        _ = memset_s(pointer, count, 0, count)
+        _ = memset_s(pointer, byteCount, 0, byteCount)
         #else
         let bytes = pointer.assumingMemoryBound(to: UInt8.self)
-        for index in 0..<count {
+        for index in 0..<byteCount {
             bytes[index] = 0
         }
         #endif
