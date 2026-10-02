@@ -163,6 +163,25 @@ struct AskpassBrokerTests {
         #expect(try FileManager.default.contentsOfDirectory(atPath: temporary.path).isEmpty)
     }
 
+    @Test func eachPromptReceivesExactlyOneResponse() async throws {
+        // A slow reader must not receive the next response as well (regression test).
+        let script = #"a=$("$SSH_ASKPASS" one | wc -l | tr -d ' '); b=$("$SSH_ASKPASS" two); "#
+            + #"printf '%s|%s' "$a" "$b""#
+        let call = ToolInvocation(
+            executable: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", script],
+            askpassResponses: [SecureBytes(utf8: "first"), SecureBytes(utf8: "second")],
+            timeout: .seconds(10)
+        )
+        let result = try await executor.execute(call)
+        #expect(result.standardOutputString == "1|second")
+    }
+
+    @Test func pipeNamesAreZeroPadded() {
+        #expect(AskpassBroker.pipePath(in: "/d", prefix: "a", index: 3) == "/d/a.03")
+        #expect(AskpassBroker.pipePath(in: "/d", prefix: "t", index: 42) == "/d/t.42")
+    }
+
     @Test func shellQuotingHandlesSingleQuotes() {
         #expect(AskpassBroker.shellQuoted("/tmp/a'b") == #"'/tmp/a'\''b'"#)
     }

@@ -45,9 +45,11 @@ All calls to `ssh-keygen`, `ssh-add`, `ssh` and `ssh-keyscan` go through `SSHToo
 - only the tool name and argument count are logged
 
 **Passphrases** use `SSH_ASKPASS` with `SSH_ASKPASS_REQUIRE=force`. The askpass broker creates a
-private 0700 directory containing a FIFO and a tiny script (`exec /bin/cat <fifo>`). It writes
-each queued passphrase into the FIFO when the tool asks for it. A passphrase is therefore never
-in argv, the environment or a regular file. When OpenSSH asks for more passphrases than were
+private 0700 directory containing one FIFO per queued passphrase and a tiny script. Each time the
+tool asks, the script atomically claims the next unused FIFO (by renaming it) and reads it, and
+the broker writes that one passphrase into it. Because every FIFO is used exactly once, a
+passphrase can never be read by the wrong prompt. A passphrase is never in argv, the environment
+or a regular file. When OpenSSH asks for more passphrases than were
 queued, it treats the failed prompt as an empty passphrase. Any operation that sets a
 passphrase must therefore verify the result afterwards (for example, by checking that the private
 key's cipher is not `none`).
