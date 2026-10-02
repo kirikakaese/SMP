@@ -279,17 +279,17 @@ private final class PipeDrain: @unchecked Sendable {
             let descriptor = handle.fileDescriptor
             var chunk = [UInt8](repeating: 0, count: 16 * 1024)
             while true {
-                let count = chunk.withUnsafeMutableBytes { read(descriptor, $0.baseAddress, $0.count) }
-                if count < 0 {
+                let bytesRead = chunk.withUnsafeMutableBytes { read(descriptor, $0.baseAddress, $0.count) }
+                if bytesRead < 0 {
                     if errno == EINTR { continue }
                     break
                 }
-                if count == 0 { break }
+                if bytesRead == 0 { break }
                 let room = limit - buffer.count
                 if room > 0 {
-                    buffer.append(contentsOf: chunk[0..<min(count, room)])
+                    buffer.append(contentsOf: chunk[0..<min(bytesRead, room)])
                 }
-                if count > room {
+                if bytesRead > room {
                     truncated = true
                 }
             }
