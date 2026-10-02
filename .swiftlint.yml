@@ -32,8 +32,16 @@ identifier_name:
   excluded: [id, i, n, fd]
 
 type_body_length:
-  warning: 300
-  error: 500
+  warning: 400
+  error: 600
+
+cyclomatic_complexity:
+  warning: 15
+  error: 25
+
+function_body_length:
+  warning: 60
+  error: 100
 
 file_length:
   warning: 600
