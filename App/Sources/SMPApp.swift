@@ -5,13 +5,20 @@ import SwiftUI
 @main
 struct SMPApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    private let services = ServiceContainer.live()
+    private let services: ServiceContainer
+    @State private var library: LibraryModel
+
+    init() {
+        let services = ServiceContainer.live()
+        self.services = services
+        _library = State(initialValue: LibraryModel(services: services))
+    }
 
     var body: some Scene {
         WindowGroup(AboutPanel.productName, id: "main") {
-            RootView()
+            RootView(model: library)
                 .environment(\.services, services)
-                .frame(minWidth: 860, minHeight: 520)
+                .frame(minWidth: 960, minHeight: 560)
         }
         .commands {
             CommandGroup(replacing: .appInfo) {
@@ -19,10 +26,11 @@ struct SMPApp: App {
                     AboutPanel.show()
                 }
             }
+            SidebarCommands()
         }
 
         Settings {
-            SettingsView()
+            SettingsView(library: library)
         }
     }
 }
