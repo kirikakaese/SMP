@@ -32,25 +32,29 @@ public struct LibraryItem: Identifiable, Hashable, Sendable {
     public var tagIDs: Set<Int64>
     public var groupIDs: Set<Int64>
     public var isLoadedInAgent: Bool
+    /// Set for keys that live in SMP's encrypted archive instead of on disk.
+    public let archive: ArchivedKey?
 
     public init(
         key: DiscoveredKey,
         metadata: KeyMetadata? = nil,
         tagIDs: Set<Int64> = [],
         groupIDs: Set<Int64> = [],
-        isLoadedInAgent: Bool = false
+        isLoadedInAgent: Bool = false,
+        archive: ArchivedKey? = nil
     ) {
         self.key = key
         self.metadata = metadata
         self.tagIDs = tagIDs
         self.groupIDs = groupIDs
         self.isLoadedInAgent = isLoadedInAgent
+        self.archive = archive
     }
 
-    public var id: String { key.id }
+    public var id: String { archive.map { "archive:\($0.id.uuidString)" } ?? key.id }
     public var displayName: String { metadata?.displayName ?? key.name }
     public var isFavorite: Bool { metadata?.isFavorite ?? false }
-    public var isArchived: Bool { metadata?.archivedAt != nil }
+    public var isArchived: Bool { archive != nil }
     /// Metadata can only be stored for keys whose fingerprint is known.
     public var canStoreMetadata: Bool { key.fingerprint != nil }
 
@@ -79,7 +83,9 @@ public final class LibraryModel {
     public var searchText = ""
     public var sortOrder: KeySortOrder = .name
 
-    @ObservationIgnored private let services: ServiceContainer
+    @ObservationIgnored let services: ServiceContainer
+    /// The main window's undo manager; sheets use it so undo survives the sheet closing.
+    @ObservationIgnored public weak var windowUndoManager: UndoManager?
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var watchTask: Task<Void, Never>?
 
@@ -94,6 +100,16 @@ public final class LibraryModel {
 
     public var visibleItems: [LibraryItem] {
         Self.sorted(Self.filter(items, selection: sidebarSelection, searchText: searchText, tags: tags), by: sortOrder)
+    }
+
+    /// Sheet or dialog currently shown for the library.
+    public var activeSheet: LibrarySheet?
+    /// A short confirmation shown after an operation (for example "Key archived").
+    public var notice: String?
+
+    /// The selected keys, in list order.
+    public var selectedItems: [LibraryItem] {
+        items.filter { selectedKeyIDs.contains($0.id) }
     }
 
     /// The single selected key, if exactly one is selected.
@@ -130,10 +146,11 @@ public final class LibraryModel {
             let metadata = try services.metadata.allMetadata()
             let tagMap = try services.metadata.tagAssignments()
             let groupMap = try services.metadata.groupAssignments()
+            let archived = try services.archive.list()
             tags = try services.metadata.allTags()
             groups = try services.metadata.allGroups()
             agentStatus = status
-            items = discovered.map { key in
+            let onDisk: [LibraryItem] = discovered.map { key in
                 let fingerprint = key.fingerprint ?? ""
                 return LibraryItem(
                     key: key,
@@ -143,6 +160,17 @@ public final class LibraryModel {
                     isLoadedInAgent: status.loadedFingerprints.contains(fingerprint)
                 )
             }
+            let inArchive: [LibraryItem] = archived.map { entry in
+                let fingerprint = entry.fingerprint ?? ""
+                return LibraryItem(
+                    key: Self.discoveredKey(fromArchived: entry),
+                    metadata: metadata[fingerprint],
+                    tagIDs: tagMap[fingerprint] ?? [],
+                    groupIDs: groupMap[fingerprint] ?? [],
+                    archive: entry
+                )
+            }
+            items = onDisk + inArchive
             selectedKeyIDs.formIntersection(items.map(\.id))
         } catch {
             report(error, whatHappened: "SMP could not scan your key folders.")
@@ -291,7 +319,7 @@ public final class LibraryModel {
         }
     }
 
-    private func report(_ error: Error, whatHappened: String) {
+    func report(_ error: Error, whatHappened: String) {
         if let error = error as? SMPError {
             lastError = error
         } else {

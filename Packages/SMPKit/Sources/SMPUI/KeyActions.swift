@@ -25,3 +25,34 @@ enum KeyActions {
         NSWorkspace.shared.open([folder], withApplicationAt: terminal, configuration: NSWorkspace.OpenConfiguration())
     }
 }
+
+extension KeyActions {
+    /// Asks where to save the public key, then writes it.
+    static func savePublicKey(_ item: LibraryItem, model: LibraryModel) {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = item.key.name + ".pub"
+        panel.title = "Save Public Key"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try model.exportPublicKey(item, to: url)
+        } catch {
+            model.report(error, whatHappened: "SMP could not save the public key.")
+        }
+    }
+
+    /// Asks for a destination, then exports the private key after Touch ID / password.
+    static func exportPrivateKey(_ item: LibraryItem, model: LibraryModel) {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = item.key.name
+        panel.title = "Export Private Key"
+        panel.message = "Anyone with this file can use the key unless it has a passphrase. Store it securely."
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        Task {
+            do {
+                try await model.exportPrivateKey(item, to: url)
+            } catch {
+                model.report(error, whatHappened: "SMP could not export the private key.")
+            }
+        }
+    }
+}

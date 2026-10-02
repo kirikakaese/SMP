@@ -16,6 +16,9 @@ struct KeyDetailView: View {
 
     var body: some View {
         Form {
+            if let archive = item.archive {
+                archivedSection(archive)
+            }
             header
             if !item.key.issues.isEmpty || item.isExpired() {
                 attentionSection
@@ -216,7 +219,6 @@ struct KeyDetailView: View {
             } label: {
                 Label("Copy Public Key", systemImage: "doc.on.doc")
             }
-            .keyboardShortcut("c", modifiers: [.command, .shift])
             .help("Copy the public key (⇧⌘C)")
             .disabled(item.key.publicKey == nil)
 
@@ -227,7 +229,7 @@ struct KeyDetailView: View {
             }
             .keyboardShortcut("y")
             .help("Preview the public key (⌘Y)")
-            .disabled(item.key.publicKeyFile == nil)
+            .disabled(item.key.publicKeyFile == nil || item.isArchived)
 
             Button {
                 KeyActions.revealInFinder(item)
@@ -236,13 +238,31 @@ struct KeyDetailView: View {
             }
             .keyboardShortcut("r", modifiers: [.command, .shift])
             .help("Reveal in Finder (⇧⌘R)")
+            .disabled(item.isArchived)
 
-            Button {
-                KeyActions.openInTerminal(item)
+            Menu {
+                KeyActionsMenu(model: model, item: item)
             } label: {
-                Label("Open in Terminal", systemImage: "terminal")
+                Label("Actions", systemImage: "ellipsis.circle")
             }
-            .help("Open the key's folder in Terminal")
+            .help("Rename, change passphrase, export, archive or delete")
+        }
+    }
+
+    private func archivedSection(_ archive: ArchivedKey) -> some View {
+        Section {
+            HStack {
+                Label(
+                    "Archived \(archive.archivedAt.formatted(date: .abbreviated, time: .shortened))",
+                    systemImage: "archivebox.fill"
+                )
+                Spacer()
+                Button("Restore") { Task { await model.restore(archiveID: archive.id) } }
+                Button("Delete Permanently…", role: .destructive) { model.activeSheet = .delete([item]) }
+            }
+        } footer: {
+            Text("Archived keys are encrypted inside SMP and are not available to ssh until restored.")
+                .foregroundStyle(.secondary)
         }
     }
 

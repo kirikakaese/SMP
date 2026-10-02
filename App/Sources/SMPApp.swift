@@ -27,6 +27,7 @@ struct SMPApp: App {
                 }
             }
             SidebarCommands()
+            LibraryCommands(model: library)
         }
 
         Settings {
