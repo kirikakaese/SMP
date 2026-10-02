@@ -97,30 +97,73 @@ struct LibraryFilterTests {
 struct LibraryModelLoadingTests {
     private func makeModel(home: URL) throws -> LibraryModel {
         let environment = SSHEnvironment(homeDirectory: home, userName: "test", agentSocketPath: "/nonexistent.sock")
-        let runner = SSHToolRunner(environment: environment)
-        let services = ServiceContainer(
+        let services = ServiceContainer.make(
             environment: environment,
-            toolRunner: runner,
+            supportDirectory: home.appending(path: "support"),
             keychain: InMemoryKeychainService(),
-            keyDiscovery: KeyDiscoveryService(),
-            agent: AgentService(runner: runner),
             metadata: try GRDBMetadataStore.inMemory(),
-            fileWatcher: FileWatcherService()
+            authenticator: FakeAuthenticator()
         )
         let suite = "smp-ui-tests-\(UUID().uuidString)"
         return LibraryModel(services: services, defaults: UserDefaults(suiteName: suite) ?? .standard)
     }
 
-    @Test func loadsKeysAndPersistsMetadataEdits() async throws {
+    private func makeHome(withKey: Bool = true) throws -> URL {
         let home = FileManager.default.temporaryDirectory.appending(path: "smp-ui-home-\(UUID().uuidString)")
         let ssh = home.appending(path: ".ssh")
         try FileManager.default.createDirectory(at: ssh, withIntermediateDirectories: true)
         try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: ssh.path)
+        if withKey {
+            let privateKey = ssh.appending(path: "id_ed25519")
+            try Data(Fixtures.ed25519EncryptedPrivate.utf8).write(to: privateKey)
+            try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: privateKey.path)
+            try Data(Fixtures.ed25519EncryptedPublic.utf8).write(to: ssh.appending(path: "id_ed25519.pub"))
+        }
+        return home
+    }
+
+    @Test func archivesWithUndoAndRestores() async throws {
+        let home = try makeHome()
         defer { try? FileManager.default.removeItem(at: home) }
-        let privateKey = ssh.appending(path: "id_ed25519")
-        try Data(Fixtures.ed25519EncryptedPrivate.utf8).write(to: privateKey)
-        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: privateKey.path)
-        try Data(Fixtures.ed25519EncryptedPublic.utf8).write(to: ssh.appending(path: "id_ed25519.pub"))
+        let model = try makeModel(home: home)
+        await model.reload()
+        let item = try #require(model.items.first)
+        model.setFavorite(true, for: item)
+
+        let undoManager = UndoManager()
+        await model.archive([item], undoManager: undoManager)
+        #expect(model.lastError == nil)
+        #expect(!FileManager.default.fileExists(atPath: home.appending(path: ".ssh/id_ed25519").path))
+        let archived = try #require(model.items.first)
+        #expect(archived.isArchived)
+        #expect(archived.isFavorite, "metadata survives archiving")
+        #expect(LibraryModel.filter(model.items, selection: .library(.allKeys), searchText: "", tags: []).isEmpty)
+        #expect(LibraryModel.filter(model.items, selection: .library(.archived), searchText: "", tags: []).count == 1)
+        #expect(undoManager.canUndo)
+
+        let archiveID = try #require(archived.archive?.id)
+        await model.restore(archiveID: archiveID)
+        #expect(FileManager.default.fileExists(atPath: home.appending(path: ".ssh/id_ed25519").path))
+        #expect(model.items.count == 1)
+        #expect(model.items.first?.isArchived == false)
+    }
+
+    @Test func deletesPermanentlyAfterAuthentication() async throws {
+        let home = try makeHome()
+        defer { try? FileManager.default.removeItem(at: home) }
+        let model = try makeModel(home: home)
+        await model.reload()
+        let item = try #require(model.items.first)
+        model.setNotes("to be removed", for: item)
+
+        try await model.deletePermanently([try #require(model.items.first)], configEdits: [:])
+        #expect(model.items.isEmpty)
+        #expect(!FileManager.default.fileExists(atPath: home.appending(path: ".ssh/id_ed25519.pub").path))
+    }
+
+    @Test func loadsKeysAndPersistsMetadataEdits() async throws {
+        let home = try makeHome()
+        defer { try? FileManager.default.removeItem(at: home) }
 
         let model = try makeModel(home: home)
         await model.reload()

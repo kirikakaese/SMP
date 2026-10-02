@@ -5,11 +5,31 @@ import SwiftUI
 /// The middle column: the filtered, searchable, sortable list of keys.
 struct KeyListView: View {
     @Bindable var model: LibraryModel
+    @Environment(\.undoManager) private var undoManager
 
     var body: some View {
         List(model.visibleItems, selection: $model.selectedKeyIDs) { item in
             KeyRow(item: item, tags: model.tags(for: item))
-                .contextMenu { KeyActionsMenu(model: model, item: item) }
+        }
+        .contextMenu(forSelectionType: String.self) { ids in
+            let selected = model.items.filter { ids.contains($0.id) }
+            if selected.count == 1, let item = selected.first {
+                KeyActionsMenu(model: model, item: item)
+            } else if selected.count > 1 {
+                BulkActionsMenu(model: model, items: selected)
+            }
+        } primaryAction: { ids in
+            model.selectedKeyIDs = ids
+        }
+        .onKeyPress(keys: [.delete]) { press in
+            guard press.modifiers.contains(.command), !model.selectedItems.isEmpty else { return .ignored }
+            if press.modifiers.contains(.option) {
+                model.activeSheet = .delete(model.selectedItems)
+            } else {
+                let onDisk = model.selectedItems.filter { !$0.isArchived }
+                Task { await model.archive(onDisk, undoManager: undoManager) }
+            }
+            return .handled
         }
         .overlay {
             if model.visibleItems.isEmpty, !model.isLoading {
@@ -37,6 +57,17 @@ struct KeyListView: View {
                 } label: {
                     Label("Sort", systemImage: "arrow.up.arrow.down")
                 }
+            }
+            ToolbarItem {
+                Menu {
+                    Button("New Key…") { model.activeSheet = .newKey }
+                    Button("Import Key…") { model.activeSheet = .importKey(nil) }
+                } label: {
+                    Label("Add Key", systemImage: "plus")
+                } primaryAction: {
+                    model.activeSheet = .newKey
+                }
+                .help("Create a new key (⌘N) or import one (⌘I)")
             }
             ToolbarItem {
                 Button {
@@ -134,12 +165,27 @@ struct KeyRow: View {
 struct KeyActionsMenu: View {
     let model: LibraryModel
     let item: LibraryItem
+    @Environment(\.undoManager) private var undoManager
 
     var body: some View {
         Button("Copy Public Key") { KeyActions.copyPublicKey(item) }
             .disabled(item.key.publicKey == nil)
-        Button("Reveal in Finder") { KeyActions.revealInFinder(item) }
-        Button("Open in Terminal") { KeyActions.openInTerminal(item) }
+        if item.isArchived {
+            Button("Restore from Archive") {
+                if let archive = item.archive {
+                    Task { await model.restore(archiveID: archive.id) }
+                }
+            }
+            Button("Delete Permanently…") { model.activeSheet = .delete([item]) }
+        } else {
+            Button("Reveal in Finder") { KeyActions.revealInFinder(item) }
+            Button("Open in Terminal") { KeyActions.openInTerminal(item) }
+            Divider()
+            KeyEditMenuItems(model: model, item: item)
+            Divider()
+            Button("Archive") { Task { await model.archive([item], undoManager: undoManager) } }
+            Button("Delete…") { model.activeSheet = .delete([item]) }
+        }
         Divider()
         Button(item.isFavorite ? "Remove from Favorites" : "Add to Favorites") {
             model.setFavorite(!item.isFavorite, for: item)
@@ -167,5 +213,48 @@ struct KeyActionsMenu: View {
             }
             .disabled(!item.canStoreMetadata)
         }
+    }
+}
+
+/// Rename, passphrase, comment, format and export actions for one key on disk.
+struct KeyEditMenuItems: View {
+    let model: LibraryModel
+    let item: LibraryItem
+
+    var body: some View {
+        let hasPrivateKey = item.key.privateKeyFile != nil
+        let format = item.key.privateKeyInfo?.format
+        Button("Rename…") { model.activeSheet = .rename(item) }
+        Button("Change Passphrase…") { model.activeSheet = .changePassphrase(item) }
+            .disabled(!hasPrivateKey || format == .putty)
+        Button("Change Comment…") { model.activeSheet = .changeComment(item) }
+            .disabled(format != .openSSH)
+        if format == .pem || format == .pkcs8 {
+            Button("Upgrade to OpenSSH Format…") { model.activeSheet = .upgradeFormat(item) }
+        }
+        Menu("Export") {
+            Button("Save Public Key…") { KeyActions.savePublicKey(item, model: model) }
+                .disabled(item.key.publicKey == nil)
+            Button("Show QR Code") { model.activeSheet = .qrCode(item) }
+                .disabled(item.key.publicKey == nil)
+            Divider()
+            Button("Export Private Key…") { KeyActions.exportPrivateKey(item, model: model) }
+                .disabled(!hasPrivateKey)
+        }
+    }
+}
+
+/// Actions for several selected keys.
+struct BulkActionsMenu: View {
+    let model: LibraryModel
+    let items: [LibraryItem]
+    @Environment(\.undoManager) private var undoManager
+
+    var body: some View {
+        let onDisk = items.filter { !$0.isArchived }
+        if !onDisk.isEmpty {
+            Button("Archive \(onDisk.count) Keys") { Task { await model.archive(onDisk, undoManager: undoManager) } }
+        }
+        Button("Delete \(items.count) Keys…") { model.activeSheet = .delete(items) }
     }
 }
