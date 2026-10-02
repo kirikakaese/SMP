@@ -179,51 +179,17 @@ enum OpenSSHPrivateKeyBuilder {
 
         try publicKey.blob.withUnsafeBytes { publicBytes in
             var pub = SSHWireReader(publicBytes)
-            let type = try pub.readStringRange()
-            writer.appendString(UnsafeRawBufferPointer(rebasing: publicBytes[type]))
             do {
-                switch publicKey.algorithm {
-                case .ed25519:
-                    let point = try pub.readStringRange()
-                    guard point.count == 32 else { throw PuTTYKeyConverter.invalid("Unexpected Ed25519 key size.") }
-                    // PuTTY stores the 32-byte seed as a little-endian integer without trailing zero bytes.
-                    let seed = try putty.readStringRange()
-                    guard seed.count <= 32 else { throw PuTTYKeyConverter.invalid("Unexpected Ed25519 key size.") }
-                    try verifyEd25519(
-                        seed: UnsafeRawBufferPointer(rebasing: puttyPrivate[seed]),
-                        publicKey: UnsafeRawBufferPointer(rebasing: publicBytes[point])
-                    )
-                    writer.appendString(UnsafeRawBufferPointer(rebasing: publicBytes[point]))
-                    writer.appendUInt32(64)
-                    writer.append(UnsafeRawBufferPointer(rebasing: puttyPrivate[seed]))
-                    writer.append([UInt8](repeating: 0, count: 32 - seed.count))
-                    writer.append(UnsafeRawBufferPointer(rebasing: publicBytes[point]))
-                case .ecdsaP256, .ecdsaP384, .ecdsaP521:
-                    let curve = try pub.readStringRange()
-                    let point = try pub.readStringRange()
-                    let scalar = try putty.readStringRange()
-                    writer.appendString(UnsafeRawBufferPointer(rebasing: publicBytes[curve]))
-                    writer.appendString(UnsafeRawBufferPointer(rebasing: publicBytes[point]))
-                    writer.appendString(UnsafeRawBufferPointer(rebasing: puttyPrivate[scalar]))
-                case .rsa:
-                    let exponent = try pub.readStringRange()
-                    let modulus = try pub.readStringRange()
-                    let privateExponent = try putty.readStringRange()
-                    let primeP = try putty.readStringRange()
-                    let primeQ = try putty.readStringRange()
-                    let inverseQ = try putty.readStringRange()
-                    // OpenSSH order: n, e, d, iqmp, p, q.
-                    writer.appendString(UnsafeRawBufferPointer(rebasing: publicBytes[modulus]))
-                    writer.appendString(UnsafeRawBufferPointer(rebasing: publicBytes[exponent]))
-                    for range in [privateExponent, inverseQ, primeP, primeQ] {
-                        writer.appendString(UnsafeRawBufferPointer(rebasing: puttyPrivate[range]))
-                    }
-                default:
-                    throw SMPError.keyOperationFailed(
-                        "\(publicKey.algorithm.displayName) keys can't be converted from PuTTY.",
-                        howToFix: "Export the key from PuTTYgen with Conversions → Export OpenSSH key."
-                    )
-                }
+                let type = try pub.readStringRange()
+                writer.appendString(UnsafeRawBufferPointer(rebasing: publicBytes[type]))
+                try appendKeyFields(
+                    algorithm: publicKey.algorithm,
+                    publicBytes: publicBytes,
+                    publicReader: &pub,
+                    puttyPrivate: puttyPrivate,
+                    puttyReader: &putty,
+                    writer: &writer
+                )
             } catch is SSHWireError {
                 throw PuTTYKeyConverter.invalid("The PuTTY private key data is malformed.")
             }
@@ -236,6 +202,60 @@ enum OpenSSHPrivateKeyBuilder {
             padding += 1
         }
         return writer.finish()
+    }
+
+    /// Appends the algorithm-specific private fields in OpenSSH order.
+    // swiftlint:disable:next function_parameter_count
+    private static func appendKeyFields(
+        algorithm: KeyAlgorithm,
+        publicBytes: UnsafeRawBufferPointer,
+        publicReader pub: inout SSHWireReader,
+        puttyPrivate: UnsafeRawBufferPointer,
+        puttyReader putty: inout SSHWireReader,
+        writer: inout SecureWireWriter
+    ) throws {
+        switch algorithm {
+        case .ed25519:
+            let point = try pub.readStringRange()
+            guard point.count == 32 else { throw PuTTYKeyConverter.invalid("Unexpected Ed25519 key size.") }
+            // PuTTY stores the 32-byte seed as a little-endian integer without trailing zero bytes.
+            let seed = try putty.readStringRange()
+            guard seed.count <= 32 else { throw PuTTYKeyConverter.invalid("Unexpected Ed25519 key size.") }
+            try verifyEd25519(
+                seed: UnsafeRawBufferPointer(rebasing: puttyPrivate[seed]),
+                publicKey: UnsafeRawBufferPointer(rebasing: publicBytes[point])
+            )
+            writer.appendString(UnsafeRawBufferPointer(rebasing: publicBytes[point]))
+            writer.appendUInt32(64)
+            writer.append(UnsafeRawBufferPointer(rebasing: puttyPrivate[seed]))
+            writer.append([UInt8](repeating: 0, count: 32 - seed.count))
+            writer.append(UnsafeRawBufferPointer(rebasing: publicBytes[point]))
+        case .ecdsaP256, .ecdsaP384, .ecdsaP521:
+            let curve = try pub.readStringRange()
+            let point = try pub.readStringRange()
+            let scalar = try putty.readStringRange()
+            writer.appendString(UnsafeRawBufferPointer(rebasing: publicBytes[curve]))
+            writer.appendString(UnsafeRawBufferPointer(rebasing: publicBytes[point]))
+            writer.appendString(UnsafeRawBufferPointer(rebasing: puttyPrivate[scalar]))
+        case .rsa:
+            let exponent = try pub.readStringRange()
+            let modulus = try pub.readStringRange()
+            let privateExponent = try putty.readStringRange()
+            let primeP = try putty.readStringRange()
+            let primeQ = try putty.readStringRange()
+            let inverseQ = try putty.readStringRange()
+            // OpenSSH order: n, e, d, iqmp, p, q.
+            writer.appendString(UnsafeRawBufferPointer(rebasing: publicBytes[modulus]))
+            writer.appendString(UnsafeRawBufferPointer(rebasing: publicBytes[exponent]))
+            for range in [privateExponent, inverseQ, primeP, primeQ] {
+                writer.appendString(UnsafeRawBufferPointer(rebasing: puttyPrivate[range]))
+            }
+        default:
+            throw SMPError.keyOperationFailed(
+                "\(algorithm.displayName) keys can't be converted from PuTTY.",
+                howToFix: "Export the key from PuTTYgen with Conversions → Export OpenSSH key."
+            )
+        }
     }
 }
 

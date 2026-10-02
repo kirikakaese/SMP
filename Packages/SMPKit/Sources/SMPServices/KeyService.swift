@@ -142,35 +142,13 @@ public struct KeyService: KeyManaging {
 
         // Validate the key with ssh-keygen and derive its public half.
         let isEncrypted = info.format != .putty && info.isEncrypted == true
-        let passphrase = request.passphrase.flatMap { $0.isEmpty ? nil : $0 }
-        var publicKey: SSHPublicKey
-        if isEncrypted, passphrase == nil {
-            guard let embeddedPublicKey else {
-                throw SMPError(
-                    .passphraseRequired,
-                    whatHappened: "This key is protected by a passphrase.",
-                    howToFix: "Enter the key's passphrase so SMP can check it and derive the public key."
-                )
-            }
-            publicKey = embeddedPublicKey
-        } else {
-            let derived = try await runner.run(
-                .sshKeygen,
-                arguments: isEncrypted ? ["-y", "-f", stagedPrivate.path] : ["-y", "-P", "", "-f", stagedPrivate.path],
-                options: ToolRunOptions(passphrases: passphrase.map { [$0] } ?? [], timeout: .seconds(30))
-            )
-            guard derived.succeeded else {
-                throw isEncrypted
-                    ? SMPError.wrongPassphrase(request.fileName)
-                    : failure(derived, action: "read the key", keyName: request.fileName)
-            }
-            publicKey = try SSHPublicKey(line: derived.standardOutputString)
-            if let embeddedPublicKey, embeddedPublicKey.blob != publicKey.blob {
-                throw SMPError.keyOperationFailed(
-                    "The key file is inconsistent: its public and private parts don't match."
-                )
-            }
-        }
+        var publicKey = try await derivePublicKey(
+            of: stagedPrivate,
+            isEncrypted: isEncrypted,
+            embedded: embeddedPublicKey,
+            passphrase: request.passphrase.flatMap { $0.isEmpty ? nil : $0 },
+            keyName: request.fileName
+        )
 
         let comment = [publicKey.comment, info.comment ?? "", request.comment ?? ""].first { !$0.isEmpty } ?? ""
         publicKey = try SSHPublicKey(blob: publicKey.blob, comment: comment)
@@ -186,6 +164,42 @@ public struct KeyService: KeyManaging {
             publicKey: publicKey,
             replacedKey: replaced
         )
+    }
+
+    /// Runs `ssh-keygen -y` to prove the key is valid and get its public half. Without a passphrase,
+    /// an encrypted OpenSSH key falls back to the public key stored in its header.
+    private func derivePublicKey(
+        of file: URL,
+        isEncrypted: Bool,
+        embedded: SSHPublicKey?,
+        passphrase: SecureBytes?,
+        keyName: String
+    ) async throws -> SSHPublicKey {
+        if isEncrypted, passphrase == nil {
+            guard let embedded else {
+                throw SMPError(
+                    .passphraseRequired,
+                    whatHappened: "This key is protected by a passphrase.",
+                    howToFix: "Enter the key's passphrase so SMP can check it and derive the public key."
+                )
+            }
+            return embedded
+        }
+        let derived = try await runner.run(
+            .sshKeygen,
+            arguments: isEncrypted ? ["-y", "-f", file.path] : ["-y", "-P", "", "-f", file.path],
+            options: ToolRunOptions(passphrases: passphrase.map { [$0] } ?? [], timeout: .seconds(30))
+        )
+        guard derived.succeeded else {
+            throw isEncrypted
+                ? SMPError.wrongPassphrase(keyName)
+                : failure(derived, action: "read the key", keyName: keyName)
+        }
+        let publicKey = try SSHPublicKey(line: derived.standardOutputString)
+        if let embedded, embedded.blob != publicKey.blob {
+            throw SMPError.keyOperationFailed("The key file is inconsistent: its public and private parts don't match.")
+        }
+        return publicKey
     }
 
     private func importPublicKey(_ request: KeyImportRequest) throws -> KeyOperationResult {

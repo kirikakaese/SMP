@@ -132,10 +132,11 @@ public struct ArchiveService: ArchiveServicing {
             guard case .rename(let newBase) = conflict else { return file.name }
             return newBase + file.name.dropFirst(manifest.name.count)
         }
-        for name in targetNames {
-            if FileManager.default.fileExists(atPath: destinationDirectory.appending(path: name).path) {
-                throw SMPError.alreadyExists(name)
-            }
+        let conflicting = targetNames.first {
+            FileManager.default.fileExists(atPath: destinationDirectory.appending(path: $0).path)
+        }
+        if let conflicting {
+            throw SMPError.alreadyExists(conflicting)
         }
 
         var written: [URL] = []
