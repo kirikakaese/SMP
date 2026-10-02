@@ -205,7 +205,6 @@ enum OpenSSHPrivateKeyBuilder {
     }
 
     /// Appends the algorithm-specific private fields in OpenSSH order.
-    // swiftlint:disable:next function_parameter_count
     private static func appendKeyFields(
         algorithm: KeyAlgorithm,
         publicBytes: UnsafeRawBufferPointer,
