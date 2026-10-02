@@ -5,6 +5,21 @@ import SMPSSH
 extension KeyService {
     // MARK: Helpers
 
+    /// Returns a copy of `contents` with a trailing newline, or `nil` if it already ends with one.
+    static func newlineTerminated(_ contents: SecureBytes) -> SecureBytes? {
+        guard contents.withUnsafeBytes({ $0.last }) != 0x0A else { return nil }
+        let terminated = SecureBytes(count: contents.count + 1)
+        terminated.withUnsafeMutableBytes { target in
+            contents.withUnsafeBytes { source in
+                if let base = target.baseAddress, let from = source.baseAddress, !source.isEmpty {
+                    base.copyMemory(from: from, byteCount: source.count)
+                }
+            }
+            target[target.count - 1] = 0x0A
+        }
+        return terminated
+    }
+
     struct Destination {
         let privateKey: URL
         let publicKey: URL

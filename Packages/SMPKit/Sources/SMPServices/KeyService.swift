@@ -137,6 +137,13 @@ public struct KeyService: KeyManaging {
             contents = try PuTTYKeyConverter.convert(request.contents)
             embeddedPublicKey = PrivateKeyInspector.inspect(contents: contents)?.embeddedPublicKey
         }
+        // OpenSSH rejects PEM-armored keys without a final newline ("invalid format").
+        if let terminated = Self.newlineTerminated(contents) {
+            if contents !== request.contents {
+                contents.wipe()
+            }
+            contents = terminated
+        }
         defer { if contents !== request.contents { contents.wipe() } }
         try contents.withUnsafeBytes { try SecureDelete.createFile(at: stagedPrivate, contents: $0, mode: 0o600) }
 

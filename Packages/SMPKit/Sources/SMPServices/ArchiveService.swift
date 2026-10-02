@@ -9,6 +9,12 @@ public struct ArchivedKey: Sendable, Hashable, Codable, Identifiable {
         public let name: String
         public let mode: Int
         public let isPrivateKey: Bool
+
+        public init(name: String, mode: Int, isPrivateKey: Bool) {
+            self.name = name
+            self.mode = mode
+            self.isPrivateKey = isPrivateKey
+        }
     }
 
     public let id: UUID
@@ -18,6 +24,24 @@ public struct ArchivedKey: Sendable, Hashable, Codable, Identifiable {
     public let publicKeyLine: String?
     public let fingerprint: String?
     public let archivedAt: Date
+
+    public init(
+        id: UUID,
+        name: String,
+        originalDirectory: String,
+        files: [File],
+        publicKeyLine: String?,
+        fingerprint: String?,
+        archivedAt: Date
+    ) {
+        self.id = id
+        self.name = name
+        self.originalDirectory = originalDirectory
+        self.files = files
+        self.publicKeyLine = publicKeyLine
+        self.fingerprint = fingerprint
+        self.archivedAt = archivedAt
+    }
 
     public var publicKey: SSHPublicKey? { publicKeyLine.flatMap { try? SSHPublicKey(line: $0) } }
 }

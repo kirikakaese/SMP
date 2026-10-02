@@ -296,7 +296,8 @@ public final class LibraryModel {
 
     private func updateMetadata(for item: LibraryItem, _ change: (inout KeyMetadata) -> Void) {
         guard let fingerprint = item.key.fingerprint else { return }
-        var metadata = item.metadata ?? KeyMetadata(fingerprint: fingerprint, lastSeenPath: item.key.id)
+        let stored = try? services.metadata.metadata(for: fingerprint)
+        var metadata = stored ?? item.metadata ?? KeyMetadata(fingerprint: fingerprint, lastSeenPath: item.key.id)
         change(&metadata)
         perform("SMP could not save your changes to this key.") {
             try services.metadata.save(metadata)
