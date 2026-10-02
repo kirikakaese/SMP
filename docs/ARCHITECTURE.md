@@ -12,17 +12,37 @@ SMP/
 ├─ AgentHelper/             (milestone 5) login-item helper running the built-in agent
 └─ Packages/SMPKit/         All logic, as one Swift package with several modules
    ├─ Sources/SMPCore       Models, SMPError, SecureBytes, SSHEnvironment, logging
-   ├─ Sources/SMPSSH        SSHToolRunner, ProcessExecutor, askpass broker;
-   │                        later: key parsing, fingerprints, config/known_hosts parsers, agent codec
-   ├─ Sources/SMPServices   KeychainService, ServiceContainer;
-   │                        later: Key, Agent, Config, KnownHosts, Provider, Audit, FileWatcher services
-   ├─ Sources/SMPUI         SwiftUI feature views and view models
+   ├─ Sources/SMPSSH        SSHToolRunner, ProcessExecutor, askpass broker, wire-format reader,
+   │                        public key parsing + fingerprints, randomart, private key header inspection;
+   │                        later: config/known_hosts parsers, agent codec
+   ├─ Sources/SMPPersistence  GRDB metadata store (tags, groups, notes, favorites, expiry)
+   ├─ Sources/SMPServices   KeychainService, KeyDiscoveryService, AgentService (status),
+   │                        FileWatcherService (FSEvents), KeyFolderSettings, ServiceContainer;
+   │                        later: Config, KnownHosts, Provider, Audit services
+   ├─ Sources/SMPUI         SwiftUI views and view models (LibraryModel, sidebar, list, detail, settings)
+   ├─ Sources/SMPTestFixtures  test-only key fixtures (not part of any product)
    └─ Tests/                Swift Testing suites per module
 ```
 
 Dependency direction: `SMPCore` ← `SMPSSH` ← `SMPServices` ← `SMPUI` ← `App`.
-Provider clients (`SMPProviders`) and the metadata store (`SMPPersistence`) will be added as
-separate modules when their milestones start.
+Provider clients (`SMPProviders`) will be added as a separate module in milestone 6.
+
+## Key discovery
+
+`KeyDiscoveryService` scans `~/.ssh` and user-added folders (non-recursively) and classifies
+files by content, not by name. It pairs `name`, `name.pub` and `name-cert.pub`, and reports
+private-only keys and orphaned public keys. Each key carries a list of issues: permissions,
+no passphrase, weak algorithm, legacy format, mismatched `.pub`. `FileWatcherService` (FSEvents)
+triggers a rescan when the folders change outside the app.
+
+**Private key files** are inspected by `PrivateKeyInspector`. The file is read into
+`SecureBytes`, base64-decoded into `SecureBytes`, and only the unencrypted header is parsed:
+format, cipher, KDF rounds and the embedded public key. The private section is never
+interpreted, copied or logged, and the buffers are zeroed afterwards. This is how SMP shows
+fingerprints and passphrase status without asking for a passphrase.
+
+Metadata (tags, groups, notes, favorites, expiry) is stored per SHA256 fingerprint, so it
+survives renames and moves, and applies to every copy of the same key.
 
 ## Services and dependency injection
 
@@ -85,5 +105,8 @@ release. The metadata store never contains secrets.
 
 ## Third-party dependencies
 
-None yet. Planned: Sparkle 2 (updates, milestone 9). Any other dependency must be justified in
-the pull request that adds it.
+- **GRDB** (SQLite toolkit, `SMPPersistence`): explicit, versioned migrations, mature, and works
+  with Swift 6 strict concurrency. Chosen over SwiftData. Stores metadata only.
+- Planned: Sparkle 2 (updates, milestone 9).
+
+Any other dependency must be justified in the pull request that adds it.
