@@ -281,9 +281,17 @@ struct UploadKeySheet: View {
     @State private var isWorking = false
     @State private var error: SMPError?
 
-    init(providers: ProvidersModel, library: LibraryModel, item: LibraryItem?, account: ProviderAccount?) {
+    init(
+        providers: ProvidersModel,
+        library: LibraryModel,
+        item: LibraryItem?,
+        account: ProviderAccount?,
+        signing: Bool = false
+    ) {
         self.providers = providers
         self.library = library
+        _forAuthentication = State(initialValue: !signing)
+        _forSigning = State(initialValue: signing)
         _itemID = State(initialValue: item?.id)
         _accountID = State(initialValue: account?.id ?? providers.accounts.first?.id)
         _title = State(initialValue: item.map(Self.defaultTitle) ?? "")

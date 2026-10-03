@@ -202,6 +202,21 @@ struct KeyDetailView: View {
                 set: { model.setExpiry($0, for: item) }
             ), displayedComponents: .date)
         }
+        if item.key.privateKeyFile != nil {
+            Toggle("Remind me to rotate", isOn: Binding(
+                get: { item.metadata?.rotateAt != nil },
+                set: { enabled in
+                    let inSixMonths = Calendar.current.date(byAdding: .month, value: 6, to: Date())
+                    model.setRotationDate(enabled ? inSixMonths : nil, for: item)
+                }
+            ))
+            if let rotateAt = item.metadata?.rotateAt {
+                DatePicker("Rotate on", selection: Binding(
+                    get: { rotateAt },
+                    set: { model.setRotationDate($0, for: item) }
+                ), displayedComponents: .date)
+            }
+        }
     }
 
     private var notesEditor: some View {

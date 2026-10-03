@@ -91,6 +91,7 @@ struct KeyListView: View {
         case .group(let id): model.groups.first { $0.id == id }?.name ?? "Group"
         case .ssh(let section): section.title
         case .provider: "Provider"
+        case .security(let section): section.title
         case nil: "Keys"
         }
     }
@@ -263,6 +264,8 @@ struct KeyEditMenuItems: View {
         }
         Button("Deploy to Server…") { model.activeSheet = .deploy(item) }
             .disabled(item.key.publicKey == nil || item.isArchived)
+        Button("Rotate Key…") { model.activeSheet = .rotate(item) }
+            .disabled(!hasPrivateKey || item.isArchived)
     }
 }
 
