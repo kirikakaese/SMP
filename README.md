@@ -43,6 +43,9 @@ once milestone 9 is complete.
 ## Build from source
 
 Requirements: Xcode 16 or later (Swift 6) and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
+The Command Line Tools alone are not enough (the tests use Swift Testing, which ships with Xcode);
+if `xcode-select -p` prints `/Library/Developer/CommandLineTools`, run
+`sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`.
 
 ```sh
 git clone https://github.com/kirikakaese/SMP.git
@@ -50,6 +53,10 @@ cd SMP
 
 # Run the package tests (uses temporary HOME folders; never touches your real ~/.ssh)
 swift test --package-path Packages/SMPKit
+
+# Set your signing team once (the file is git-ignored)
+cp Config/Local.xcconfig.example Config/Local.xcconfig
+open -e Config/Local.xcconfig   # replace ABCDE12345 with your Team ID
 
 # Generate the Xcode project and open it
 brew install xcodegen
@@ -59,14 +66,22 @@ open SMP.xcodeproj
 
 The Xcode project is generated from `project.yml` and is not checked in.
 
-Secure Enclave keys and SMP Agent need a signed build: select your development team in Xcode
-(the shared Keychain group needs a provisioning profile). Unsigned builds run, but cannot create or
-use Secure Enclave keys.
+Both targets share a Keychain group, so a normal build must be signed with your team; a free
+personal team is enough for local runs. With `Config/Local.xcconfig` in place, every generated
+project picks the team up automatically. Without it, build unsigned the way CI does; that build
+runs, but cannot create or use Secure Enclave keys or run SMP Agent:
+
+```sh
+xcodebuild build -project SMP.xcodeproj -scheme SMP -configuration Debug \
+  -derivedDataPath build CODE_SIGNING_ALLOWED=NO
+open build/Build/Products/Debug/SMP.app
+```
 
 ## Project layout
 
 ```
 App/                 App target (entry point, Info.plist, entitlements)
+Config/              Build settings (signing team via the git-ignored Local.xcconfig)
 Packages/SMPKit/     All logic, as a Swift package
   Sources/SMPCore      Models, errors, secret-handling primitives
   Sources/SMPSSH       SSHToolRunner, key parsing and everything that talks to OpenSSH

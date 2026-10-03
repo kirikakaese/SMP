@@ -7,6 +7,7 @@
 xcuserdata/
 DerivedData/
 build/
+Config/Local.xcconfig
 
 # Swift Package Manager
 .build/
