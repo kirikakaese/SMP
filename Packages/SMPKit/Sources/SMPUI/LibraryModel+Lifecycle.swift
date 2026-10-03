@@ -19,6 +19,8 @@ public enum LibrarySheet: Identifiable, Sendable {
     case deploy(LibraryItem)
     case rotate(LibraryItem)
     case resumeRotation(RotationJob)
+    case backup
+    case restoreBackup
 
     public var id: String {
         switch self {
@@ -35,6 +37,8 @@ public enum LibrarySheet: Identifiable, Sendable {
         case .deploy(let item): "deploy-\(item.id)"
         case .rotate(let item): "rotate-\(item.id)"
         case .resumeRotation(let job): "rotation-\(job.id.uuidString)"
+        case .backup: "backup"
+        case .restoreBackup: "restore-backup"
         }
     }
 }

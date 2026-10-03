@@ -33,6 +33,10 @@ struct LibrarySheetHost: View {
             RotationSheet(library: model, start: .key(item))
         case .resumeRotation(let job):
             RotationSheet(library: model, start: .job(job))
+        case .backup:
+            BackupSheet(model: model)
+        case .restoreBackup:
+            RestoreBackupSheet(model: model)
         }
     }
 }
