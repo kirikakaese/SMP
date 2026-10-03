@@ -138,9 +138,12 @@ struct AgentView: View {
 
     private var statusText: String {
         switch model.helperStatus {
-        case .enabled: model.identityCount == nil
-            ? String(localized: "Starting or not responding")
-            : String(localized: "Running")
+        case .enabled:
+            if model.identityCount == nil {
+                String(localized: "Starting or not responding")
+            } else {
+                String(localized: "Running")
+            }
         case .requiresApproval: String(localized: "Waiting for your approval")
         case .notRegistered: String(localized: "Off")
         case .notFound: String(localized: "Not available")
