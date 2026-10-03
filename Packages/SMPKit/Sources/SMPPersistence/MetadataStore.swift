@@ -25,6 +25,20 @@ public protocol MetadataStoring: Sendable {
     /// Group IDs per key fingerprint.
     func groupAssignments() throws -> [String: Set<Int64>]
     func setGroups(_ groupIDs: Set<Int64>, for fingerprint: String) throws
+
+    // Hosts (keyed by the alias in ~/.ssh/config)
+    func allHostMetadata() throws -> [String: HostMetadata]
+    func saveHostMetadata(_ metadata: HostMetadata) throws
+    /// Moves metadata and tags to a new alias after a host was renamed.
+    func renameHost(from oldAlias: String, to newAlias: String) throws
+    func deleteHostMetadata(alias: String) throws
+    func hostTagAssignments() throws -> [String: Set<Int64>]
+    func setHostTags(_ tagIDs: Set<Int64>, forHost alias: String) throws
+
+    // Tunnels
+    func allTunnels() throws -> [TunnelProfile]
+    func saveTunnel(_ tunnel: TunnelProfile) throws
+    func deleteTunnel(id: UUID) throws
 }
 
 /// `MetadataStoring` backed by SQLite through GRDB.
@@ -86,6 +100,25 @@ public final class GRDBMetadataStore: MetadataStoring, Sendable {
                 table.column("groupID", .integer).notNull()
                     .references(GroupRecord.databaseTableName, onDelete: .cascade)
                 table.primaryKey(["fingerprint", "groupID"])
+            }
+        }
+        migrator.registerMigration("v2-hosts-tunnels") { db in
+            try db.create(table: HostMetadataRecord.databaseTableName) { table in
+                table.primaryKey("alias", .text)
+                table.column("isFavorite", .boolean).notNull().defaults(to: false)
+                table.column("notes", .text).notNull().defaults(to: "")
+                table.column("lastConnectedAt", .datetime)
+            }
+            try db.create(table: HostTagRecord.databaseTableName) { table in
+                table.column("alias", .text).notNull()
+                table.column("tagID", .integer).notNull().references(TagRecord.databaseTableName, onDelete: .cascade)
+                table.primaryKey(["alias", "tagID"])
+            }
+            try db.create(table: TunnelRecord.databaseTableName) { table in
+                table.primaryKey("id", .text)
+                table.column("name", .text).notNull()
+                table.column("hostAlias", .text).notNull()
+                table.column("forwards", .blob).notNull()
             }
         }
         return migrator
@@ -219,6 +252,78 @@ public final class GRDBMetadataStore: MetadataStoring, Sendable {
         }
     }
 
+    // MARK: Hosts
+
+    public func allHostMetadata() throws -> [String: HostMetadata] {
+        try database.read { db in
+            let records = try HostMetadataRecord.fetchAll(db)
+            return Dictionary(uniqueKeysWithValues: records.map { ($0.alias, $0.model) })
+        }
+    }
+
+    public func saveHostMetadata(_ metadata: HostMetadata) throws {
+        try database.write { db in
+            try HostMetadataRecord(metadata).save(db)
+        }
+    }
+
+    public func renameHost(from oldAlias: String, to newAlias: String) throws {
+        guard oldAlias != newAlias else { return }
+        try database.write { db in
+            // Metadata left over from an earlier host with the new name would collide; the renamed host wins.
+            try db.execute(sql: "DELETE FROM hostMetadata WHERE alias = ?", arguments: [newAlias])
+            try db.execute(sql: "DELETE FROM hostTag WHERE alias = ?", arguments: [newAlias])
+            try db.execute(sql: "UPDATE hostMetadata SET alias = ? WHERE alias = ?", arguments: [newAlias, oldAlias])
+            try db.execute(sql: "UPDATE hostTag SET alias = ? WHERE alias = ?", arguments: [newAlias, oldAlias])
+            try db.execute(sql: "UPDATE tunnel SET hostAlias = ? WHERE hostAlias = ?", arguments: [newAlias, oldAlias])
+        }
+    }
+
+    public func deleteHostMetadata(alias: String) throws {
+        try database.write { db in
+            _ = try HostMetadataRecord.deleteOne(db, key: alias)
+            try HostTagRecord.filter(Column("alias") == alias).deleteAll(db)
+        }
+    }
+
+    public func hostTagAssignments() throws -> [String: Set<Int64>] {
+        try database.read { db in
+            try HostTagRecord.fetchAll(db).reduce(into: [:]) { result, row in
+                result[row.alias, default: []].insert(row.tagID)
+            }
+        }
+    }
+
+    public func setHostTags(_ tagIDs: Set<Int64>, forHost alias: String) throws {
+        try database.write { db in
+            try HostTagRecord.filter(Column("alias") == alias).deleteAll(db)
+            for tagID in tagIDs {
+                try HostTagRecord(alias: alias, tagID: tagID).insert(db)
+            }
+        }
+    }
+
+    // MARK: Tunnels
+
+    public func allTunnels() throws -> [TunnelProfile] {
+        try database.read { db in
+            try TunnelRecord.order(Column("name")).fetchAll(db).compactMap(\.model)
+        }
+    }
+
+    public func saveTunnel(_ tunnel: TunnelProfile) throws {
+        let record = try TunnelRecord(tunnel)
+        try database.write { db in
+            try record.save(db)
+        }
+    }
+
+    public func deleteTunnel(id: UUID) throws {
+        _ = try database.write { db in
+            try TunnelRecord.deleteOne(db, key: id.uuidString)
+        }
+    }
+
     private static func validatedName(_ name: String) throws -> String {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, trimmed.count <= 64 else {
@@ -313,4 +418,55 @@ struct GroupMemberRecord: Codable, FetchableRecord, PersistableRecord {
 
     var fingerprint: String
     var groupID: Int64
+}
+
+struct HostMetadataRecord: Codable, FetchableRecord, PersistableRecord {
+    static let databaseTableName = "hostMetadata"
+
+    var alias: String
+    var isFavorite: Bool
+    var notes: String
+    var lastConnectedAt: Date?
+
+    init(_ model: HostMetadata) {
+        alias = model.alias
+        isFavorite = model.isFavorite
+        notes = model.notes
+        lastConnectedAt = model.lastConnectedAt
+    }
+
+    var model: HostMetadata {
+        HostMetadata(alias: alias, isFavorite: isFavorite, notes: notes, lastConnectedAt: lastConnectedAt)
+    }
+}
+
+struct HostTagRecord: Codable, FetchableRecord, PersistableRecord {
+    static let databaseTableName = "hostTag"
+
+    var alias: String
+    var tagID: Int64
+}
+
+struct TunnelRecord: Codable, FetchableRecord, PersistableRecord {
+    static let databaseTableName = "tunnel"
+
+    var id: String
+    var name: String
+    var hostAlias: String
+    /// JSON-encoded `[TunnelForward]`.
+    var forwards: Data
+
+    init(_ model: TunnelProfile) throws {
+        id = model.id.uuidString
+        name = model.name
+        hostAlias = model.hostAlias
+        forwards = try JSONEncoder().encode(model.forwards)
+    }
+
+    var model: TunnelProfile? {
+        guard let uuid = UUID(uuidString: id),
+              let decoded = try? JSONDecoder().decode([TunnelForward].self, from: forwards)
+        else { return nil }
+        return TunnelProfile(id: uuid, name: name, hostAlias: hostAlias, forwards: decoded)
+    }
 }
