@@ -28,26 +28,33 @@ public struct AgentActivity: Sendable, Hashable, Identifiable {
 }
 
 /// Answers agent protocol requests: Secure Enclave keys are served here, everything else is
-/// forwarded to the system agent. Requests that would carry secrets are refused.
+/// forwarded to the system agent. Requests that would carry secrets are refused. SMP itself
+/// manages the Secure Enclave keys through the `AgentKeyCommand` extension.
 public final class AgentRequestHandler: Sendable {
     private let store: any SecureEnclaveKeyStoring
     private let upstream: (any AgentUpstream)?
     private let authorizer: any SignatureAuthorizing
+    private let peerVerifier: any PeerVerifying
     private let settings: @Sendable () -> AgentSettings
     private let record: @Sendable (AgentActivity) -> Void
+    private let keysChanged: @Sendable () -> Void
 
     public init(
         store: any SecureEnclaveKeyStoring,
         upstream: (any AgentUpstream)?,
         authorizer: any SignatureAuthorizing,
+        peerVerifier: any PeerVerifying = FixedPeerVerifier(allows: false),
         settings: @escaping @Sendable () -> AgentSettings = { AgentSettings() },
-        record: @escaping @Sendable (AgentActivity) -> Void = { _ in }
+        record: @escaping @Sendable (AgentActivity) -> Void = { _ in },
+        keysChanged: @escaping @Sendable () -> Void = {}
     ) {
         self.store = store
         self.upstream = upstream
         self.authorizer = authorizer
+        self.peerVerifier = peerVerifier
         self.settings = settings
         self.record = record
+        self.keysChanged = keysChanged
     }
 
     /// Handles one request payload and returns the response payload. Never throws: failures are
@@ -59,6 +66,8 @@ public final class AgentRequestHandler: Sendable {
             return SSHAgentCodec.identitiesAnswer(identities())
         case .signRequest:
             return sign(payload, peer: peer)
+        case .extension:
+            return handleExtension(payload, peer: peer)
         default:
             if type.carriesSecrets {
                 record(AgentActivity(
@@ -154,6 +163,72 @@ public final class AgentRequestHandler: Sendable {
     static func fingerprint(of blob: Data) -> String {
         let digest = Data(SHA256.hash(data: blob)).base64EncodedString()
         return "SHA256:" + digest.trimmingCharacters(in: CharacterSet(charactersIn: "="))
+    }
+
+    // MARK: Key management (SMP only)
+
+    private func handleExtension(_ payload: Data, peer: PeerProcess) -> Data {
+        guard let request = try? SSHAgentCodec.parseExtensionRequest(payload) else {
+            return SSHAgentCodec.failure
+        }
+        // Other extensions (e.g. OpenSSH's session-bind) are the system agent's business.
+        guard request.name == AgentKeyCommand.extensionName else { return forward(payload) }
+        guard peerVerifier.mayManageKeys(peer) else {
+            record(AgentActivity(
+                peer: peer.displayName, keyName: "—", outcome: .refused,
+                detail: "Only SMP can manage Secure Enclave keys."
+            ))
+            return SSHAgentCodec.failure
+        }
+        guard let command = try? JSONDecoder().decode(AgentKeyCommand.self, from: request.contents) else {
+            return SSHAgentCodec.failure
+        }
+        let reply: AgentKeyReply
+        do {
+            reply = AgentKeyReply(keys: try perform(command))
+        } catch {
+            reply = AgentKeyReply(error: (error as? SMPError) ?? SMPError(
+                .keychain, whatHappened: "SMP Agent could not change its keys.", details: error.localizedDescription
+            ))
+        }
+        guard let contents = try? JSONEncoder().encode(reply) else { return SSHAgentCodec.failure }
+        return SSHAgentCodec.extensionResponse(contents)
+    }
+
+    private func perform(_ command: AgentKeyCommand) throws -> [SecureEnclaveKeyInfo] {
+        switch command {
+        case .list:
+            return try store.keys()
+        case .create(let name, let comment, let policy):
+            let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty, trimmed.count <= 200, comment.count <= 1000 else {
+                throw SMPError.invalidArgument("The key needs a name of at most 200 characters.")
+            }
+            let key = try store.create(name: trimmed, comment: comment, policy: policy)
+            keysChanged()
+            return [key]
+        case .update(let changed):
+            // Only the name, comment and policy can change; the public key and Touch ID
+            // requirement stay as created.
+            guard var key = try store.keys().first(where: { $0.id == changed.id }) else {
+                throw SMPError.invalidArgument("The Secure Enclave key no longer exists.")
+            }
+            guard changed.policy.requiresUserPresence == key.policy.requiresUserPresence else {
+                throw SMPError.invalidArgument(
+                    "Whether a key needs Touch ID is fixed when it is created. Create a new key to change it."
+                )
+            }
+            key.name = changed.name
+            key.comment = changed.comment
+            key.policy = changed.policy
+            try store.update(key)
+            keysChanged()
+            return []
+        case .delete(let id):
+            try store.delete(id: id)
+            keysChanged()
+            return []
+        }
     }
 
     // MARK: Forwarding

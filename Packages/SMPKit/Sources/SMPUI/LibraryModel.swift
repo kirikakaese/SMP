@@ -121,6 +121,8 @@ public final class LibraryModel {
     public private(set) var isLoading = false
     public private(set) var additionalFolders: [URL]
     public var lastError: SMPError?
+    /// Why Secure Enclave keys could not be listed (usually: SMP Agent is not running).
+    public internal(set) var secureEnclaveProblem: SMPError?
 
     public var sidebarSelection: SidebarSelection? = .library(.allKeys)
     public var selectedKeyIDs: Set<String> = []

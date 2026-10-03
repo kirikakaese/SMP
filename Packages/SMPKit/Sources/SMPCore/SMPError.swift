@@ -29,6 +29,8 @@ public struct SMPError: Error, Sendable, Equatable {
         case network
         /// A provider rejected a request (bad token, missing scope, invalid key, rate limit).
         case providerRejected
+        /// SMP Agent, which holds the Secure Enclave keys, is not running or did not answer.
+        case agentNotRunning
     }
 
     public let code: Code
