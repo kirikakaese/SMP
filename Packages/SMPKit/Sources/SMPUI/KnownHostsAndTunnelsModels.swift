@@ -83,7 +83,7 @@ public final class KnownHostsModel {
     }
 
     /// `host`, `host:port` or `[host]:port`.
-    static func split(_ text: String) -> (String, Int) {
+    nonisolated static func split(_ text: String) -> (String, Int) {
         var value = text
         if value.hasPrefix("["), let close = value.firstIndex(of: "]") {
             let host = String(value[value.index(after: value.startIndex)..<close])
