@@ -39,6 +39,12 @@ struct SidebarView: View {
                         .tag(SidebarSelection.library(item))
                 }
             }
+            Section("SSH") {
+                ForEach(SSHSection.allCases) { section in
+                    Label(section.title, systemImage: section.systemImage)
+                        .tag(SidebarSelection.ssh(section))
+                }
+            }
             if !model.tags.isEmpty {
                 Section("Tags") {
                     ForEach(model.tags) { tag in

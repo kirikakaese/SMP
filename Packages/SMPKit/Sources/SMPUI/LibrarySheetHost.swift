@@ -23,6 +23,8 @@ struct LibrarySheetHost: View {
             DeleteKeySheet(model: model, items: items)
         case .qrCode(let item):
             QRCodeSheet(item: item)
+        case .deploy(let item):
+            DeployKeySheet(library: model, item: item)
         }
     }
 }
