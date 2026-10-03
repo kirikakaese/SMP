@@ -8,6 +8,7 @@ import SwiftUI
 /// The right column: everything known about one key.
 struct KeyDetailView: View {
     let model: LibraryModel
+    let providers: ProvidersModel
     let item: LibraryItem
 
     @State private var notesDraft = ""
@@ -30,6 +31,9 @@ struct KeyDetailView: View {
             detailsSection
             if !item.isVirtualSecureEnclaveEntry {
                 filesSection
+            }
+            if !item.isArchived {
+                KeyProvidersSection(providers: providers, library: model, item: item)
             }
             organizeSection
         }

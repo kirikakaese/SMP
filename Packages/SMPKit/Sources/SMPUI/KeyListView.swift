@@ -90,6 +90,7 @@ struct KeyListView: View {
         case .tag(let id): model.tags.first { $0.id == id }?.name ?? "Tag"
         case .group(let id): model.groups.first { $0.id == id }?.name ?? "Group"
         case .ssh(let section): section.title
+        case .provider: "Provider"
         case nil: "Keys"
         }
     }

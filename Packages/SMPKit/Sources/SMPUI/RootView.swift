@@ -8,6 +8,7 @@ public struct RootView: View {
     @Bindable private var knownHosts: KnownHostsModel
     @Bindable private var tunnels: TunnelsModel
     @Bindable private var agent: AgentModel
+    @Bindable private var providers: ProvidersModel
     @Environment(\.undoManager) private var undoManager
 
     public init(
@@ -15,13 +16,19 @@ public struct RootView: View {
         hosts: HostsModel,
         knownHosts: KnownHostsModel,
         tunnels: TunnelsModel,
-        agent: AgentModel
+        agent: AgentModel,
+        providers: ProvidersModel
     ) {
         self.model = model
         self.hosts = hosts
         self.knownHosts = knownHosts
         self.tunnels = tunnels
         self.agent = agent
+        self.providers = providers
+    }
+
+    private var providerAccount: ProviderAccount? {
+        if case .provider(let id) = model.sidebarSelection { providers.account(id) } else { nil }
     }
 
     private var sshSection: SSHSection? {
@@ -30,32 +37,37 @@ public struct RootView: View {
 
     public var body: some View {
         NavigationSplitView {
-            SidebarView(model: model)
+            SidebarView(model: model, providers: providers)
         } content: {
-            switch sshSection {
-            case .hosts: HostListView(model: hosts)
-            case .knownHosts: KnownHostsListView(model: knownHosts)
-            case .tunnels: TunnelListView(model: tunnels, hosts: hosts)
-            case .agent: AgentView(model: agent, hosts: hosts)
-            case nil: KeyListView(model: model)
+            if let account = providerAccount {
+                ProviderKeysView(providers: providers, library: model, account: account)
+            } else {
+                sshContent
             }
         } detail: {
-            detail
+            if providerAccount != nil {
+                RemoteKeyDetailView(providers: providers, library: model)
+            } else {
+                detail
+            }
         }
         .sheet(item: $model.activeSheet) { sheet in
             LibrarySheetHost(model: model, sheet: sheet)
         }
         .overlay(alignment: .bottom) {
-            if let notice = model.notice ?? hosts.notice ?? knownHosts.notice {
+            if let notice = model.notice ?? hosts.notice ?? knownHosts.notice ?? providers.notice {
                 NoticeBanner(text: notice) {
                     model.notice = nil
                     hosts.notice = nil
                     knownHosts.notice = nil
+                    providers.notice = nil
                 }
             }
         }
         .dropDestination(for: URL.self) { urls, _ in
-            guard let url = urls.first, model.activeSheet == nil, sshSection == nil else { return false }
+            guard let url = urls.first, model.activeSheet == nil, sshSection == nil, providerAccount == nil else {
+                return false
+            }
             model.activeSheet = .importKey(url)
             return true
         }
@@ -64,11 +76,26 @@ public struct RootView: View {
             await model.reload()
             model.startWatching()
         }
+        .task {
+            // The only automatic network traffic: refresh provider accounts once at launch.
+            await providers.refreshAll()
+        }
         .errorAlert($model.lastError)
         .errorAlert($hosts.lastError)
         .errorAlert($knownHosts.lastError)
         .errorAlert($tunnels.lastError)
         .errorAlert($agent.lastError)
+        .errorAlert($providers.lastError)
+    }
+
+    @ViewBuilder private var sshContent: some View {
+        switch sshSection {
+        case .hosts: HostListView(model: hosts)
+        case .knownHosts: KnownHostsListView(model: knownHosts)
+        case .tunnels: TunnelListView(model: tunnels, hosts: hosts)
+        case .agent: AgentView(model: agent, hosts: hosts)
+        case nil: KeyListView(model: model)
+        }
     }
 
     @ViewBuilder private var detail: some View {
@@ -93,7 +120,7 @@ public struct RootView: View {
 
     @ViewBuilder private var keyDetail: some View {
         if let item = model.selectedItem {
-            KeyDetailView(model: model, item: item)
+            KeyDetailView(model: model, providers: providers, item: item)
         } else if model.selectedKeyIDs.count > 1 {
             ContentUnavailableView(
                 "\(model.selectedKeyIDs.count) Keys Selected",
