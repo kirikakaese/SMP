@@ -64,6 +64,20 @@ struct SSHAgentProtocolTests {
         #expect(throws: (any Error).self) { try SSHAgentCodec.ecdsaP256SignatureBlob(raw: Data(count: 63)) }
     }
 
+    @Test func roundTripsExtensionRequestsAndReplies() throws {
+        let contents = Data(#"{"list":{}}"#.utf8)
+        let request = SSHAgentCodec.extensionRequest(name: "manage-keys@smp.kirikakaese.com", contents: contents)
+        #expect(SSHAgentCodec.type(of: request) == .extension)
+        let parsed = try SSHAgentCodec.parseExtensionRequest(request)
+        #expect(parsed.name == "manage-keys@smp.kirikakaese.com")
+        #expect(parsed.contents == contents)
+
+        let reply = SSHAgentCodec.extensionResponse(contents)
+        #expect(try SSHAgentCodec.parseExtensionResponse(reply) == contents)
+        #expect(throws: (any Error).self) { try SSHAgentCodec.parseExtensionResponse(SSHAgentCodec.failure) }
+        #expect(throws: (any Error).self) { try SSHAgentCodec.parseExtensionRequest(Data([27, 0, 0])) }
+    }
+
     @Test func secretBearingRequestsAreFlagged() {
         #expect(SSHAgentMessageType.addIdentity.carriesSecrets)
         #expect(SSHAgentMessageType.addIdentityConstrained.carriesSecrets)

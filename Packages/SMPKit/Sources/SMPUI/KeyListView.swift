@@ -33,7 +33,9 @@ struct KeyListView: View {
         }
         .overlay {
             if model.visibleItems.isEmpty, !model.isLoading {
-                if model.searchText.isEmpty {
+                if model.sidebarSelection == .library(.secureEnclave), let problem = model.secureEnclaveProblem {
+                    AgentProblemView(model: model, problem: problem)
+                } else if model.searchText.isEmpty {
                     ContentUnavailableView(
                         "No Keys",
                         systemImage: "key",
