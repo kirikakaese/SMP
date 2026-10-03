@@ -79,7 +79,8 @@ struct ProvidersModelTests {
         let account = try await model.addAccount(
             kind: .github, serverURL: nil, loginEmail: nil, token: SecureBytes(utf8: "token")
         )
-        #expect(model.accounts == [account])
+        #expect(model.accounts.map(\.id) == [account.id])
+        #expect(model.accounts.first?.lastSyncedAt != nil)  // Refreshed right after adding.
 
         let item = try libraryItem()
         try await model.upload(item, to: account, title: "Laptop", usages: [.authentication])
