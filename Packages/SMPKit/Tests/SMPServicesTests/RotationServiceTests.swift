@@ -8,7 +8,7 @@ import Testing
 @testable import SMPServices
 
 /// Servers in memory: an authorized_keys list per alias.
-private final class FakeServers: DeployServicing, @unchecked Sendable {
+final class FakeServers: DeployServicing, @unchecked Sendable {
     private let lock = NSLock()
     private var keys: [String: [String]] = [:]
     var failingAliases: Set<String> = []
