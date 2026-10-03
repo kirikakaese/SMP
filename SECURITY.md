@@ -47,6 +47,9 @@ Until 1.0, only the latest release receives security fixes.
 | A key the user believes is protected is silently stored without passphrase | After every operation that sets a passphrase, SMP re-reads the key header; an unprotected result is deleted and reported. |
 | Private key export | Requires Touch ID / password; the file is copied without passing through SMP's memory. |
 | Leftover key material after deletion | Files are overwritten with zeros before unlinking. On APFS (copy-on-write, SSD) this cannot guarantee erasure; FileVault is the real protection. |
+| Accepting a malicious host key (MITM) | Host keys fetched with `ssh-keyscan` are only added after the user pasted a matching fingerprint or explicitly confirmed an out-of-band check. A changed host key can only be replaced with a verified fingerprint. Connection tests, tunnels and deployments use `StrictHostKeyChecking=yes` and never modify `known_hosts`. |
+| Locking yourself out of a server | Deployment never replaces `authorized_keys`; removal deletes one exact line after a backup on the server, and asks for confirmation. |
+| Server password exposure during deployment | The password is passed through the askpass pipe only, public-key authentication is disabled for that connection so it can only answer a password prompt, and it is never stored. |
 | Token theft from disk | Provider tokens are stored only in the Keychain, never synchronized. |
 
 ### Out of scope

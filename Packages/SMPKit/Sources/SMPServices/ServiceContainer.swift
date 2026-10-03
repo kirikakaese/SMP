@@ -17,6 +17,11 @@ public struct ServiceContainer: Sendable {
     public var archive: any ArchiveServicing
     public var keys: any KeyManaging
     public var authenticator: any DeviceAuthenticating
+    public var hosts: any HostServicing
+    public var knownHosts: any KnownHostsServicing
+    public var terminal: any TerminalLaunching
+    public var tunnels: any TunnelServicing
+    public var deploy: any DeployServicing
     /// Set when a service could not start normally (for example, the metadata store could not be
     /// opened and an in-memory store is used instead). Shown to the user.
     public var startupIssue: SMPError?
@@ -33,6 +38,11 @@ public struct ServiceContainer: Sendable {
         archive: any ArchiveServicing,
         keys: any KeyManaging,
         authenticator: any DeviceAuthenticating,
+        hosts: any HostServicing,
+        knownHosts: any KnownHostsServicing,
+        terminal: any TerminalLaunching,
+        tunnels: any TunnelServicing,
+        deploy: any DeployServicing,
         startupIssue: SMPError? = nil
     ) {
         self.environment = environment
@@ -46,6 +56,11 @@ public struct ServiceContainer: Sendable {
         self.archive = archive
         self.keys = keys
         self.authenticator = authenticator
+        self.hosts = hosts
+        self.knownHosts = knownHosts
+        self.terminal = terminal
+        self.tunnels = tunnels
+        self.deploy = deploy
         self.startupIssue = startupIssue
     }
 
@@ -61,10 +76,8 @@ public struct ServiceContainer: Sendable {
     ) -> ServiceContainer {
         let runner = SSHToolRunner(environment: environment)
         let agent = AgentService(runner: runner)
-        let config = ConfigService(
-            environment: environment,
-            writer: SafeFileWriter(backupDirectory: supportDirectory.appending(path: "Backups"))
-        )
+        let writer = SafeFileWriter(backupDirectory: supportDirectory.appending(path: "Backups"))
+        let config = ConfigService(environment: environment, writer: writer)
         let archive = ArchiveService(directory: supportDirectory.appending(path: "Archive"), keychain: keychain)
         return ServiceContainer(
             environment: environment,
@@ -78,6 +91,11 @@ public struct ServiceContainer: Sendable {
             archive: archive,
             keys: KeyService(runner: runner, environment: environment, config: config, archive: archive, agent: agent),
             authenticator: authenticator,
+            hosts: HostService(runner: runner, environment: environment, writer: writer),
+            knownHosts: KnownHostsService(runner: runner, environment: environment, writer: writer),
+            terminal: TerminalLauncher(homeDirectory: environment.homeDirectory),
+            tunnels: TunnelService(launcher: runner),
+            deploy: DeployService(runner: runner),
             startupIssue: startupIssue
         )
     }

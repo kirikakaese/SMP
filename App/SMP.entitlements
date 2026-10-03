@@ -3,8 +3,11 @@
 <plist version="1.0">
 <!--
   SMP runs with the Hardened Runtime and is intentionally NOT sandboxed (it needs ~/.ssh and the
-  ssh-agent socket). No Hardened Runtime exceptions are requested. Each entitlement added later
-  must be documented in docs/ENTITLEMENTS.md.
+  ssh-agent socket). No Hardened Runtime exceptions are requested. Each entitlement must be
+  documented in docs/ENTITLEMENTS.md.
 -->
-<dict/>
+<dict>
+	<key>com.apple.security.automation.apple-events</key>
+	<true/>
+</dict>
 </plist>

@@ -1,3 +1,4 @@
+import SMPCore
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -11,7 +12,7 @@ public struct SettingsView: View {
 
     public var body: some View {
         TabView {
-            GeneralSettingsView()
+            GeneralSettingsView(library: library)
                 .tabItem { Label("General", systemImage: "gearshape") }
             KeyFoldersSettingsView(library: library)
                 .tabItem { Label("Key Folders", systemImage: "folder") }
@@ -21,8 +22,17 @@ public struct SettingsView: View {
 }
 
 struct GeneralSettingsView: View {
+    let library: LibraryModel
+    @AppStorage("terminalApp") private var terminalApp: TerminalApp = .terminal
+
     var body: some View {
         Form {
+            Picker("Open connections in", selection: $terminalApp) {
+                ForEach(TerminalApp.allCases) { app in
+                    let installed = library.services.terminal.installedApps().contains(app)
+                    Text(installed ? app.displayName : "\(app.displayName) (not installed)").tag(app)
+                }
+            }
             LabeledContent("Privacy") {
                 Text("SMP collects no telemetry.")
                     .foregroundStyle(.secondary)

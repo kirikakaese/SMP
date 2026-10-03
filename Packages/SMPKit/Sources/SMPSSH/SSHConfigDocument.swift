@@ -7,7 +7,7 @@ import Foundation
 /// The full visual editor (milestone 4) builds on this type.
 public struct SSHConfigDocument: Sendable, Equatable {
     /// One `Keyword value` line.
-    public struct Directive: Sendable, Equatable {
+    public struct Directive: Sendable, Hashable {
         public let lineIndex: Int
         /// The keyword as written (OpenSSH keywords are case-insensitive).
         public let keyword: String
@@ -23,7 +23,7 @@ public struct SSHConfigDocument: Sendable, Equatable {
         public var normalizedKeyword: String { keyword.lowercased() }
     }
 
-    public private(set) var lines: [String]
+    public internal(set) var lines: [String]
     private let lineSeparator: String
     private let hasTrailingNewline: Bool
 

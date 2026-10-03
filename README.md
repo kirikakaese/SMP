@@ -4,9 +4,11 @@
 deploying, auditing and deleting SSH keys and SSH host configurations. It aims to feel like a
 first-party Apple utility: fast, safe and keyboard-friendly.
 
-> **Status:** early development. The key library and the full key lifecycle (create, import incl.
+> **Status:** early development. The key library, the full key lifecycle (create, import incl.
 > PuTTY conversion, export, rename, passphrase and comment changes, format upgrade, archive with
-> undo, and safe permanent deletion) work; the remaining features below are planned.
+> undo, and safe permanent deletion) and the host tools (`~/.ssh/config` editor with diff review,
+> connection tests, connect in your terminal, `known_hosts` manager, tunnels, deploying keys to
+> servers) work; the remaining features below are planned.
 
 ## Features (planned)
 
