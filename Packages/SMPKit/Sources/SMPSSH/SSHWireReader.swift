@@ -35,6 +35,12 @@ public struct SSHWireReader {
         return value
     }
 
+    public mutating func readByte() throws -> UInt8 {
+        guard remaining >= 1 else { throw SSHWireError.truncated }
+        defer { offset += 1 }
+        return bytes[offset]
+    }
+
     /// Reads a length-prefixed `string` and returns a copy of its bytes. Use only for public data.
     public mutating func readBytes() throws -> [UInt8] {
         let range = try readStringRange()
