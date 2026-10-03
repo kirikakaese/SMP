@@ -41,6 +41,13 @@ targets:
         product: SMPServices
       - package: SMPKit
         product: SMPUI
+      # The agent helper is embedded as a login item and registered with SMAppService.
+      - target: SMPAgent
+        embed: true
+        codeSign: true
+        copy:
+          destination: wrapper
+          subpath: Contents/Library/LoginItems
     settings:
       base:
         PRODUCT_NAME: SMP
@@ -50,6 +57,28 @@ targets:
         CODE_SIGN_ENTITLEMENTS: App/SMP.entitlements
         CODE_SIGN_STYLE: Automatic
         COMBINE_HIDPI_IMAGES: YES
+
+  SMPAgent:
+    type: application
+    platform: macOS
+    sources:
+      - path: App/AgentHelper/Sources
+    dependencies:
+      - package: SMPKit
+        product: SMPCore
+      - package: SMPKit
+        product: SMPServices
+      - package: SMPKit
+        product: SMPAgent
+    settings:
+      base:
+        PRODUCT_NAME: SMPAgent
+        PRODUCT_BUNDLE_IDENTIFIER: com.kirikakaese.smp.agent
+        INFOPLIST_FILE: App/AgentHelper/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_ENTITLEMENTS: App/AgentHelper/SMPAgent.entitlements
+        CODE_SIGN_STYLE: Automatic
+        SKIP_INSTALL: YES
 
 schemes:
   SMP:
