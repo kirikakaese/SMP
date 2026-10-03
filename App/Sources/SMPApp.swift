@@ -18,6 +18,7 @@ struct SMPApp: App {
     init() {
         let services = ServiceContainer.live()
         self.services = services
+        AppContext.services = services
         _library = State(initialValue: LibraryModel(
             services: services, reminderScheduleURL: try? ReminderSchedule.fileURL()
         ))

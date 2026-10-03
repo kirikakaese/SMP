@@ -211,6 +211,16 @@ passphrase (`ssh-add -d --apple-use-keychain`), then overwrites and unlinks the 
 Exporting a private key also requires re-authentication; the file is copied by the kernel and
 never read into SMP's memory.
 
+## Shortcuts
+
+`App/Sources/Shortcuts.swift` defines App Intents (they live in the app target so Xcode extracts
+their metadata): Copy Public Key, List SSH Keys, Connect to SSH Host, Start / Stop SSH Tunnel and
+Check SSH Security, with entities for keys, hosts and tunnels and suggested phrases for Siri and
+Spotlight. They use the running app's `ServiceContainer` (`AppContext`), so a tunnel started from
+Shortcuts is the same one SMP's window shows. The logic is in `ServiceContainer+ShortcutSupport`
+(tested in the package). Actions only read and return public data (public key lines,
+fingerprints, aliases, tunnel names, the audit score); none touches private keys.
+
 ## Services and dependency injection
 
 Every service is a protocol (`SSHToolRunning`, `KeychainServicing`, …) with a live

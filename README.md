@@ -29,6 +29,8 @@ first-party Apple utility: fast, safe and keyboard-friendly.
 - **Providers:** GitHub, GitLab, Bitbucket, Gitea/Forgejo and custom servers. Sync and match keys by fingerprint.
 - **Security audit:** findings with one-click fixes, a key rotation assistant, git commit signing
   setup and expiry reminders.
+- **Shortcuts:** copy a public key, list keys, connect to a host, start or stop a tunnel and check
+  your security score from Shortcuts, Spotlight or Siri.
 - **Backup & restore:** encrypted `.smpbackup` bundles.
 
 ## Requirements
