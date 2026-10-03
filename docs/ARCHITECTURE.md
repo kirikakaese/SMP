@@ -19,7 +19,8 @@ SMP/
    ├─ Sources/SMPServices   KeychainService, KeyDiscoveryService, AgentService, KeyService,
    │                        ArchiveService, ConfigService, SafeFileWriter, DeviceAuthenticator,
    │                        FileWatcherService (FSEvents), KeyFolderSettings, ServiceContainer;
-   │                        later: Config, KnownHosts, Provider, Audit services
+   │                        ProviderService; later: Audit services
+   ├─ Sources/SMPProviders  HTTPS clients for GitHub, GitLab, Bitbucket, Gitea/Forgejo
    ├─ Sources/SMPAgent      The built-in agent: socket server, request handler, Touch ID approval,
    │                        forwarding to the system agent (no UI; used by the helper)
    ├─ Sources/SMPUI         SwiftUI views and view models (LibraryModel, sidebar, list, detail, settings)
@@ -29,7 +30,7 @@ SMP/
 
 Dependency direction: `SMPCore` ← `SMPSSH` ← `SMPServices` ← `SMPUI` ← `App`, and
 `SMPServices` ← `SMPAgent` ← `App/AgentHelper`.
-Provider clients (`SMPProviders`) will be added as a separate module in milestone 6.
+`SMPProviders` (provider HTTP clients) depends only on `SMPCore` and `SMPSSH`; `SMPServices` uses it.
 
 ## Key discovery
 
@@ -135,6 +136,28 @@ temporary file → atomic rename. Symlinked configs (dotfile managers) are writt
   downloaded with `ssh-keygen -K` (PIN through askpass) into `~/.ssh`. The OpenSSH shipped with
   macOS needs a FIDO provider library for both.
 
+## Providers
+
+- **Accounts** use personal access tokens. When an account is added, `ProviderService` asks the
+  provider who the token belongs to, then stores the token in the Keychain
+  (`com.kirikakaese.smp.provider-token`, keyed by account id, `…ThisDeviceOnly`) and the account
+  (kind, server, user name, last refresh) in the metadata database. Tokens are read from the
+  Keychain for each operation and wiped from memory afterwards.
+- **Clients** (`SMPProviders`): GitHub / GitHub Enterprise (`/user/keys`, `/user/ssh_signing_keys`),
+  GitLab (`/api/v4/user/keys` with `usage_type`), Bitbucket Cloud (`/2.0/users/{uuid}/ssh-keys`, Basic
+  auth with email + API token) and Gitea/Forgejo (`/api/v1/user/keys`). Requests go through an
+  ephemeral `URLSession` (no cookies, cache or credential storage), HTTPS only; redirects are refused
+  and pagination links to another host are rejected, so a token is only ever sent to the configured
+  server. Responses are capped at 4 MiB and error bodies are reduced to the provider's message.
+  Keys are uploaded as `type base64`, without the local comment.
+- **Matching:** keys returned by providers are parsed locally and matched to library keys by SHA256
+  fingerprint. The last known key list per account is cached in the database (public data only), so
+  the Providers section works offline.
+- **Sync** happens when SMP launches, when an account's section is opened (at most every two
+  minutes) and with Refresh. There is no other network traffic.
+- **Removing** a key from a provider needs Touch ID or the login password and lists the local key and
+  the `~/.ssh/config` hosts that use it. Removing an account from SMP only deletes its token and cache.
+
 ## Archive
 
 `ArchiveService` stores archived keys in `Application Support/Archive`: a public JSON manifest
@@ -205,7 +228,8 @@ release. The metadata store never contains secrets.
 | `SecureEnclaveKey` | key record id, Keychain reference, access control, require-every-use |
 | `HostMetadata` | config alias (the `~/.ssh/config` block remains the source of truth), favorite, notes, last connected; tags via `hostTag` |
 | `TunnelProfile` | id, name, host alias, forwards (local/remote/dynamic, stored as JSON) |
-| `ProviderAccount` | id, provider type, base URL, username, Keychain token reference, scopes, last sync |
+| `ProviderAccount` | id, provider kind, server URL, username, login email (Bitbucket), last sync; token in the Keychain under the account id |
+| `RemoteKey` (cache) | account, remote id, title, public key line, fingerprint, usages (authentication/signing), created/last used/expires |
 | `Deployment` | key record, target (provider account or `user@host:port`), remote key id, usage (auth/signing), deployed/verified dates, status |
 | `RotationJob` | id, old key, new key, state (generated → deployed → configUpdated → verified → retired), step log, timestamps; resumable |
 | `AuditSnapshot` | date, score, findings (rule id, severity, subject, fix available) |

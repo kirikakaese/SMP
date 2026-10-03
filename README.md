@@ -9,8 +9,9 @@ first-party Apple utility: fast, safe and keyboard-friendly.
 > undo, and safe permanent deletion) and the host tools (`~/.ssh/config` editor with diff review,
 > connection tests, connect in your terminal, `known_hosts` manager, tunnels, deploying keys to
 > servers) and the agent (Secure Enclave keys with Touch ID, a proxy to the macOS ssh-agent,
-> menu bar activity, resident keys from FIDO2 security keys) work; the remaining features below are
-> planned.
+> menu bar activity, resident keys from FIDO2 security keys) and provider accounts (GitHub, GitLab,
+> Bitbucket, Gitea/Forgejo: list, upload and remove keys, matched by fingerprint) work; the
+> remaining features below are planned.
 
 ## Features (planned)
 
@@ -83,7 +84,8 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for details.
 - OpenSSH tools are always run from `/usr/bin` with argument arrays, never through a shell.
   Passphrases reach them through a private pipe, never through command-line arguments or
   environment variables.
-- There is no telemetry.
+- There is no telemetry. The only network requests go to the provider servers you add, when SMP
+  launches, when you open an account or when you upload or remove a key.
 - The app uses the Hardened Runtime and is intentionally not sandboxed, so it can read `~/.ssh`
   and reach the `ssh-agent` socket.
 
