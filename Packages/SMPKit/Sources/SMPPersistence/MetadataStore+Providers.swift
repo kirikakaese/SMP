@@ -88,3 +88,45 @@ struct ProviderKeyRecord: Codable, FetchableRecord, PersistableRecord {
         try? JSONDecoder().decode(RemoteKey.self, from: data)
     }
 }
+
+// MARK: - Rotation jobs
+
+extension GRDBMetadataStore {
+    public func rotationJobs() throws -> [RotationJob] {
+        try database.read { db in
+            try RotationJobRecord.order(Column("updatedAt").desc).fetchAll(db).compactMap(\.model)
+        }
+    }
+
+    public func saveRotationJob(_ job: RotationJob) throws {
+        let record = try RotationJobRecord(job)
+        try database.write { db in
+            try record.save(db)
+        }
+    }
+
+    public func deleteRotationJob(id: UUID) throws {
+        _ = try database.write { db in
+            try RotationJobRecord.deleteOne(db, key: id.uuidString)
+        }
+    }
+}
+
+/// A rotation job as JSON: paths, fingerprints and step state only, never key material.
+struct RotationJobRecord: Codable, FetchableRecord, PersistableRecord {
+    static let databaseTableName = "rotationJob"
+
+    var id: String
+    var updatedAt: Date
+    var data: Data
+
+    init(_ model: RotationJob) throws {
+        id = model.id.uuidString
+        updatedAt = model.updatedAt
+        data = try JSONEncoder().encode(model)
+    }
+
+    var model: RotationJob? {
+        try? JSONDecoder().decode(RotationJob.self, from: data)
+    }
+}

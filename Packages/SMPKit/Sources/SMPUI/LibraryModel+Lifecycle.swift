@@ -17,6 +17,8 @@ public enum LibrarySheet: Identifiable, Sendable {
     case delete([LibraryItem])
     case qrCode(LibraryItem)
     case deploy(LibraryItem)
+    case rotate(LibraryItem)
+    case resumeRotation(RotationJob)
 
     public var id: String {
         switch self {
@@ -31,6 +33,8 @@ public enum LibrarySheet: Identifiable, Sendable {
         case .delete(let items): "delete-" + items.map(\.id).joined(separator: ",")
         case .qrCode(let item): "qr-\(item.id)"
         case .deploy(let item): "deploy-\(item.id)"
+        case .rotate(let item): "rotate-\(item.id)"
+        case .resumeRotation(let job): "rotation-\(job.id.uuidString)"
         }
     }
 }

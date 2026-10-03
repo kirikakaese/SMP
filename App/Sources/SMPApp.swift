@@ -1,3 +1,4 @@
+import SMPCore
 import SMPServices
 import SMPUI
 import SwiftUI
@@ -12,16 +13,20 @@ struct SMPApp: App {
     @State private var tunnels: TunnelsModel
     @State private var agent: AgentModel
     @State private var providers: ProvidersModel
+    @State private var security: SecurityModel
 
     init() {
         let services = ServiceContainer.live()
         self.services = services
-        _library = State(initialValue: LibraryModel(services: services))
+        _library = State(initialValue: LibraryModel(
+            services: services, reminderScheduleURL: try? ReminderSchedule.fileURL()
+        ))
         _hosts = State(initialValue: HostsModel(services: services))
         _knownHosts = State(initialValue: KnownHostsModel(services: services))
         _tunnels = State(initialValue: TunnelsModel(services: services))
         _agent = State(initialValue: AgentModel(services: services))
         _providers = State(initialValue: ProvidersModel(services: services))
+        _security = State(initialValue: SecurityModel(services: services))
         // Tunnels are child ssh processes; don't leave them running after SMP quits.
         _ = NotificationCenter.default.addObserver(
             forName: NSApplication.willTerminateNotification,
@@ -40,7 +45,8 @@ struct SMPApp: App {
                 knownHosts: knownHosts,
                 tunnels: tunnels,
                 agent: agent,
-                providers: providers
+                providers: providers,
+                security: security
             )
                 .environment(\.services, services)
                 .frame(minWidth: 960, minHeight: 560)
