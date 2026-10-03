@@ -25,6 +25,10 @@ public struct SMPError: Error, Sendable, Equatable {
         case passphraseRequired
         /// Touch ID / password re-authentication failed or was cancelled.
         case authenticationFailed
+        /// A provider could not be reached (offline, DNS, TLS, timeout).
+        case network
+        /// A provider rejected a request (bad token, missing scope, invalid key, rate limit).
+        case providerRejected
     }
 
     public let code: Code
