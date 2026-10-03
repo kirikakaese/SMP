@@ -29,6 +29,7 @@ first-party Apple utility: fast, safe and keyboard-friendly.
 - **Providers:** GitHub, GitLab, Bitbucket, Gitea/Forgejo and custom servers. Sync and match keys by fingerprint.
 - **Security audit:** findings with one-click fixes, a key rotation assistant, git commit signing
   setup and expiry reminders.
+- **App lock:** Touch ID or your password when SMP opens and after 5 idle minutes (adjustable).
 - **Shortcuts:** copy a public key, list keys, connect to a host, start or stop a tunnel and check
   your security score from Shortcuts, Spotlight or Siri.
 - **Backup & restore:** one passphrase-encrypted `.smpbackup` file with your keys, SSH settings and
