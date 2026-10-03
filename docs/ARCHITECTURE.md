@@ -232,6 +232,20 @@ passphrase (`ssh-add -d --apple-use-keychain`), then overwrites and unlinks the 
 Exporting a private key also requires re-authentication; the file is copied by the kernel and
 never read into SMP's memory.
 
+## App lock and first run
+
+- **App lock** (`AppLockModel`, on by default): while locked, `RootView` replaces the whole
+  workspace with `LockView`, so every sheet it presented goes away too; observable models keep
+  their state, and the keys stay loaded in memory. Unlocking uses `DeviceAuthenticator`
+  (`.deviceOwnerAuthentication`: Touch ID, Apple Watch or the login password). SMP locks at
+  launch, after `idleMinutes` without keyboard or mouse input in SMP (default 5; 0 = never for
+  idleness), when the screen locks and before the Mac sleeps, and on Lock SMP (⌃⌘L). On a Mac
+  without a login password the lock is unavailable and stays off, so nobody can be locked out.
+  Actions with their own confirmation (delete, export, …) keep it regardless of the lock.
+- **Onboarding** (`OnboardingView`) runs once, before the first lock: what SMP does and doesn't
+  do with data, the keys and audit score it found, the app lock settings, and starting SMP Agent.
+  Settings → General can show it again.
+
 ## Services and dependency injection
 
 Every service is a protocol (`SSHToolRunning`, `KeychainServicing`, …) with a live
