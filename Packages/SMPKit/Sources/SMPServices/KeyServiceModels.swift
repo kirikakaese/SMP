@@ -152,4 +152,8 @@ public protocol KeyManaging: Sendable {
     func deletePermanently(_ key: DiscoveredKey, configEdits: [ConfigReferenceEdit]) async throws
     func exportPrivateKey(_ key: DiscoveredKey, to destination: URL) throws
     func exportPublicKey(_ key: DiscoveredKey, to destination: URL) throws
+    /// Downloads resident keys from a FIDO2 security key into `~/.ssh`.
+    func downloadResidentKeys(pin: SecureBytes?, providerPath: String) async throws -> [KeyOperationResult]
+    /// Writes a public key to `~/.ssh/<fileName>.pub` (used for Secure Enclave keys).
+    func installPublicKey(_ key: SSHPublicKey, fileName: String) throws -> URL
 }

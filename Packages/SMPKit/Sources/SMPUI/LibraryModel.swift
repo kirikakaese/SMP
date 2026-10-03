@@ -13,7 +13,7 @@ public enum SidebarSelection: Hashable, Sendable {
 
 /// The SSH sections below the key library.
 public enum SSHSection: String, CaseIterable, Identifiable, Hashable, Sendable {
-    case hosts, knownHosts, tunnels
+    case hosts, knownHosts, tunnels, agent
 
     public var id: String { rawValue }
 
@@ -22,6 +22,7 @@ public enum SSHSection: String, CaseIterable, Identifiable, Hashable, Sendable {
         case .hosts: "Hosts"
         case .knownHosts: "Known Hosts"
         case .tunnels: "Tunnels"
+        case .agent: "Agent"
         }
     }
 
@@ -30,6 +31,7 @@ public enum SSHSection: String, CaseIterable, Identifiable, Hashable, Sendable {
         case .hosts: "server.rack"
         case .knownHosts: "checkmark.shield"
         case .tunnels: "point.3.connected.trianglepath.dotted"
+        case .agent: "key.viewfinder"
         }
     }
 }
@@ -58,6 +60,8 @@ public struct LibraryItem: Identifiable, Hashable, Sendable {
     public var isLoadedInAgent: Bool
     /// Set for keys that live in SMP's encrypted archive instead of on disk.
     public let archive: ArchivedKey?
+    /// Set for keys whose private half lives in the Secure Enclave.
+    public var secureEnclave: SecureEnclaveKeyInfo?
 
     public init(
         key: DiscoveredKey,
@@ -65,7 +69,8 @@ public struct LibraryItem: Identifiable, Hashable, Sendable {
         tagIDs: Set<Int64> = [],
         groupIDs: Set<Int64> = [],
         isLoadedInAgent: Bool = false,
-        archive: ArchivedKey? = nil
+        archive: ArchivedKey? = nil,
+        secureEnclave: SecureEnclaveKeyInfo? = nil
     ) {
         self.key = key
         self.metadata = metadata
@@ -73,6 +78,19 @@ public struct LibraryItem: Identifiable, Hashable, Sendable {
         self.groupIDs = groupIDs
         self.isLoadedInAgent = isLoadedInAgent
         self.archive = archive
+        self.secureEnclave = secureEnclave
+    }
+
+    public var isSecureEnclave: Bool { secureEnclave != nil }
+
+    /// A Secure Enclave key without a `.pub` file on disk (shown from the Keychain only).
+    public var isVirtualSecureEnclaveEntry: Bool {
+        isSecureEnclave && key.primaryFile.url.path.hasPrefix("/secure-enclave/")
+    }
+
+    /// Discovery issues, minus those that do not apply (a Secure Enclave key has no private key file).
+    public var issues: [KeyIssue] {
+        isSecureEnclave ? key.issues.filter { $0 != .orphanedPublicKey } : key.issues
     }
 
     public var id: String { archive.map { "archive:\($0.id.uuidString)" } ?? key.id }
@@ -87,14 +105,14 @@ public struct LibraryItem: Identifiable, Hashable, Sendable {
         return expiresAt <= date
     }
 
-    public var needsAttention: Bool { !key.issues.isEmpty || isExpired() }
+    public var needsAttention: Bool { !issues.isEmpty || isExpired() }
 }
 
 /// The state behind the main window: discovered keys, metadata, filtering and selection.
 @MainActor
 @Observable
 public final class LibraryModel {
-    public private(set) var items: [LibraryItem] = []
+    public internal(set) var items: [LibraryItem] = []
     public private(set) var tags: [KeyTag] = []
     public private(set) var groups: [KeyGroup] = []
     public private(set) var agentStatus: AgentStatus = .unavailable
@@ -194,7 +212,7 @@ public final class LibraryModel {
                     archive: entry
                 )
             }
-            items = onDisk + inArchive
+            items = Self.attachSecureEnclaveKeys(secureEnclaveKeys(), to: onDisk) + inArchive
             selectedKeyIDs.formIntersection(items.map(\.id))
         } catch {
             report(error, whatHappened: "SMP could not scan your key folders.")
@@ -375,7 +393,7 @@ public final class LibraryModel {
             switch section {
             case .allKeys, .archived: return true
             case .favorites: return item.isFavorite
-            case .secureEnclave: return false  // Secure Enclave keys arrive in milestone 5.
+            case .secureEnclave: return item.isSecureEnclave
             case .hardware: return item.key.algorithm.isSecurityKey
             case .loadedInAgent: return item.isLoadedInAgent
             case .needsAttention: return item.needsAttention
