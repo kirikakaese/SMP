@@ -8,6 +8,30 @@ public enum SidebarSelection: Hashable, Sendable {
     case library(SidebarItem)
     case tag(Int64)
     case group(Int64)
+    case ssh(SSHSection)
+}
+
+/// The SSH sections below the key library.
+public enum SSHSection: String, CaseIterable, Identifiable, Hashable, Sendable {
+    case hosts, knownHosts, tunnels
+
+    public var id: String { rawValue }
+
+    public var title: String {
+        switch self {
+        case .hosts: "Hosts"
+        case .knownHosts: "Known Hosts"
+        case .tunnels: "Tunnels"
+        }
+    }
+
+    public var systemImage: String {
+        switch self {
+        case .hosts: "server.rack"
+        case .knownHosts: "checkmark.shield"
+        case .tunnels: "point.3.connected.trianglepath.dotted"
+        }
+    }
 }
 
 public enum KeySortOrder: String, CaseIterable, Identifiable, Sendable {
@@ -360,6 +384,8 @@ public final class LibraryModel {
             return item.tagIDs.contains(id)
         case .group(let id):
             return item.groupIDs.contains(id)
+        case .ssh:
+            return false
         case nil:
             return !item.isArchived
         }

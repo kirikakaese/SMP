@@ -86,6 +86,7 @@ struct KeyListView: View {
         case .library(let item): item.title
         case .tag(let id): model.tags.first { $0.id == id }?.name ?? "Tag"
         case .group(let id): model.groups.first { $0.id == id }?.name ?? "Group"
+        case .ssh(let section): section.title
         case nil: "Keys"
         }
     }
@@ -241,6 +242,8 @@ struct KeyEditMenuItems: View {
             Button("Export Private Key…") { KeyActions.exportPrivateKey(item, model: model) }
                 .disabled(!hasPrivateKey)
         }
+        Button("Deploy to Server…") { model.activeSheet = .deploy(item) }
+            .disabled(item.key.publicKey == nil || item.isArchived)
     }
 }
 
