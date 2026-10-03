@@ -148,7 +148,9 @@ public struct ServiceContainer: Sendable {
             keychain: KeychainService(),
             metadata: metadata,
             authenticator: DeviceAuthenticator(),
-            secureEnclave: SecureEnclaveKeyStore(accessGroup: SecureEnclaveKeyStore.bundleAccessGroup()),
+            // SMP Agent owns the Secure Enclave keys; the app asks it over the agent socket
+            // (the same path as AgentPaths.socketURL()).
+            secureEnclave: AgentKeyClient(socketURL: support.appending(path: "agent.sock")),
             agentHelper: AgentHelperService(runner: SSHToolRunner(environment: environment)),
             startupIssue: issue
         )

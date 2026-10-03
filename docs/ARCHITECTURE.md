@@ -109,12 +109,25 @@ temporary file → atomic rename. Symlinked configs (dotfile managers) are writt
 ## Built-in agent and Secure Enclave keys
 
 - **Secure Enclave keys** are ECDSA P-256 keys created with CryptoKit. The private key never leaves
-  the Secure Enclave; SMP stores only the encrypted, device-bound key reference as a Keychain
-  item (data protection keychain, `…AfterFirstUnlockThisDeviceOnly`, never synchronized) in an
-  access group shared by the app and the helper. The item's generic attribute holds the public
-  `SecureEnclaveKeyInfo` (name, comment, signing policy, public point). With the Touch ID policy
-  the key's access control includes `.userPresence`; that requirement is fixed at creation.
-  SMP writes the public key to `~/.ssh/<name>.pub` so `IdentityFile` can select it.
+  the Secure Enclave. **SMP Agent owns them:** it alone stores the encrypted, device-bound key
+  reference, as an item in the login keychain (service `com.kirikakaese.smp.secure-enclave`). The
+  item's generic attribute holds the public `SecureEnclaveKeyInfo` (name, comment, signing policy,
+  public point). The login keychain needs no entitlement, so ad-hoc signed builds work; macOS
+  ties the item to the agent that created it and asks before anything else reads the reference,
+  including an updated agent with a new ad-hoc signature (the user answers "Always Allow" once).
+  With the Touch ID policy the key's access control includes `.userPresence`; that requirement
+  is fixed at creation. SMP writes the public key to `~/.ssh/<name>.pub` so `IdentityFile` can
+  select it.
+- **Managing them from the app:** `AgentKeyClient` (the app's `SecureEnclaveKeyStoring`) sends
+  `AgentKeyCommand`s (list, create, update, delete) as JSON in an `SSH_AGENTC_EXTENSION` request
+  named `manage-keys@smp.kirikakaese.com` on the agent socket; the agent answers with
+  `SSH_AGENT_SUCCESS` and an `AgentKeyReply`. Only public data crosses the socket. The agent
+  serves this extension only to the SMP app it is embedded in: `CodeSignaturePeerVerifier` takes
+  the peer's audit token (`LOCAL_PEERTOKEN`), checks its code signature is valid (and, in
+  team-signed builds, that it is SMP signed by the same team) and that its bundle is the
+  `SMP.app` containing the helper. Updates can change only name, comment and policy, never the
+  public key or the Touch ID requirement. Deleting asks for Touch ID in the app first. When the
+  agent is not running, the Secure Enclave list offers to start it.
 - **SMP Agent** (`App/AgentHelper`, bundle id `com.kirikakaese.smp.agent`) is a login item
   registered with `SMAppService`. It listens on
   `~/Library/Application Support/com.kirikakaese.smp/agent.sock` (socket 0600, folder 0700) and
@@ -256,7 +269,7 @@ key's cipher is not `none`).
 | Private keys | `~/.ssh` files (or the encrypted archive) |
 | Key passphrases | macOS Keychain through OpenSSH's own `UseKeychain` / `--apple-use-keychain` |
 | Provider tokens | Keychain (`KeychainService`, `…ThisDeviceOnly`, never synchronized) |
-| Secure Enclave keys | Secure Enclave; only an encrypted, device-bound reference in the Keychain (shared access group) |
+| Secure Enclave keys | Secure Enclave; only an encrypted, device-bound reference in the login keychain, owned by SMP Agent |
 | Archive / backup keys | Keychain |
 
 In memory, secrets are held in `SecureBytes`, which are locked against swapping and zeroed on

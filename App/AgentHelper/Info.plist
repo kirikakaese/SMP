@@ -28,7 +28,5 @@
 	<string>Copyright © 2026 kirikakaese. MIT License.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
-	<key>SMPKeychainAccessGroup</key>
-	<string>$(AppIdentifierPrefix)com.kirikakaese.smp.shared</string>
 </dict>
 </plist>

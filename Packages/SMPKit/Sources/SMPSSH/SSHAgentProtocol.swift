@@ -146,6 +146,39 @@ public enum SSHAgentCodec {
         }
     }
 
+    // MARK: Extensions
+
+    /// An `SSH_AGENTC_EXTENSION` request: `byte 27 || string name || contents`.
+    public static func extensionRequest(name: String, contents: Data) -> Data {
+        var payload = Data([SSHAgentMessageType.extension.rawValue])
+        payload.appendSSHString(Data(name.utf8))
+        payload.append(contents)
+        return payload
+    }
+
+    /// The extension name and the extension-specific contents that follow it.
+    public static func parseExtensionRequest(_ payload: Data) throws -> (name: String, contents: Data) {
+        try payload.withUnsafeBytes { buffer in
+            var reader = SSHWireReader(buffer, maxFieldLength: maxMessageLength)
+            guard try reader.readByte() == SSHAgentMessageType.extension.rawValue else {
+                throw SSHWireError.invalidEncoding
+            }
+            let name = try reader.readUTF8()
+            return (name, Data(buffer[reader.offset...]))
+        }
+    }
+
+    /// A successful extension reply: `byte SSH_AGENT_SUCCESS || contents`.
+    public static func extensionResponse(_ contents: Data) -> Data {
+        success + contents
+    }
+
+    /// The contents of a successful extension reply.
+    public static func parseExtensionResponse(_ payload: Data) throws -> Data {
+        guard type(of: payload) == .success else { throw SSHWireError.invalidEncoding }
+        return Data(payload.dropFirst())
+    }
+
     // MARK: ECDSA P-256 (Secure Enclave keys)
 
     public static let ecdsaP256KeyType = "ecdsa-sha2-nistp256"

@@ -8,11 +8,37 @@ extension LibraryModel {
 
     func secureEnclaveKeys() -> [SecureEnclaveKeyInfo] {
         do {
-            return try services.secureEnclave.keys()
+            let keys = try services.secureEnclave.keys()
+            secureEnclaveProblem = nil
+            return keys
         } catch {
-            // Unsigned development builds cannot reach the shared Keychain group.
+            // SMP Agent keeps the keys; without it running there is nothing to list.
             Log.keychain.error("Secure Enclave keys could not be listed")
+            secureEnclaveProblem = error.asSMPError
             return []
+        }
+    }
+
+    /// Starts SMP Agent (as a login item) and lists its keys once it answers.
+    public func startAgent() async {
+        do {
+            try services.agentHelper.register()
+        } catch {
+            lastError = error.asSMPError
+            return
+        }
+        // The helper needs a moment to create its socket.
+        for _ in 0..<10 {
+            try? await Task.sleep(for: .milliseconds(300))
+            if (try? services.secureEnclave.keys()) != nil { break }
+        }
+        await reload()
+        if secureEnclaveProblem?.code == .agentNotRunning, services.agentHelper.status() == .requiresApproval {
+            secureEnclaveProblem = SMPError(
+                .agentNotRunning,
+                whatHappened: "SMP Agent needs your approval to run.",
+                howToFix: "Allow “SMP Agent” in System Settings → General → Login Items."
+            )
         }
     }
 

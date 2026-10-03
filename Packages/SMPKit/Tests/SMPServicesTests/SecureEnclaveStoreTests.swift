@@ -52,13 +52,7 @@ struct SecureEnclaveStoreTests {
         #expect(!SigningPolicy.notifyOnly.requiresUserPresence)
         #expect(SigningPolicy.reuse(seconds: 300).title == "Touch ID, then allow for 5 min")
     }
-
-    @Test func readsTheAccessGroupOnlyWhenExpanded() {
-        #expect(SecureEnclaveKeyStore.bundleAccessGroup(Bundle(for: BundleMarker.self)) == nil)
-    }
 }
-
-private final class BundleMarker {}
 
 @Suite("KeyService public keys and security keys")
 struct KeyServicePublicKeyTests {
