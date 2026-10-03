@@ -30,7 +30,8 @@ first-party Apple utility: fast, safe and keyboard-friendly.
 - **Security audit:** findings with one-click fixes, a key rotation assistant, git commit signing
   setup and expiry reminders.
 - **App lock:** Touch ID or your password when SMP opens and after 5 idle minutes (adjustable).
-- **Backup & restore:** encrypted `.smpbackup` bundles.
+- **Backup & restore:** one passphrase-encrypted `.smpbackup` file with your keys, SSH settings and
+  SMP's tags and notes; restoring shows every file first and never overwrites anything.
 
 ## Requirements
 

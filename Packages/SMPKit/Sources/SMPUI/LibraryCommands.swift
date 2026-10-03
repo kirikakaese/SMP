@@ -18,6 +18,11 @@ public struct LibraryCommands: Commands {
                 .keyboardShortcut("i")
             Button("Download Keys from Security Key…") { model.activeSheet = .downloadResidentKeys }
         }
+        CommandGroup(after: .importExport) {
+            Button("Back Up…") { model.activeSheet = .backup }
+                .keyboardShortcut("b", modifiers: [.command, .shift])
+            Button("Restore from Backup…") { model.activeSheet = .restoreBackup }
+        }
         CommandMenu("Key") {
             KeyMenuContent(model: model)
         }
