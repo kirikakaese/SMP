@@ -1,0 +1,183 @@
+name: Release
+
+# Push a tag like v0.9.0 (or v0.9.1-beta.1 for a beta) to build, sign, package and publish a release.
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: macos-15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SPARKLE_PUBLIC_KEY: ${{ vars.SPARKLE_PUBLIC_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Version
+        id: version
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::Release tags must look like v1.2.3 or v1.2.3-beta.1"
+            exit 1
+          fi
+          beta=false
+          if [[ "$version" == *-* ]]; then beta=true; fi
+          # Sparkle compares CFBundleVersion: the commit count on the tagged commit only ever grows.
+          build="$(git rev-list --count HEAD)"
+          {
+            echo "version=$version"
+            echo "build=$build"
+            echo "beta=$beta"
+          } >> "$GITHUB_OUTPUT"
+          echo "Releasing $version (build $build, beta: $beta)"
+
+      - name: Check the signing setup
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SPARKLE_PUBLIC_KEY" ]; then
+            echo "::error::Set the repository variable SPARKLE_PUBLIC_KEY (see RELEASING.md)."
+            exit 1
+          fi
+          if [ -z "$SPARKLE_PRIVATE_KEY" ]; then
+            echo "::error::Add the repository secret SPARKLE_PRIVATE_KEY (see RELEASING.md)."
+            exit 1
+          fi
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+
+      - name: Build (universal, ad-hoc signed)
+        run: |
+          xcodebuild build \
+            -project SMP.xcodeproj \
+            -scheme SMP \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            MARKETING_VERSION="${{ steps.version.outputs.version }}" \
+            CURRENT_PROJECT_VERSION="${{ steps.version.outputs.build }}" \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM= \
+            SPARKLE_PUBLIC_KEY="$SPARKLE_PUBLIC_KEY"
+
+      - name: Verify the app
+        run: |
+          app=build/Build/Products/Release/SMP.app
+          codesign --verify --deep --strict --verbose=2 "$app"
+          for binary in "$app/Contents/MacOS/SMP" \
+                        "$app/Contents/Library/LoginItems/SMPAgentHelper.app/Contents/MacOS/SMPAgentHelper"; do
+            lipo -archs "$binary" | grep -Eq "x86_64 arm64|arm64 x86_64"
+          done
+          test "$(plutil -extract CFBundleShortVersionString raw "$app/Contents/Info.plist")" = "${{ steps.version.outputs.version }}"
+          test "$(plutil -extract SUPublicEDKey raw "$app/Contents/Info.plist")" = "$SPARKLE_PUBLIC_KEY"
+
+      - name: Package
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          app=build/Build/Products/Release/SMP.app
+          mkdir -p dist
+          # The zip is what Sparkle downloads; the DMG is for people and Homebrew.
+          ditto -c -k --sequesterRsrc --keepParent "$app" "dist/SMP-$version.zip"
+          staging="$(mktemp -d)"
+          ditto "$app" "$staging/SMP.app"
+          ln -s /Applications "$staging/Applications"
+          hdiutil create -volname "SSH Management Platform" -srcfolder "$staging" -fs HFS+ \
+            -format UDZO -ov "dist/SMP-$version.dmg"
+          (cd dist && shasum -a 256 "SMP-$version.dmg" "SMP-$version.zip" > SHA256SUMS.txt)
+          cat dist/SHA256SUMS.txt
+
+      - name: Sign the update and write the appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          tools="$RUNNER_TEMP/sparkle"
+          mkdir -p "$tools"
+          gh release download --repo sparkle-project/Sparkle --pattern 'Sparkle-[0-9]*.tar.xz' --dir "$tools"
+          tar -xf "$tools"/Sparkle-*.tar.xz -C "$tools"
+          keyfile="$RUNNER_TEMP/sparkle-ed25519.key"
+          (umask 077 && printf '%s' "$SPARKLE_PRIVATE_KEY" > "$keyfile")
+          signature="$("$tools/bin/sign_update" --ed-key-file "$keyfile" "dist/SMP-$version.zip")"
+          rm -f "$keyfile"
+          curl -fsSL -o previous.xml \
+            "https://github.com/$GITHUB_REPOSITORY/releases/latest/download/appcast.xml" || : > previous.xml
+          beta_flag=""
+          if [ "${{ steps.version.outputs.beta }}" = true ]; then beta_flag="--beta"; fi
+          python3 scripts/appcast.py \
+            --previous previous.xml \
+            --output dist/appcast.xml \
+            --version "$version" \
+            --build "${{ steps.version.outputs.build }}" \
+            --url "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/SMP-$version.zip" \
+            --signature-line "$signature" \
+            --notes-url "https://github.com/$GITHUB_REPOSITORY/releases/tag/$GITHUB_REF_NAME" \
+            $beta_flag
+
+      - name: Publish the release
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          cat > notes.md <<NOTES
+          **Install:** download \`SMP-$version.dmg\` and drag SMP to Applications, or run
+          \`brew install --cask kirikakaese/tap/smp\`.
+
+          SMP is not notarized by Apple. The first time you open it, macOS blocks it: open
+          **System Settings → Privacy & Security** and click **Open Anyway**. Later versions install
+          through SMP's own updater, which only accepts updates signed with SMP's release key.
+          Checksums are in \`SHA256SUMS.txt\`.
+          NOTES
+          prerelease=""
+          if [ "${{ steps.version.outputs.beta }}" = true ]; then prerelease="--prerelease"; fi
+          gh release create "$GITHUB_REF_NAME" \
+            "dist/SMP-$version.dmg" "dist/SMP-$version.zip" dist/appcast.xml dist/SHA256SUMS.txt \
+            --title "SMP $version" --notes-file notes.md --generate-notes $prerelease
+          if [ -n "$prerelease" ]; then
+            # The feed URL points at the latest stable release; give it the appcast with the beta.
+            latest="$(gh release view --json tagName --jq .tagName 2>/dev/null || true)"
+            if [ -n "$latest" ] && [ "$latest" != "$GITHUB_REF_NAME" ]; then
+              gh release upload "$latest" dist/appcast.xml --clobber
+            fi
+          fi
+
+      - name: Update the Homebrew tap
+        if: steps.version.outputs.beta == 'false'
+        env:
+          TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
+        run: |
+          if [ -z "$TAP_TOKEN" ]; then
+            echo "::notice::TAP_TOKEN is not set, so the Homebrew tap was not updated (see RELEASING.md)."
+            exit 0
+          fi
+          version="${{ steps.version.outputs.version }}"
+          sha="$(shasum -a 256 "dist/SMP-$version.dmg" | cut -d' ' -f1)"
+          git clone "https://x-access-token:${TAP_TOKEN}@github.com/kirikakaese/homebrew-tap.git" tap
+          mkdir -p tap/Casks
+          sed -e "s/@VERSION@/$version/" -e "s/@SHA256@/$sha/" scripts/smp.rb.template > tap/Casks/smp.rb
+          cd tap
+          git config user.name "kirikakaese"
+          git config user.email "252577764+kirikakaese@users.noreply.github.com"
+          git add Casks/smp.rb
+          if git diff --cached --quiet; then
+            echo "The cask is already up to date."
+          else
+            git commit -m "smp $version"
+            git push
+          fi
