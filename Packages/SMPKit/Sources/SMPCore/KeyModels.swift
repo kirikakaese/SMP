@@ -92,6 +92,8 @@ public struct KeyMetadata: Sendable, Hashable, Codable {
     public var notes: String
     public var isFavorite: Bool
     public var expiresAt: Date?
+    /// When the user wants to be reminded to rotate the key.
+    public var rotateAt: Date?
     public var archivedAt: Date?
     public var firstSeenAt: Date
     public var lastSeenPath: String?
@@ -102,6 +104,7 @@ public struct KeyMetadata: Sendable, Hashable, Codable {
         notes: String = "",
         isFavorite: Bool = false,
         expiresAt: Date? = nil,
+        rotateAt: Date? = nil,
         archivedAt: Date? = nil,
         firstSeenAt: Date = Date(),
         lastSeenPath: String? = nil
@@ -111,6 +114,7 @@ public struct KeyMetadata: Sendable, Hashable, Codable {
         self.notes = notes
         self.isFavorite = isFavorite
         self.expiresAt = expiresAt
+        self.rotateAt = rotateAt
         self.archivedAt = archivedAt
         self.firstSeenAt = firstSeenAt
         self.lastSeenPath = lastSeenPath
