@@ -9,6 +9,7 @@ public struct RootView: View {
     @Bindable private var tunnels: TunnelsModel
     @Bindable private var agent: AgentModel
     @Bindable private var providers: ProvidersModel
+    @Bindable private var security: SecurityModel
     @Environment(\.undoManager) private var undoManager
 
     public init(
@@ -17,7 +18,8 @@ public struct RootView: View {
         knownHosts: KnownHostsModel,
         tunnels: TunnelsModel,
         agent: AgentModel,
-        providers: ProvidersModel
+        providers: ProvidersModel,
+        security: SecurityModel
     ) {
         self.model = model
         self.hosts = hosts
@@ -25,10 +27,15 @@ public struct RootView: View {
         self.tunnels = tunnels
         self.agent = agent
         self.providers = providers
+        self.security = security
     }
 
     private var providerAccount: ProviderAccount? {
         if case .provider(let id) = model.sidebarSelection { providers.account(id) } else { nil }
+    }
+
+    private var securitySection: SecuritySection? {
+        if case .security(let section) = model.sidebarSelection { section } else { nil }
     }
 
     private var sshSection: SSHSection? {
@@ -37,16 +44,26 @@ public struct RootView: View {
 
     public var body: some View {
         NavigationSplitView {
-            SidebarView(model: model, providers: providers)
+            SidebarView(model: model, providers: providers, security: security)
         } content: {
             if let account = providerAccount {
                 ProviderKeysView(providers: providers, library: model, account: account)
+            } else if let securitySection {
+                switch securitySection {
+                case .audit: AuditView(security: security, library: model, hosts: hosts)
+                case .signing: SigningView(security: security, library: model, providers: providers)
+                }
             } else {
                 sshContent
             }
         } detail: {
             if providerAccount != nil {
                 RemoteKeyDetailView(providers: providers, library: model)
+            } else if let securitySection {
+                switch securitySection {
+                case .audit: FindingDetailView(security: security, library: model, hosts: hosts)
+                case .signing: SigningDetailView()
+                }
             } else {
                 detail
             }
@@ -55,17 +72,19 @@ public struct RootView: View {
             LibrarySheetHost(model: model, sheet: sheet)
         }
         .overlay(alignment: .bottom) {
-            if let notice = model.notice ?? hosts.notice ?? knownHosts.notice ?? providers.notice {
+            if let notice = model.notice ?? hosts.notice ?? knownHosts.notice ?? providers.notice ?? security.notice {
                 NoticeBanner(text: notice) {
                     model.notice = nil
                     hosts.notice = nil
                     knownHosts.notice = nil
                     providers.notice = nil
+                    security.notice = nil
                 }
             }
         }
         .dropDestination(for: URL.self) { urls, _ in
-            guard let url = urls.first, model.activeSheet == nil, sshSection == nil, providerAccount == nil else {
+            let showsKeys = sshSection == nil && providerAccount == nil && securitySection == nil
+            guard let url = urls.first, model.activeSheet == nil, showsKeys else {
                 return false
             }
             model.activeSheet = .importKey(url)
@@ -75,6 +94,7 @@ public struct RootView: View {
         .task {
             await model.reload()
             model.startWatching()
+            security.runAudit(library: model)
         }
         .task {
             // The only automatic network traffic: refresh provider accounts once at launch.
@@ -86,6 +106,7 @@ public struct RootView: View {
         .errorAlert($tunnels.lastError)
         .errorAlert($agent.lastError)
         .errorAlert($providers.lastError)
+        .errorAlert($security.lastError)
     }
 
     @ViewBuilder private var sshContent: some View {
