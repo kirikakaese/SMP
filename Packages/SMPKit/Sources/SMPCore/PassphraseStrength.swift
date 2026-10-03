@@ -11,12 +11,12 @@ public struct PassphraseStrength: Sendable, Equatable {
 
         public var title: String {
             switch self {
-            case .empty: "No passphrase"
-            case .veryWeak: "Very weak"
-            case .weak: "Weak"
-            case .fair: "Fair"
-            case .strong: "Strong"
-            case .veryStrong: "Very strong"
+            case .empty: String(localized: "No passphrase")
+            case .veryWeak: String(localized: "Very weak")
+            case .weak: String(localized: "Weak")
+            case .fair: String(localized: "Fair")
+            case .strong: String(localized: "Strong")
+            case .veryStrong: String(localized: "Very strong")
             }
         }
     }

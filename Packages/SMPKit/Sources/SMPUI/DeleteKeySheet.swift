@@ -13,9 +13,9 @@ struct DeleteKeySheet: View {
         var id: String { rawValue }
         var title: String {
             switch self {
-            case .keep: "Keep"
-            case .commentOut: "Comment out"
-            case .remove: "Remove line"
+            case .keep: String(localized: "Keep")
+            case .commentOut: String(localized: "Comment out")
+            case .remove: String(localized: "Remove line")
             }
         }
     }
@@ -92,11 +92,15 @@ struct DeleteKeySheet: View {
     }
 
     private var title: String {
-        items.count == 1 ? "Remove “\(items[0].displayName)”?" : "Remove \(items.count) keys?"
+        items.count == 1
+            ? String(localized: "Remove “\(items[0].displayName)”?")
+            : String(localized: "Remove \(items.count) keys?")
     }
 
     private var isPermanent: Bool { mode == .deletePermanently || onlyArchived }
-    private var confirmTitle: String { isPermanent ? "Delete Permanently" : "Archive" }
+    private var confirmTitle: String { isPermanent
+        ? String(localized: "Delete Permanently")
+        : String(localized: "Archive") }
     private var canConfirm: Bool {
         !isWorking && !isLoading && (!isPermanent || confirmationText == confirmationPhrase)
     }

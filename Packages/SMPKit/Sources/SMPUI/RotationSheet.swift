@@ -46,7 +46,7 @@ struct RotationSheet: View {
         .disabled(isWorking)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button(job?.isFinished == true ? "Done" : "Close") { dismiss() }
+                Button(job?.isFinished == true ? String(localized: "Done") : String(localized: "Close")) { dismiss() }
             }
         }
         .confirmationDialog("Retire the old key?", isPresented: $confirmRetire) {
@@ -71,8 +71,10 @@ struct RotationSheet: View {
                 ))
             }
         } footer: {
-            Text("SMP replaces the old key everywhere it is used, then retires it. You can close this "
-                + "window at any time; the rotation continues where it stopped.")
+            Text("""
+                SMP replaces the old key everywhere it is used, then retires it. You can close this \
+                window at any time; the rotation continues where it stopped.
+                """)
                 .foregroundStyle(.secondary)
         }
     }
@@ -94,8 +96,10 @@ struct RotationSheet: View {
     private func targetsSection(_ job: RotationJob) -> some View {
         Section {
             if job.targets.isEmpty {
-                Text("SMP found no provider account or ~/.ssh/config host that uses this key. "
-                    + "Upload the new key manually where you used the old one.")
+                Text("""
+                    SMP found no provider account or ~/.ssh/config host that uses this key. \
+                    Upload the new key manually where you used the old one.
+                    """)
                     .foregroundStyle(.secondary)
             }
             ForEach(job.targets) { target in
@@ -160,8 +164,10 @@ struct RotationSheet: View {
 
     private var retireMessage: String {
         let places = job?.activeTargets.map(\.label).joined(separator: ", ") ?? ""
-        let removal = places.isEmpty ? "" : "SMP removes the old key from: \(places). "
-        return removal + "The old key files are then moved to SMP's encrypted archive, where you can restore them."
+        let removal = places.isEmpty ? "" : String(localized: "SMP removes the old key from: \(places). ")
+        return removal + String(localized: """
+            The old key files are then moved to SMP's encrypted archive, where you can restore them.
+            """)
     }
 
     private func prepare() {
@@ -195,11 +201,11 @@ struct RotationSheet: View {
     }
 
     private func status(of target: RotationJob.Target) -> String {
-        if target.skipped { return "Skipped" }
-        if target.retired { return "Old key removed" }
-        if target.verified { return "Login works" }
-        if target.deployed { return "New key added" }
-        return "Waiting"
+        if target.skipped { return String(localized: "Skipped") }
+        if target.retired { return String(localized: "Old key removed") }
+        if target.verified { return String(localized: "Login works") }
+        if target.deployed { return String(localized: "New key added") }
+        return String(localized: "Waiting")
     }
 
     /// Runs one step, then saves the job (also when the step failed half-way).

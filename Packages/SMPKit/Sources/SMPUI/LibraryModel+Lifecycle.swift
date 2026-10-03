@@ -178,7 +178,7 @@ extension LibraryModel {
     public func archive(_ items: [LibraryItem], undoManager: UndoManager?) async {
         var archivedIDs: [UUID] = []
         if items.contains(where: \.isSecureEnclave) {
-            notice = "Secure Enclave keys cannot be archived: they can never leave this Mac."
+            notice = String(localized: "Secure Enclave keys cannot be archived: they can never leave this Mac.")
         }
         for item in items where item.archive == nil && !item.isSecureEnclave {
             do {
@@ -195,7 +195,7 @@ extension LibraryModel {
                     try? services.metadata.save(metadata)
                 }
             } catch {
-                report(error, whatHappened: "SMP could not archive “\(item.displayName)”.")
+                report(error, whatHappened: String(localized: "SMP could not archive “\(item.displayName)”."))
             }
         }
         guard !archivedIDs.isEmpty else { return }
@@ -223,19 +223,21 @@ extension LibraryModel {
         do {
             do {
                 try services.archive.restore(id: archiveID, conflict: .fail)
-                notice = "“\(entry.name)” restored."
+                notice = String(localized: "“\(entry.name)” restored.")
             } catch let error as SMPError where error.code == .alreadyExists {
                 let newName = entry.name + "_restored"
                 try services.archive.restore(id: archiveID, conflict: .rename(to: newName))
-                notice = "A key named “\(entry.name)” already exists, "
-                    + "so the archived key was restored as “\(newName)”."
+                notice = String(localized: """
+                    A key named “\(entry.name)” already exists, \
+                    so the archived key was restored as “\(newName)”.
+                    """)
             }
             if let fingerprint = entry.fingerprint, var metadata = try services.metadata.metadata(for: fingerprint) {
                 metadata.archivedAt = nil
                 try services.metadata.save(metadata)
             }
         } catch {
-            report(error, whatHappened: "SMP could not restore “\(entry.name)”.")
+            report(error, whatHappened: String(localized: "SMP could not restore “\(entry.name)”."))
         }
         await reload()
     }
@@ -275,7 +277,9 @@ extension LibraryModel {
                 }
             }
         }
-        notice = count == 1 ? "Key deleted permanently." : "\(count) keys deleted permanently."
+        notice = count == 1
+            ? String(localized: "Key deleted permanently.")
+            : String(localized: "\(count) keys deleted permanently.")
         selectedKeyIDs = []
         await reload()
     }
@@ -285,7 +289,7 @@ extension LibraryModel {
     public func exportPrivateKey(_ item: LibraryItem, to destination: URL) async throws {
         try await services.authenticator.authenticate(reason: "export the private key “\(item.displayName)”")
         try services.keys.exportPrivateKey(item.key, to: destination)
-        notice = "Private key exported. Keep the copy somewhere safe."
+        notice = String(localized: "Private key exported. Keep the copy somewhere safe.")
     }
 
     public func exportPublicKey(_ item: LibraryItem, to destination: URL) throws {

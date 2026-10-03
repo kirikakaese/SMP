@@ -8,8 +8,10 @@ public enum AboutPanel {
 
     public static func show() {
         let credits = NSAttributedString(
-            string: "\(shortName) — create, organize, deploy, audit and delete SSH keys.\n"
-                + "Released under the MIT License.",
+            string: """
+                \(shortName) — create, organize, deploy, audit and delete SSH keys.\n\
+                Released under the MIT License.
+                """,
             attributes: [
                 .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
                 .foregroundColor: NSColor.secondaryLabelColor,

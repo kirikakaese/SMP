@@ -18,35 +18,41 @@ public enum ConnectionProblem: String, Sendable, Hashable {
 
     public var title: String {
         switch self {
-        case .authenticationFailed: "The server rejected the login."
-        case .unknownHostKey: "The server's host key is not known yet."
-        case .hostKeyChanged: "The server's host key has CHANGED."
-        case .hostNotFound: "The host name could not be found."
-        case .connectionRefused: "The server refused the connection."
-        case .timedOut: "The connection timed out."
-        case .networkUnreachable: "The network or host is unreachable."
-        case .other: "The connection failed."
+        case .authenticationFailed: String(localized: "The server rejected the login.")
+        case .unknownHostKey: String(localized: "The server's host key is not known yet.")
+        case .hostKeyChanged: String(localized: "The server's host key has CHANGED.")
+        case .hostNotFound: String(localized: "The host name could not be found.")
+        case .connectionRefused: String(localized: "The server refused the connection.")
+        case .timedOut: String(localized: "The connection timed out.")
+        case .networkUnreachable: String(localized: "The network or host is unreachable.")
+        case .other: String(localized: "The connection failed.")
         }
     }
 
     public var howToFix: String {
         switch self {
         case .authenticationFailed:
-            "Check the user name and that the right key is deployed to the server and loaded in the agent "
-                + "(the test cannot ask for passphrases)."
+            String(localized: """
+                Check the user name and that the right key is deployed to the server and loaded in the agent \
+                (the test cannot ask for passphrases).
+                """)
         case .unknownHostKey:
-            "Add the host key under Known Hosts after checking its fingerprint against one from the server's admin."
+            String(localized: """
+                Add the host key under Known Hosts after checking its fingerprint against one from the server's admin.
+                """)
         case .hostKeyChanged:
-            "This can mean the server was reinstalled, or that someone is intercepting the connection. "
-                + "Verify the new fingerprint with the server's admin before replacing the stored key."
+            String(localized: """
+                This can mean the server was reinstalled, or that someone is intercepting the connection. \
+                Verify the new fingerprint with the server's admin before replacing the stored key.
+                """)
         case .hostNotFound:
-            "Check HostName for typos, and your network or VPN connection."
+            String(localized: "Check HostName for typos, and your network or VPN connection.")
         case .connectionRefused:
-            "Check the port and that an SSH server is running on the host."
+            String(localized: "Check the port and that an SSH server is running on the host.")
         case .timedOut, .networkUnreachable:
-            "Check your network, VPN and any firewall between you and the server."
+            String(localized: "Check your network, VPN and any firewall between you and the server.")
         case .other:
-            "See the details below."
+            String(localized: "See the details below.")
         }
     }
 }

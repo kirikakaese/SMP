@@ -36,8 +36,10 @@ public struct CodeSignaturePeerVerifier: PeerVerifying {
         guard url.pathExtension == "app" else { return nil }
         appURL = Self.normalized(url)
         requirement = Self.ownTeamIdentifier().map {
-            "identifier \"\(AppPaths.bundleIdentifier)\" and anchor apple generic "
-                + "and certificate leaf[subject.OU] = \"\($0)\""
+            """
+                identifier \"\(AppPaths.bundleIdentifier)\" and anchor apple generic \
+                and certificate leaf[subject.OU] = \"\($0)\"
+                """
         }
     }
 

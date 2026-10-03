@@ -40,8 +40,10 @@ public enum ProviderKind: String, Sendable, Hashable, Codable, CaseIterable, Ide
     /// What the token needs, in the provider's own words.
     public var requiredScopes: String {
         switch self {
-        case .github: "admin:public_key and admin:ssh_signing_key (classic token), or “Git SSH keys” and "
-            + "“SSH signing keys” read/write (fine-grained token)"
+        case .github: String(localized: """
+            admin:public_key and admin:ssh_signing_key (classic token), or “Git SSH keys” and \
+            “SSH signing keys” read/write (fine-grained token)
+            """)
         case .gitlab: "api (or read_user to only view keys)"
         case .bitbucket: "read:ssh-key:bitbucket, write:ssh-key:bitbucket and delete:ssh-key:bitbucket"
         case .gitea: "write:user (or read:user to only view keys)"
@@ -66,8 +68,8 @@ public enum RemoteKeyUsage: String, Sendable, Hashable, Codable, CaseIterable {
 
     public var title: String {
         switch self {
-        case .authentication: "Authentication"
-        case .signing: "Signing"
+        case .authentication: String(localized: "Authentication")
+        case .signing: String(localized: "Signing")
         }
     }
 }

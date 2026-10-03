@@ -18,7 +18,9 @@ struct HostListView: View {
                 ContentUnavailableView(
                     model.searchText.isEmpty ? "No Hosts" : "No Matches",
                     systemImage: "server.rack",
-                    description: Text(model.searchText.isEmpty ? "Add a host, or edit ~/.ssh/config directly." : "")
+                    description: Text(model.searchText.isEmpty
+                        ? String(localized: "Add a host, or edit ~/.ssh/config directly.")
+                        : "")
                 )
             }
         }
@@ -89,7 +91,7 @@ struct HostRow: View {
     }
 
     private var subtitle: String {
-        if host.block.isWildcard { return "Defaults for matching hosts" }
+        if host.block.isWildcard { return String(localized: "Defaults for matching hosts") }
         let user = host.block.value(of: "User").map { "\($0)@" } ?? ""
         let name = host.block.value(of: "HostName") ?? host.alias
         let port = host.block.value(of: "Port").map { ":\($0)" } ?? ""
@@ -355,7 +357,7 @@ struct HostDetailView: View {
     private var tagSummary: String {
         let ids = model.hostTags[host.alias] ?? []
         let names = library.tags.filter { ids.contains($0.id) }.map(\.name)
-        return names.isEmpty ? "None" : names.joined(separator: ", ")
+        return names.isEmpty ? String(localized: "None") : names.joined(separator: ", ")
     }
 
     private func placeholder(for keyword: String) -> String {

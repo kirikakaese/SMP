@@ -89,12 +89,12 @@ struct KeyListView: View {
     private var title: String {
         switch model.sidebarSelection {
         case .library(let item): item.title
-        case .tag(let id): model.tags.first { $0.id == id }?.name ?? "Tag"
-        case .group(let id): model.groups.first { $0.id == id }?.name ?? "Group"
+        case .tag(let id): model.tags.first { $0.id == id }?.name ?? String(localized: "Tag")
+        case .group(let id): model.groups.first { $0.id == id }?.name ?? String(localized: "Group")
         case .ssh(let section): section.title
-        case .provider: "Provider"
+        case .provider: String(localized: "Provider")
         case .security(let section): section.title
-        case nil: "Keys"
+        case nil: String(localized: "Keys")
         }
     }
 }
@@ -195,7 +195,7 @@ struct KeyActionsMenu: View {
             Button("Delete…") { model.activeSheet = .delete([item]) }
         }
         Divider()
-        Button(item.isFavorite ? "Remove from Favorites" : "Add to Favorites") {
+        Button(item.isFavorite ? String(localized: "Remove from Favorites") : String(localized: "Add to Favorites")) {
             model.setFavorite(!item.isFavorite, for: item)
         }
         .disabled(!item.canStoreMetadata)

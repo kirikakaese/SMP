@@ -78,14 +78,20 @@ public struct ReminderSchedule: Sendable, Hashable, Codable {
     static func title(for entry: Entry, remaining: TimeInterval) -> String {
         let days = Int((remaining / (24 * 3600)).rounded(.up))
         switch (entry.kind, remaining <= 0) {
-        case (.expiry, true): return "“\(entry.keyName)” has expired"
-        case (.expiry, false): return "“\(entry.keyName)” expires in \(days == 1 ? "1 day" : "\(days) days")"
-        case (.rotation, true): return "Time to rotate “\(entry.keyName)”"
-        case (.rotation, false): return "Rotate “\(entry.keyName)” in \(days == 1 ? "1 day" : "\(days) days")"
+        case (.expiry, true): return String(localized: "“\(entry.keyName)” has expired")
+        case (.expiry, false):
+            return days == 1
+                ? String(localized: "“\(entry.keyName)” expires in 1 day")
+                : String(localized: "“\(entry.keyName)” expires in \(days) days")
+        case (.rotation, true): return String(localized: "Time to rotate “\(entry.keyName)”")
+        case (.rotation, false):
+            return days == 1
+                ? String(localized: "Rotate “\(entry.keyName)” in 1 day")
+                : String(localized: "Rotate “\(entry.keyName)” in \(days) days")
         }
     }
 
     static func body(for entry: Entry) -> String {
-        "Open SMP and choose Rotate Key… to replace it everywhere it is used."
+        String(localized: "Open SMP and choose Rotate Key… to replace it everywhere it is used.")
     }
 }

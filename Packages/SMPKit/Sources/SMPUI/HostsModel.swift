@@ -176,7 +176,9 @@ public final class HostsModel {
                 try? services.metadata.deleteHostMetadata(alias: deleted)
             }
             pendingChange = nil
-            notice = "Saved \(change.file.url.lastPathComponent). A backup of the previous version was kept."
+            notice = String(localized: """
+                Saved \(change.file.url.lastPathComponent). A backup of the previous version was kept.
+                """)
             reload()
             return true
         } catch {
@@ -240,7 +242,7 @@ public final class HostsModel {
     public func copyCommand(_ host: HostEntry) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(HostService.sshCommand(for: host.alias), forType: .string)
-        notice = "Copied “\(HostService.sshCommand(for: host.alias))”."
+        notice = String(localized: "Copied “\(HostService.sshCommand(for: host.alias))”.")
     }
 
     public func effectiveConfig(_ host: HostEntry) async -> [(key: String, value: String)] {

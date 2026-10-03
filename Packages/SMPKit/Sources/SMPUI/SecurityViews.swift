@@ -98,9 +98,9 @@ struct AuditView: View {
 
     private var summary: String {
         switch security.findings.count {
-        case 0: "Everything looks good"
-        case 1: "1 thing to look at"
-        default: "\(security.findings.count) things to look at"
+        case 0: String(localized: "Everything looks good")
+        case 1: String(localized: "1 thing to look at")
+        default: String(localized: "\(security.findings.count) things to look at")
         }
     }
 
@@ -167,10 +167,12 @@ struct FindingDetailView: View {
 
     private func footer(for fix: AuditFinding.Fix) -> String {
         switch fix {
-        case .setPermissions: "Changes the file mode right away. Nothing else is touched."
-        case .removeConfigLine: "You see the change as a diff before it is saved. A backup is kept."
-        case .addPassphrase, .upgradeFormat: "Opens the key's editing sheet."
-        case .rotate: "Opens the rotation assistant: a new key replaces this one everywhere it is used."
+        case .setPermissions: String(localized: "Changes the file mode right away. Nothing else is touched.")
+        case .removeConfigLine: String(localized: "You see the change as a diff before it is saved. A backup is kept.")
+        case .addPassphrase, .upgradeFormat: String(localized: "Opens the key's editing sheet.")
+        case .rotate: String(localized: """
+            Opens the rotation assistant: a new key replaces this one everywhere it is used.
+            """)
         }
     }
 }
@@ -220,9 +222,11 @@ struct SigningView: View {
             } header: {
                 Text("Sign with an SSH key")
             } footer: {
-                Text("SMP changes only your global git config (~/.gitconfig), after showing exactly what "
-                    + "changes. Secure Enclave keys are not offered: git asks the macOS ssh-agent, not "
-                    + "SMP Agent, for signatures.")
+                Text("""
+                    SMP changes only your global git config (~/.gitconfig), after showing exactly what \
+                    changes. Secure Enclave keys are not offered: git asks the macOS ssh-agent, not \
+                    SMP Agent, for signatures.
+                    """)
                     .foregroundStyle(.secondary)
             }
             if let plan {
@@ -309,10 +313,12 @@ struct SigningDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Signing commits with SSH").font(.title2.weight(.semibold))
-                Text("git 2.34 and later can sign commits and tags with an SSH key instead of GPG. "
-                    + "SMP sets gpg.format to ssh, points user.signingkey at your public key, turns on "
-                    + "commit.gpgsign, and lists your key in ~/.ssh/allowed_signers so "
-                    + "“git log --show-signature” can verify your own commits.")
+                Text("""
+                    git 2.34 and later can sign commits and tags with an SSH key instead of GPG. \
+                    SMP sets gpg.format to ssh, points user.signingkey at your public key, turns on \
+                    commit.gpgsign, and lists your key in ~/.ssh/allowed_signers so \
+                    “git log --show-signature” can verify your own commits.
+                    """)
                 Text("To get the “Verified” badge on GitHub or GitLab, upload the same key there as a signing key.")
                     .foregroundStyle(.secondary)
             }

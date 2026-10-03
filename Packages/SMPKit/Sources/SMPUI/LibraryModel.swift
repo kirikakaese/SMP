@@ -21,10 +21,10 @@ public enum SSHSection: String, CaseIterable, Identifiable, Hashable, Sendable {
 
     public var title: String {
         switch self {
-        case .hosts: "Hosts"
-        case .knownHosts: "Known Hosts"
-        case .tunnels: "Tunnels"
-        case .agent: "Agent"
+        case .hosts: String(localized: "Hosts")
+        case .knownHosts: String(localized: "Known Hosts")
+        case .tunnels: String(localized: "Tunnels")
+        case .agent: String(localized: "Agent")
         }
     }
 
@@ -45,10 +45,10 @@ public enum KeySortOrder: String, CaseIterable, Identifiable, Sendable {
 
     public var title: String {
         switch self {
-        case .name: "Name"
-        case .type: "Type"
-        case .created: "Date Created"
-        case .modified: "Date Modified"
+        case .name: String(localized: "Name")
+        case .type: String(localized: "Type")
+        case .created: String(localized: "Date Created")
+        case .modified: String(localized: "Date Modified")
         }
     }
 }
@@ -224,7 +224,7 @@ public final class LibraryModel {
             writeReminderSchedule()
             selectedKeyIDs.formIntersection(items.map(\.id))
         } catch {
-            report(error, whatHappened: "SMP could not scan your key folders.")
+            report(error, whatHappened: String(localized: "SMP could not scan your key folders."))
         }
     }
 

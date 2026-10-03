@@ -26,19 +26,25 @@ struct BackupSheet: View {
             Section {
                 LabeledContent("Keys", value: keySummary)
                 LabeledContent("SSH settings", value: settingsSummary)
-                LabeledContent("SMP data", value: "Tags, groups, notes, dates, host settings and tunnels")
+                LabeledContent("SMP data", value: String(localized: """
+                    Tags, groups, notes, dates, host settings and tunnels
+                    """))
             } header: {
                 Text("Included")
             } footer: {
-                Text("Not included: Secure Enclave keys (they can never leave this Mac), archived keys and "
-                    + "provider tokens (add your accounts again after restoring).")
+                Text("""
+                    Not included: Secure Enclave keys (they can never leave this Mac), archived keys and \
+                    provider tokens (add your accounts again after restoring).
+                    """)
                     .foregroundStyle(.secondary)
             }
             Section {
                 PassphraseFields(passphrase: $passphrase, confirmation: $confirmation, title: "Backup passphrase")
             } footer: {
-                Text("The backup is encrypted with AES-256-GCM. Without this passphrase nobody can open it, "
-                    + "including you: SMP does not store it.")
+                Text("""
+                    The backup is encrypted with AES-256-GCM. Without this passphrase nobody can open it, \
+                    including you: SMP does not store it.
+                    """)
                     .foregroundStyle(.secondary)
             }
             if let error {
@@ -73,12 +79,12 @@ struct BackupSheet: View {
             default: return nil
             }
         }
-        return names.isEmpty ? "None found" : names.joined(separator: ", ")
+        return names.isEmpty ? String(localized: "None found") : names.joined(separator: ", ")
     }
 
     private func save() {
         let panel = NSSavePanel()
-        panel.title = "Save Backup"
+        panel.title = String(localized: "Save Backup")
         panel.allowedContentTypes = [.smpBackup]
         let date = Date().formatted(.iso8601.year().month().day())
         panel.nameFieldStringValue = "SMP Backup \(date).\(BackupService.fileExtension)"
@@ -126,7 +132,9 @@ struct RestoreBackupSheet: View {
                 Section {
                     LabeledContent("Backup") {
                         HStack {
-                            Text(file?.lastPathComponent ?? "None chosen").foregroundStyle(.secondary)
+                            Text(file?.lastPathComponent ?? String(localized: """
+                                None chosen
+                                """)).foregroundStyle(.secondary)
                             Button("Choose…") { choose() }
                         }
                     }
@@ -146,7 +154,7 @@ struct RestoreBackupSheet: View {
         .disabled(isWorking)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button(summary == nil ? "Cancel" : "Done") { dismiss() }
+                Button(summary == nil ? String(localized: "Cancel") : String(localized: "Done")) { dismiss() }
             }
             ToolbarItem(placement: .confirmationAction) {
                 if summary == nil {
@@ -168,7 +176,7 @@ struct RestoreBackupSheet: View {
 
     private func choose() {
         let panel = NSOpenPanel()
-        panel.title = "Choose a Backup"
+        panel.title = String(localized: "Choose a Backup")
         panel.allowedContentTypes = [.smpBackup]
         panel.allowsMultipleSelection = false
         if panel.runModal() == .OK {
@@ -220,14 +228,18 @@ private struct RestorePlanSection: View {
             LabeledContent("Keys", value: "\(manifest.keyCount)")
             LabeledContent(
                 "SMP data",
-                value: "\(manifest.metadata.tags.count) tags, \(manifest.metadata.groups.count) groups, "
-                    + "\(manifest.metadata.tunnels.count) tunnels"
+                value: String(localized: """
+                    \(manifest.metadata.tags.count) tags, \(manifest.metadata.groups.count) groups, \
+                    \(manifest.metadata.tunnels.count) tunnels
+                    """)
             )
         } header: {
             Text("Backup")
         } footer: {
-            Text("Existing files are never overwritten. A different file with the same name is restored "
-                + "next to it with “-restored” in its name. Tags, notes and settings you already have are kept.")
+            Text("""
+                Existing files are never overwritten. A different file with the same name is restored \
+                next to it with “-restored” in its name. Tags, notes and settings you already have are kept.
+                """)
                 .foregroundStyle(.secondary)
         }
         Section("Files") {
@@ -263,10 +275,12 @@ private struct RestorePlanSection: View {
 
     private func description(of action: RestoreStep.Action) -> String {
         switch action {
-        case .create: "Will be restored"
-        case .alreadyPresent: "Already here, unchanged"
-        case .writeAlongside: "A different file has this name; the backup's version is saved next to it"
-        case .skip(let reason): "Skipped: \(reason)"
+        case .create: String(localized: "Will be restored")
+        case .alreadyPresent: String(localized: "Already here, unchanged")
+        case .writeAlongside: String(localized: """
+            A different file has this name; the backup's version is saved next to it
+            """)
+        case .skip(let reason): String(localized: "Skipped: \(reason)")
         }
     }
 }
@@ -283,9 +297,11 @@ private struct RestoreSummarySection: View {
             }
             LabeledContent(
                 "SMP data",
-                value: "\(summary.tagsAdded) tags, \(summary.groupsAdded) groups, "
-                    + "\(summary.notesRestored) key notes, \(summary.hostsRestored) host settings, "
-                    + "\(summary.tunnelsAdded) tunnels added"
+                value: String(localized: """
+                    \(summary.tagsAdded) tags, \(summary.groupsAdded) groups, \
+                    \(summary.notesRestored) key notes, \(summary.hostsRestored) host settings, \
+                    \(summary.tunnelsAdded) tunnels added
+                    """)
             )
             ForEach(summary.written, id: \.self) { url in
                 Text(displayPath(url)).font(.system(.caption, design: .monospaced)).foregroundStyle(.secondary)

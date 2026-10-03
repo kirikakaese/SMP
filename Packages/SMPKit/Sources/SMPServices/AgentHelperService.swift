@@ -47,8 +47,8 @@ public struct AgentHelperService: AgentHelperControlling {
         } catch {
             throw SMPError(
                 .toolLaunchFailed,
-                whatHappened: "SMP could not start its agent.",
-                howToFix: "Allow “SMP Agent” in System Settings → General → Login Items.",
+                whatHappened: String(localized: "SMP could not start its agent."),
+                howToFix: String(localized: "Allow “SMP Agent” in System Settings → General → Login Items."),
                 details: error.localizedDescription
             )
         }
@@ -59,7 +59,9 @@ public struct AgentHelperService: AgentHelperControlling {
             try await service.unregister()
         } catch {
             throw SMPError(
-                .toolFailed, whatHappened: "SMP could not stop its agent.", details: error.localizedDescription
+                .toolFailed, whatHappened: String(localized: """
+                    SMP could not stop its agent.
+                    """), details: error.localizedDescription
             )
         }
     }

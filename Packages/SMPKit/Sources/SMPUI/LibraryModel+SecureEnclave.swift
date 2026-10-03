@@ -36,8 +36,8 @@ extension LibraryModel {
         if secureEnclaveProblem?.code == .agentNotRunning, services.agentHelper.status() == .requiresApproval {
             secureEnclaveProblem = SMPError(
                 .agentNotRunning,
-                whatHappened: "SMP Agent needs your approval to run.",
-                howToFix: "Allow “SMP Agent” in System Settings → General → Login Items."
+                whatHappened: String(localized: "SMP Agent needs your approval to run."),
+                howToFix: String(localized: "Allow “SMP Agent” in System Settings → General → Login Items.")
             )
         }
     }
@@ -116,7 +116,7 @@ extension LibraryModel {
                 throw error
             }
         }
-        notice = "Secure Enclave key “\(name)” created. It can only be used through SMP's agent."
+        notice = String(localized: "Secure Enclave key “\(name)” created. It can only be used through SMP's agent.")
         await reload()
         selectedKeyIDs = Set(items.filter { $0.secureEnclave?.id == key.id }.map(\.id))
     }
@@ -137,7 +137,7 @@ extension LibraryModel {
                 items[index].secureEnclave = key
             }
         } catch {
-            report(error, whatHappened: "SMP could not change the key's Touch ID setting.")
+            report(error, whatHappened: String(localized: "SMP could not change the key's Touch ID setting."))
         }
     }
 

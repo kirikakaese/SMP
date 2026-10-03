@@ -138,8 +138,10 @@ struct ChangePassphraseSheet: View {
                 }
             }
             Section {
-                Text("If the old passphrase is saved in your Keychain, add the key to the agent again "
-                    + "with “Store passphrase in Keychain” to update it.")
+                Text("""
+                    If the old passphrase is saved in your Keychain, add the key to the agent again \
+                    with “Store passphrase in Keychain” to update it.
+                    """)
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
@@ -221,6 +223,8 @@ struct UpgradeFormatSheet: View {
     @State private var isWorking = false
     @State private var error: SMPError?
 
+    private var legacyFormat: String { item.key.privateKeyInfo?.format.displayName ?? "" }
+
     var body: some View {
         EditSheet(
             title: "Upgrade Key Format",
@@ -231,9 +235,11 @@ struct UpgradeFormatSheet: View {
             onConfirm: upgrade
         ) {
             Section {
-                Text("Converts the key from the legacy \(item.key.privateKeyInfo?.format.displayName ?? "") format "
-                    + "to the OpenSSH format, which protects the passphrase with a stronger key derivation (bcrypt). "
-                    + "The key itself and its fingerprint stay the same.")
+                Text("""
+                    Converts the key from the legacy \(legacyFormat) format \
+                    to the OpenSSH format, which protects the passphrase with a stronger key derivation (bcrypt). \
+                    The key itself and its fingerprint stay the same.
+                    """)
                 if item.key.isPassphraseProtected == true {
                     SecureField("Passphrase", text: $passphrase)
                 }

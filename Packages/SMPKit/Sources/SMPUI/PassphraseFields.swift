@@ -97,6 +97,8 @@ extension Error {
     /// The error as an `SMPError`, wrapping unexpected errors with a generic message.
     var asSMPError: SMPError {
         (self as? SMPError)
-            ?? SMPError(.keyOperationFailed, whatHappened: "Something went wrong.", details: localizedDescription)
+            ?? SMPError(.keyOperationFailed, whatHappened: String(localized: """
+                Something went wrong.
+                """), details: localizedDescription)
     }
 }

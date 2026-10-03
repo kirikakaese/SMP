@@ -188,7 +188,9 @@ public final class AgentRequestHandler: Sendable {
             reply = AgentKeyReply(keys: try perform(command))
         } catch {
             reply = AgentKeyReply(error: (error as? SMPError) ?? SMPError(
-                .keychain, whatHappened: "SMP Agent could not change its keys.", details: error.localizedDescription
+                .keychain, whatHappened: String(localized: """
+                    SMP Agent could not change its keys.
+                    """), details: error.localizedDescription
             ))
         }
         guard let contents = try? JSONEncoder().encode(reply) else { return SSHAgentCodec.failure }
@@ -202,7 +204,7 @@ public final class AgentRequestHandler: Sendable {
         case .create(let name, let comment, let policy):
             let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmed.isEmpty, trimmed.count <= 200, comment.count <= 1000 else {
-                throw SMPError.invalidArgument("The key needs a name of at most 200 characters.")
+                throw SMPError.invalidArgument(String(localized: "The key needs a name of at most 200 characters."))
             }
             let key = try store.create(name: trimmed, comment: comment, policy: policy)
             keysChanged()
@@ -211,7 +213,7 @@ public final class AgentRequestHandler: Sendable {
             // Only the name, comment and policy can change; the public key and Touch ID
             // requirement stay as created.
             guard var key = try store.keys().first(where: { $0.id == changed.id }) else {
-                throw SMPError.invalidArgument("The Secure Enclave key no longer exists.")
+                throw SMPError.invalidArgument(String(localized: "The Secure Enclave key no longer exists."))
             }
             guard changed.policy.requiresUserPresence == key.policy.requiresUserPresence else {
                 throw SMPError.invalidArgument(

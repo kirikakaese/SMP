@@ -39,6 +39,8 @@ targets:
     platform: macOS
     sources:
       - path: App/Sources
+      # English and German strings for the app and the SMPKit views it shows.
+      - path: App/Resources/Localizable.xcstrings
     dependencies:
       - package: SMPKit
         product: SMPCore
@@ -68,6 +70,7 @@ targets:
     platform: macOS
     sources:
       - path: App/AgentHelper/Sources
+      - path: App/Resources/Localizable.xcstrings
     dependencies:
       - package: SMPKit
         product: SMPCore
