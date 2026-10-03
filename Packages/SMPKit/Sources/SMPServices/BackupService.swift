@@ -416,7 +416,7 @@ public struct BackupService: BackupServicing {
         var derived = [UInt8](repeating: 0, count: 32)
         defer {
             derived.withUnsafeMutableBytes { buffer in
-                if let base = buffer.baseAddress { SecureBytes.zero(base, count: buffer.count) }
+                if let base = buffer.baseAddress { SecureMemory.zero(base, count: buffer.count) }
             }
         }
         let status = passphrase.withUnsafeBytes { password in
