@@ -301,14 +301,24 @@ struct KeyDetailView: View {
         switch item.key.isPassphraseProtected {
         case true?: String(localized: "Protected")
         case false?: String(localized: "None")
-        case nil: item.key.privateKeyFile == nil ? String(localized: "No private key") : String(localized: "Unknown")
+        case nil:
+            if item.key.privateKeyFile == nil {
+                String(localized: "No private key")
+            } else {
+                String(localized: "Unknown")
+            }
         }
     }
 
     private var agentText: String {
         switch model.agentStatus {
         case .unavailable: String(localized: "Agent not available")
-        case .running: item.isLoadedInAgent ? String(localized: "Loaded") : String(localized: "Not loaded")
+        case .running:
+            if item.isLoadedInAgent {
+                String(localized: "Loaded")
+            } else {
+                String(localized: "Not loaded")
+            }
         }
     }
 
