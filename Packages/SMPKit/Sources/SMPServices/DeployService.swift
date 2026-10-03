@@ -153,6 +153,8 @@ public struct DeployService: DeployServicing {
         case 5: "The server has no ~/.ssh/authorized_keys file."
         default: nil
         }
-        return SMPError(.toolFailed, whatHappened: "SMP could not \(action).", howToFix: hint, details: stderr)
+        return SMPError(.toolFailed, whatHappened: String(localized: """
+            SMP could not \(action).
+            """), howToFix: hint, details: stderr)
     }
 }

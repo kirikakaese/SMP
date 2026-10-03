@@ -35,8 +35,8 @@ public struct TerminalLauncher: TerminalLaunching {
         guard let url = appURL(app) else {
             throw SMPError(
                 .toolNotFound,
-                whatHappened: "\(app.displayName) is not installed.",
-                howToFix: "Install it, or choose another terminal in SMP's settings."
+                whatHappened: String(localized: "\(app.displayName) is not installed."),
+                howToFix: String(localized: "Install it, or choose another terminal in SMP's settings.")
             )
         }
         let command = HostService.sshCommand(for: alias)
@@ -73,16 +73,20 @@ public struct TerminalLauncher: TerminalLaunching {
     private func runAppleScript(_ source: String) throws {
         var errorInfo: NSDictionary?
         guard let script = NSAppleScript(source: source) else {
-            throw SMPError(.toolLaunchFailed, whatHappened: "SMP could not prepare the terminal command.")
+            throw SMPError(.toolLaunchFailed, whatHappened: String(localized: """
+                SMP could not prepare the terminal command.
+                """))
         }
         _ = script.executeAndReturnError(&errorInfo)
         if let errorInfo {
             let message = errorInfo[NSAppleScript.errorMessage] as? String ?? "Unknown AppleScript error"
             throw SMPError(
                 .toolLaunchFailed,
-                whatHappened: "SMP could not open the terminal.",
-                howToFix: "Allow SMP to control your terminal in "
-                    + "System Settings → Privacy & Security → Automation.",
+                whatHappened: String(localized: "SMP could not open the terminal."),
+                howToFix: String(localized: """
+                    Allow SMP to control your terminal in \
+                    System Settings → Privacy & Security → Automation.
+                    """),
                 details: message
             )
         }

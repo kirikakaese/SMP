@@ -39,16 +39,18 @@ public struct ToolInvocation: Sendable {
 
     func validate() throws {
         guard executable.isFileURL, executable.path.hasPrefix("/") else {
-            throw SMPError.invalidArgument("The tool path must be an absolute file path.")
+            throw SMPError.invalidArgument(String(localized: "The tool path must be an absolute file path."))
         }
         if arguments.contains(where: { $0.utf8.contains(0) }) {
-            throw SMPError.invalidArgument("A command argument contained a NUL byte and was rejected.")
+            throw SMPError.invalidArgument(String(localized: """
+                A command argument contained a NUL byte and was rejected.
+                """))
         }
         if environment.contains(where: { $0.key.isEmpty || $0.key.contains("=") || $0.value.utf8.contains(0) }) {
-            throw SMPError.invalidArgument("An environment variable was malformed and was rejected.")
+            throw SMPError.invalidArgument(String(localized: "An environment variable was malformed and was rejected."))
         }
         guard timeout > .zero else {
-            throw SMPError.invalidArgument("The timeout must be greater than zero.")
+            throw SMPError.invalidArgument(String(localized: "The timeout must be greater than zero."))
         }
     }
 }

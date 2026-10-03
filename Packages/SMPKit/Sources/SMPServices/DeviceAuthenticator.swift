@@ -26,8 +26,8 @@ public struct DeviceAuthenticator: DeviceAuthenticating {
         guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
             throw SMPError(
                 .authenticationFailed,
-                whatHappened: "SMP could not ask for Touch ID or your password.",
-                howToFix: "Make sure your Mac has a login password set.",
+                whatHappened: String(localized: "SMP could not ask for Touch ID or your password."),
+                howToFix: String(localized: "Make sure your Mac has a login password set."),
                 details: error?.localizedDescription
             )
         }
@@ -36,7 +36,7 @@ public struct DeviceAuthenticator: DeviceAuthenticating {
         } catch {
             throw SMPError(
                 .authenticationFailed,
-                whatHappened: "Authentication was cancelled or failed, so nothing was changed.",
+                whatHappened: String(localized: "Authentication was cancelled or failed, so nothing was changed."),
                 details: error.localizedDescription
             )
         }
@@ -53,7 +53,7 @@ public struct FakeAuthenticator: DeviceAuthenticating {
 
     public func authenticate(reason: String) async throws {
         guard succeeds else {
-            throw SMPError(.authenticationFailed, whatHappened: "Authentication failed.")
+            throw SMPError(.authenticationFailed, whatHappened: String(localized: "Authentication failed."))
         }
     }
 }

@@ -53,7 +53,9 @@ private struct KeyMenuContent: View {
 
         // ⌘⌫ / ⌥⌘⌫ are handled by the key list itself (see KeyListView), so they never
         // fire while the user is editing text such as notes.
-        Button(onDisk.count > 1 ? "Archive \(onDisk.count) Keys (⌘⌫)" : "Archive (⌘⌫)") {
+        Button(onDisk.count > 1
+            ? String(localized: "Archive \(onDisk.count) Keys (⌘⌫)")
+            : String(localized: "Archive (⌘⌫)")) {
             Task { await model.archive(onDisk, undoManager: undoManager) }
         }
         .disabled(onDisk.isEmpty)

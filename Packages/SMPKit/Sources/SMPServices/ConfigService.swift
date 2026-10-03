@@ -85,8 +85,8 @@ public struct ConfigService: ConfigServicing {
         guard data.count <= 1_024 * 1_024, let text = String(data: data, encoding: .utf8) else {
             throw SMPError(
                 .fileSystem,
-                whatHappened: "\(url.lastPathComponent) is not a readable SSH config file.",
-                howToFix: "Make sure the file is UTF-8 text."
+                whatHappened: String(localized: "\(url.lastPathComponent) is not a readable SSH config file."),
+                howToFix: String(localized: "Make sure the file is UTF-8 text.")
             )
         }
         let document = SSHConfigDocument(text: text)

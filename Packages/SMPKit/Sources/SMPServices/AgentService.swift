@@ -70,9 +70,11 @@ public struct AgentService: AgentServicing {
             if stderr.contains("Could not open a connection") || stderr.contains("Error connecting to agent") {
                 throw SMPError(
                     .toolFailed,
-                    whatHappened: "No ssh-agent is running.",
-                    howToFix: "macOS starts the agent automatically when you log in. Log out and back in, "
-                        + "or start one with “eval $(ssh-agent)” in Terminal.",
+                    whatHappened: String(localized: "No ssh-agent is running."),
+                    howToFix: String(localized: """
+                        macOS starts the agent automatically when you log in. Log out and back in, \
+                        or start one with “eval $(ssh-agent)” in Terminal.
+                        """),
                     details: stderr
                 )
             }

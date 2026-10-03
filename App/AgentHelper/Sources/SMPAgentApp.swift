@@ -12,7 +12,9 @@ struct SMPAgentApp: App {
             AgentMenu(controller: controller)
         } label: {
             Image(systemName: controller.isRunning ? "key.horizontal.fill" : "key.slash")
-                .accessibilityLabel(controller.isRunning ? "SMP Agent is running" : "SMP Agent is stopped")
+                .accessibilityLabel(controller.isRunning
+                    ? String(localized: "SMP Agent is running")
+                    : String(localized: "SMP Agent is stopped"))
         }
         .menuBarExtraStyle(.window)
     }
@@ -28,7 +30,9 @@ struct AgentMenu: View {
                     .fill(controller.isRunning ? Color.green : Color.red)
                     .frame(width: 8, height: 8)
                     .accessibilityHidden(true)
-                Text(controller.isRunning ? "SMP Agent is running" : "SMP Agent is stopped").font(.headline)
+                Text(controller.isRunning
+                    ? String(localized: "SMP Agent is running")
+                    : String(localized: "SMP Agent is stopped")).font(.headline)
             }
             if let problem = controller.problem {
                 Text(problem).font(.callout).foregroundStyle(.red)
@@ -60,10 +64,12 @@ struct AgentMenu: View {
 
     private var summary: String {
         let keys = controller.secureEnclaveKeyCount == 1
-            ? "1 Secure Enclave key" : "\(controller.secureEnclaveKeyCount) Secure Enclave keys"
+            ? String(localized: "1 Secure Enclave key")
+            : String(localized: "\(controller.secureEnclaveKeyCount) Secure Enclave keys")
         let forwarding = controller.forwardsToSystemAgent
-            ? "other keys come from the system ssh-agent" : "no system ssh-agent found"
-        return "\(keys); \(forwarding)."
+            ? String(localized: "other keys come from the system ssh-agent")
+            : String(localized: "no system ssh-agent found")
+        return String(localized: "\(keys); \(forwarding).")
     }
 }
 
@@ -84,11 +90,11 @@ struct ActivityRow: View {
 
     private var outcome: String {
         switch entry.outcome {
-        case .signed: "Signed"
-        case .forwarded: "Signed by the system agent"
-        case .declined: "Declined"
-        case .refused: "Refused"
-        case .failed: "Failed"
+        case .signed: String(localized: "Signed")
+        case .forwarded: String(localized: "Signed by the system agent")
+        case .declined: String(localized: "Declined")
+        case .refused: String(localized: "Refused")
+        case .failed: String(localized: "Failed")
         }
     }
 

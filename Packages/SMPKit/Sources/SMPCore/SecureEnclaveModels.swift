@@ -17,9 +17,9 @@ public enum SigningPolicy: Sendable, Hashable, Codable {
 
     public var title: String {
         switch self {
-        case .everyUse: "Touch ID for every use"
-        case .reuse(let seconds): "Touch ID, then allow for \(seconds / 60) min"
-        case .notifyOnly: "No prompt, show a notification"
+        case .everyUse: String(localized: "Touch ID for every use")
+        case .reuse(let seconds): String(localized: "Touch ID, then allow for \(seconds / 60) min")
+        case .notifyOnly: String(localized: "No prompt, show a notification")
         }
     }
 }

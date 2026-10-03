@@ -51,7 +51,7 @@ public struct KnownHostsService: KnownHostsServicing {
             throw SMPError.invalidArgument(problem)
         }
         guard (1...65_535).contains(port) else {
-            throw SMPError.invalidArgument("Ports must be between 1 and 65535.")
+            throw SMPError.invalidArgument(String(localized: "Ports must be between 1 and 65535."))
         }
         let result = try await runner.run(
             .sshKeyscan,
@@ -62,8 +62,8 @@ public struct KnownHostsService: KnownHostsServicing {
         guard !keys.isEmpty else {
             throw SMPError(
                 .toolFailed,
-                whatHappened: "\(host) did not return any host keys.",
-                howToFix: "Check the host name, port and your network connection.",
+                whatHappened: String(localized: "\(host) did not return any host keys."),
+                howToFix: String(localized: "Check the host name, port and your network connection."),
                 details: result.standardErrorString.trimmingCharacters(in: .whitespacesAndNewlines)
             )
         }

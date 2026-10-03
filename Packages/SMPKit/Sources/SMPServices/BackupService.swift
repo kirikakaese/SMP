@@ -95,7 +95,7 @@ public struct BackupService: BackupServicing {
         let key = try Self.deriveKey(passphrase: passphrase, salt: salt, iterations: iterations)
         let box = try plaintext.withUnsafeBytes { try AES.GCM.seal($0, using: key, authenticating: header) }
         guard let combined = box.combined else {
-            throw SMPError(.keyOperationFailed, whatHappened: "SMP could not encrypt the backup.")
+            throw SMPError(.keyOperationFailed, whatHappened: String(localized: "SMP could not encrypt the backup."))
         }
         try write(header + combined, to: url)
         return manifest
@@ -108,7 +108,7 @@ public struct BackupService: BackupServicing {
         } catch {
             throw SMPError(
                 .fileSystem,
-                whatHappened: "SMP could not save the backup to \(url.lastPathComponent).",
+                whatHappened: String(localized: "SMP could not save the backup to \(url.lastPathComponent)."),
                 details: error.localizedDescription
             )
         }
@@ -146,8 +146,10 @@ public struct BackupService: BackupServicing {
         } catch {
             throw SMPError(
                 .passphraseRequired,
-                whatHappened: "The backup could not be opened.",
-                howToFix: "Check the passphrase. If it is right, the file is damaged or not an SMP backup."
+                whatHappened: String(localized: "The backup could not be opened."),
+                howToFix: String(localized: """
+                    Check the passphrase. If it is right, the file is damaged or not an SMP backup.
+                    """)
             )
         }
         let secure = SecureBytes(consuming: &plaintext)
@@ -158,13 +160,15 @@ public struct BackupService: BackupServicing {
     static func readBackupFile(_ url: URL) throws -> Data {
         let size = try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int
         guard let size, size <= maxBackupSize else {
-            throw SMPError.invalidArgument("\(url.lastPathComponent) is missing or too large to be an SMP backup.")
+            throw SMPError.invalidArgument(String(localized: """
+                \(url.lastPathComponent) is missing or too large to be an SMP backup.
+                """))
         }
         do {
             return try Data(contentsOf: url)
         } catch {
             throw SMPError(
-                .fileSystem, whatHappened: "SMP could not read \(url.lastPathComponent).",
+                .fileSystem, whatHappened: String(localized: "SMP could not read \(url.lastPathComponent)."),
                 details: error.localizedDescription
             )
         }
@@ -185,7 +189,7 @@ public struct BackupService: BackupServicing {
 
     /// - Returns: iterations, salt and the header's length.
     static func parseHeader(_ data: Data) throws -> (Int, Data, Int) {
-        let notABackup = SMPError.invalidArgument("This file is not an SMP backup.")
+        let notABackup = SMPError.invalidArgument(String(localized: "This file is not an SMP backup."))
         let bytes = [UInt8](data.prefix(magic.count + 6 + 255))
         guard bytes.count > magic.count + 6, Data(bytes.prefix(magic.count)) == magic else { throw notABackup }
         var offset = magic.count
@@ -203,7 +207,7 @@ public struct BackupService: BackupServicing {
     }
 
     static func parsePayload(_ payload: SecureBytes) throws -> OpenedBackup {
-        let damaged = SMPError.invalidArgument("The backup is damaged.")
+        let damaged = SMPError.invalidArgument(String(localized: "The backup is damaged."))
         return try payload.withUnsafeBytes { buffer in
             var reader = SSHWireReader(buffer, maxFieldLength: maxBackupSize)
             guard let manifestRange = try? reader.readStringRange(),
@@ -408,7 +412,7 @@ public struct BackupService: BackupServicing {
 
     static func checkPassphrase(_ passphrase: SecureBytes) throws {
         guard passphrase.count >= 1 else {
-            throw SMPError.invalidArgument("A backup needs a passphrase.")
+            throw SMPError.invalidArgument(String(localized: "A backup needs a passphrase."))
         }
     }
 
@@ -433,7 +437,7 @@ public struct BackupService: BackupServicing {
             }
         }
         guard status == Int32(kCCSuccess) else {
-            throw SMPError(.keyOperationFailed, whatHappened: "SMP could not derive the backup key.")
+            throw SMPError(.keyOperationFailed, whatHappened: String(localized: "SMP could not derive the backup key."))
         }
         return SymmetricKey(data: derived)
     }

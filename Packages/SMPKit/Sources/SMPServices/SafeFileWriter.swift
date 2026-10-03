@@ -71,7 +71,9 @@ public struct SafeFileWriter: Sendable {
                 contents: contents,
                 attributes: [.posixPermissions: permissions]
             ) else {
-                throw SMPError(.fileSystem, whatHappened: "SMP could not write \(target.lastPathComponent).")
+                throw SMPError(.fileSystem, whatHappened: String(localized: """
+                    SMP could not write \(target.lastPathComponent).
+                    """))
             }
             let handle = try FileHandle(forWritingTo: temporary)
             try handle.synchronize()
@@ -79,7 +81,7 @@ public struct SafeFileWriter: Sendable {
             guard rename(temporary.path, target.path) == 0 else {
                 throw SMPError(
                     .fileSystem,
-                    whatHappened: "SMP could not replace \(target.lastPathComponent).",
+                    whatHappened: String(localized: "SMP could not replace \(target.lastPathComponent)."),
                     details: String(cString: strerror(errno))
                 )
             }
@@ -127,7 +129,7 @@ final class FileLock {
     init(path: String, timeout: TimeInterval = 5) throws {
         let opened = open(path, O_RDWR | O_CREAT | O_CLOEXEC, 0o600)
         guard opened >= 0 else {
-            throw SMPError(.fileSystem, whatHappened: "SMP could not lock a file for editing.")
+            throw SMPError(.fileSystem, whatHappened: String(localized: "SMP could not lock a file for editing."))
         }
         let deadline = Date().addingTimeInterval(timeout)
         while flock(opened, LOCK_EX | LOCK_NB) != 0 {
@@ -135,8 +137,8 @@ final class FileLock {
                 close(opened)
                 throw SMPError(
                     .fileSystem,
-                    whatHappened: "Another SMP window is editing this file.",
-                    howToFix: "Wait a moment, then try again."
+                    whatHappened: String(localized: "Another SMP window is editing this file."),
+                    howToFix: String(localized: "Wait a moment, then try again.")
                 )
             }
             usleep(50_000)

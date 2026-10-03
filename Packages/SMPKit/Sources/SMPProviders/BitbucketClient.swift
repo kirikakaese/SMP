@@ -12,7 +12,9 @@ struct BitbucketClient: ProviderClient {
         guard let email = account.loginEmail?.trimmingCharacters(in: .whitespaces), !email.isEmpty,
               !email.contains(":")
         else {
-            throw SMPError.invalidArgument("Bitbucket needs the email address of your Atlassian account.")
+            throw SMPError.invalidArgument(String(localized: """
+                Bitbucket needs the email address of your Atlassian account.
+                """))
         }
         let credentials = Data("\(email):\(token)".utf8).base64EncodedString()
         api = try ProviderAPI(

@@ -62,23 +62,25 @@ public enum KeyIssue: Sendable, Hashable {
     public var summary: String {
         switch self {
         case .privateKeyPermissionsTooOpen(let mode):
-            "Private key permissions are too open (\(String(mode, radix: 8))). SSH refuses such keys; use 600."
+            String(localized: """
+                Private key permissions are too open (\(String(mode, radix: 8))). SSH refuses such keys; use 600.
+                """)
         case .publicKeyWritableByOthers(let mode):
-            "Public key can be modified by other users (\(String(mode, radix: 8))). Use 644."
+            String(localized: "Public key can be modified by other users (\(String(mode, radix: 8))). Use 644.")
         case .directoryPermissionsTooOpen(let mode):
-            "The key's folder is accessible by other users (\(String(mode, radix: 8))). Use 700."
+            String(localized: "The key's folder is accessible by other users (\(String(mode, radix: 8))). Use 700.")
         case .notOwnedByCurrentUser:
-            "The key file belongs to another user."
+            String(localized: "The key file belongs to another user.")
         case .noPassphrase:
-            "The private key has no passphrase."
+            String(localized: "The private key has no passphrase.")
         case .weakAlgorithm(let reason):
             reason
         case .orphanedPublicKey:
-            "Only the public key was found; the private key is missing."
+            String(localized: "Only the public key was found; the private key is missing.")
         case .legacyFormat(let format):
-            "The private key uses the legacy \(format.displayName) format."
+            String(localized: "The private key uses the legacy \(format.displayName) format.")
         case .publicKeyMismatch:
-            "The .pub file does not match its private key."
+            String(localized: "The .pub file does not match its private key.")
         }
     }
 }

@@ -51,8 +51,10 @@ struct KnownHostsListView: View {
         ) {
             Button("Remove", role: .destructive) { model.remove(lines: model.selectedLines) }
         } message: {
-            Text("SSH will ask you to verify these hosts again on the next connection. "
-                + "A backup of known_hosts is kept.")
+            Text("""
+                SSH will ask you to verify these hosts again on the next connection. \
+                A backup of known_hosts is kept.
+                """)
         }
         .sheet(item: $model.addRequest) { request in AddHostKeySheet(model: model, initial: request) }
         .sheet(item: $model.changedKeyRequest) { request in ChangedHostKeySheet(model: model, request: request) }
@@ -69,7 +71,7 @@ struct KnownHostRow: View {
                 if entry.isHashed {
                     Image(systemName: "number").foregroundStyle(.secondary).help("Hashed host name")
                 }
-                Text(entry.isHashed ? "Hashed entry" : entry.hostPatterns.joined(separator: ", "))
+                Text(entry.isHashed ? String(localized: "Hashed entry") : entry.hostPatterns.joined(separator: ", "))
                     .fontWeight(.medium)
                     .lineLimit(1)
                 if let marker = entry.marker {
@@ -86,7 +88,7 @@ struct KnownHostRow: View {
     }
 
     private var subtitle: String {
-        let type = entry.publicKey?.algorithm.displayName ?? "Unknown key"
+        let type = entry.publicKey?.algorithm.displayName ?? String(localized: "Unknown key")
         return "\(type) · \(entry.publicKey?.fingerprintSHA256 ?? "")"
     }
 }
@@ -101,7 +103,7 @@ struct KnownHostDetailView: View {
             Form {
                 Section("Host") {
                     if entry.isHashed {
-                        LabeledContent("Host name", value: "Hashed (HashKnownHosts)")
+                        LabeledContent("Host name", value: String(localized: "Hashed (HashKnownHosts)"))
                         Text("Search for a host name to find out whether this entry belongs to it.")
                             .font(.caption).foregroundStyle(.secondary)
                     } else {
@@ -167,11 +169,15 @@ struct AddHostKeySheet: View {
             Section {
                 TextField("Host", text: $host, prompt: Text("server.example.com"))
                 TextField("Port", text: $port)
-                Button(isScanning ? "Fetching…" : "Fetch Host Keys") { Task { await scan() } }
+                Button(isScanning
+                    ? String(localized: "Fetching…")
+                    : String(localized: "Fetch Host Keys")) { Task { await scan() } }
                     .disabled(host.isEmpty || isScanning)
             } footer: {
-                Text("Fetching a key does not prove it belongs to the server. Compare the fingerprint with one "
-                    + "you got through another channel (the server's admin, the provider's documentation).")
+                Text("""
+                    Fetching a key does not prove it belongs to the server. Compare the fingerprint with one \
+                    you got through another channel (the server's admin, the provider's documentation).
+                    """)
                     .foregroundStyle(.secondary)
             }
             if !keys.isEmpty {
@@ -252,9 +258,11 @@ struct ChangedHostKeySheet: View {
                 Label("Stop and verify before you continue.", systemImage: "exclamationmark.shield.fill")
                     .foregroundStyle(.red)
                     .font(.headline)
-                Text("A changed host key is expected after a server is reinstalled, but it can also mean someone "
-                    + "is intercepting your connection. Ask the server's admin (or check the provider's published "
-                    + "fingerprints) for the new key's fingerprint and paste it below.")
+                Text("""
+                    A changed host key is expected after a server is reinstalled, but it can also mean someone \
+                    is intercepting your connection. Ask the server's admin (or check the provider's published \
+                    fingerprints) for the new key's fingerprint and paste it below.
+                    """)
             }
             Section("Stored keys for \(request.host)") {
                 let stored = model.storedEntries(for: request)
@@ -268,7 +276,9 @@ struct ChangedHostKeySheet: View {
                 }
             }
             Section("Keys the server presents now") {
-                Button(isScanning ? "Fetching…" : "Fetch Current Keys") { Task { await scan() } }
+                Button(isScanning
+                    ? String(localized: "Fetching…")
+                    : String(localized: "Fetch Current Keys")) { Task { await scan() } }
                     .disabled(isScanning)
                 ForEach(current, id: \.blob) { key in
                     FingerprintRow(key: key, expected: expected)

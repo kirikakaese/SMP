@@ -11,10 +11,10 @@ public struct AuditFinding: Sendable, Hashable, Identifiable {
 
         public var title: String {
             switch self {
-            case .low: "Low"
-            case .medium: "Medium"
-            case .high: "High"
-            case .critical: "Critical"
+            case .low: String(localized: "Low")
+            case .medium: String(localized: "Medium")
+            case .high: String(localized: "High")
+            case .critical: String(localized: "Critical")
             }
         }
 
@@ -40,11 +40,11 @@ public struct AuditFinding: Sendable, Hashable, Identifiable {
 
         public var title: String {
             switch self {
-            case .setPermissions(_, let mode): "Set permissions to \(String(mode, radix: 8))"
-            case .addPassphrase: "Add a Passphrase…"
-            case .upgradeFormat: "Upgrade Format…"
-            case .rotate: "Rotate Key…"
-            case .removeConfigLine: "Remove the Line…"
+            case .setPermissions(_, let mode): String(localized: "Set permissions to \(String(mode, radix: 8))")
+            case .addPassphrase: String(localized: "Add a Passphrase…")
+            case .upgradeFormat: String(localized: "Upgrade Format…")
+            case .rotate: String(localized: "Rotate Key…")
+            case .removeConfigLine: String(localized: "Remove the Line…")
             }
         }
     }
@@ -119,32 +119,36 @@ public enum AuditEngine {
             guard let path = key.privateKeyFile?.url.path else { return nil }
             return AuditFinding(
                 rule: "private-key-permissions", severity: .critical,
-                title: "Private key readable by others",
-                detail: "Mode \(String(mode, radix: 8)). Other users could copy the key, "
-                    + "and ssh refuses to use it.",
+                title: String(localized: "Private key readable by others"),
+                detail: String(localized: """
+                    Mode \(String(mode, radix: 8)). Other users could copy the key, \
+                    and ssh refuses to use it.
+                    """),
                 subject: key.name, keyID: key.id, fix: .setPermissions(path: path, mode: 0o600)
             )
         case .publicKeyWritableByOthers:
             guard let path = key.publicKeyFile?.url.path else { return nil }
             return AuditFinding(
                 rule: "public-key-permissions", severity: .medium,
-                title: "Public key writable by others",
-                detail: "Someone could swap it for their own key before you upload it somewhere.",
+                title: String(localized: "Public key writable by others"),
+                detail: String(localized: "Someone could swap it for their own key before you upload it somewhere."),
                 subject: key.name, keyID: key.id, fix: .setPermissions(path: path, mode: 0o644)
             )
         case .directoryPermissionsTooOpen:
             let folder = key.primaryFile.url.deletingLastPathComponent().path
             return AuditFinding(
                 rule: "folder-permissions", severity: .high,
-                title: "Key folder accessible by others",
-                detail: "Other users can list or change files in \(folder).",
+                title: String(localized: "Key folder accessible by others"),
+                detail: String(localized: "Other users can list or change files in \(folder)."),
                 subject: folder, keyID: nil, fix: .setPermissions(path: folder, mode: 0o700)
             )
         case .notOwnedByCurrentUser:
             return AuditFinding(
                 rule: "not-owned", severity: .high,
-                title: "Key file owned by another user",
-                detail: "Whoever owns the file can replace or read it. Copy the key into your own folder.",
+                title: String(localized: "Key file owned by another user"),
+                detail: String(localized: """
+                    Whoever owns the file can replace or read it. Copy the key into your own folder.
+                    """),
                 subject: key.name, keyID: key.id, fix: nil
             )
         default:
@@ -157,8 +161,8 @@ public enum AuditEngine {
         case .noPassphrase:
             return AuditFinding(
                 rule: "no-passphrase", severity: .high,
-                title: "Private key without passphrase",
-                detail: "Anyone who gets a copy of the file can use it immediately.",
+                title: String(localized: "Private key without passphrase"),
+                detail: String(localized: "Anyone who gets a copy of the file can use it immediately."),
                 subject: key.name, keyID: key.id, fix: .addPassphrase(keyID: key.id)
             )
         case .weakAlgorithm(let reason):
@@ -172,15 +176,17 @@ public enum AuditEngine {
         case .legacyFormat:
             return AuditFinding(
                 rule: "legacy-format", severity: .low,
-                title: "Legacy key file format",
-                detail: "The OpenSSH format protects passphrases with a stronger key derivation.",
+                title: String(localized: "Legacy key file format"),
+                detail: String(localized: "The OpenSSH format protects passphrases with a stronger key derivation."),
                 subject: key.name, keyID: key.id, fix: .upgradeFormat(keyID: key.id)
             )
         case .publicKeyMismatch:
             return AuditFinding(
                 rule: "public-key-mismatch", severity: .medium,
-                title: "Public key does not match the private key",
-                detail: "You might upload or trust the wrong key. Regenerate the .pub file from the private key.",
+                title: String(localized: "Public key does not match the private key"),
+                detail: String(localized: """
+                    You might upload or trust the wrong key. Regenerate the .pub file from the private key.
+                    """),
                 subject: key.name, keyID: key.id, fix: nil
             )
         default:
@@ -194,22 +200,22 @@ public enum AuditEngine {
         if let expires = metadata?.expiresAt {
             if expires <= now {
                 result.append(AuditFinding(
-                    rule: "expired", severity: .high, title: "Key past its expiry date",
-                    detail: "You marked this key to expire on \(Self.day(expires)).",
+                    rule: "expired", severity: .high, title: String(localized: "Key past its expiry date"),
+                    detail: String(localized: "You marked this key to expire on \(Self.day(expires))."),
                     subject: key.name, keyID: key.id, fix: canRotate ? .rotate(keyID: key.id) : nil
                 ))
             } else if expires.timeIntervalSince(now) <= warningPeriod {
                 result.append(AuditFinding(
-                    rule: "expiring", severity: .medium, title: "Key expires soon",
-                    detail: "It expires on \(Self.day(expires)).",
+                    rule: "expiring", severity: .medium, title: String(localized: "Key expires soon"),
+                    detail: String(localized: "It expires on \(Self.day(expires))."),
                     subject: key.name, keyID: key.id, fix: canRotate ? .rotate(keyID: key.id) : nil
                 ))
             }
         }
         if let rotate = metadata?.rotateAt, rotate <= now {
             result.append(AuditFinding(
-                rule: "rotation-due", severity: .medium, title: "Key rotation due",
-                detail: "You planned to rotate it on \(Self.day(rotate)).",
+                rule: "rotation-due", severity: .medium, title: String(localized: "Key rotation due"),
+                detail: String(localized: "You planned to rotate it on \(Self.day(rotate))."),
                 subject: key.name, keyID: key.id, fix: canRotate ? .rotate(keyID: key.id) : nil
             ))
         }
@@ -234,30 +240,36 @@ public enum AuditEngine {
             case "forwardagent" where value == "yes" && appliesBroadly:
                 return AuditFinding(
                     rule: "forward-agent-everywhere", severity: .high,
-                    title: "Agent forwarding for many hosts",
-                    detail: "Anyone with root on one of these servers can use your keys while you are connected. "
-                        + "Enable ForwardAgent only for hosts that need it.",
+                    title: String(localized: "Agent forwarding for many hosts"),
+                    detail: String(localized: """
+                        Anyone with root on one of these servers can use your keys while you are connected. \
+                        Enable ForwardAgent only for hosts that need it.
+                        """),
                     subject: subject, keyID: nil, fix: fix
                 )
             case "stricthostkeychecking" where value == "no" || value == "off":
                 return AuditFinding(
                     rule: "no-host-key-checking", severity: .high,
-                    title: "Host key checking turned off",
-                    detail: "ssh will not notice if someone impersonates the server.",
+                    title: String(localized: "Host key checking turned off"),
+                    detail: String(localized: "ssh will not notice if someone impersonates the server."),
                     subject: subject, keyID: nil, fix: fix
                 )
             case "userknownhostsfile" where value == "/dev/null":
                 return AuditFinding(
                     rule: "known-hosts-discarded", severity: .high,
-                    title: "Known host keys are thrown away",
-                    detail: "With /dev/null, every server is unknown, so impersonation goes unnoticed.",
+                    title: String(localized: "Known host keys are thrown away"),
+                    detail: String(localized: """
+                        With /dev/null, every server is unknown, so impersonation goes unnoticed.
+                        """),
                     subject: subject, keyID: nil, fix: fix
                 )
             case "forwardx11trusted" where value == "yes":
                 return AuditFinding(
                     rule: "trusted-x11", severity: .medium,
-                    title: "Trusted X11 forwarding",
-                    detail: "Remote programs get full access to your X11 display, including keystrokes.",
+                    title: String(localized: "Trusted X11 forwarding"),
+                    detail: String(localized: """
+                        Remote programs get full access to your X11 display, including keystrokes.
+                        """),
                     subject: subject, keyID: nil, fix: fix
                 )
             default:
@@ -283,11 +295,13 @@ public struct AuditFixer: AuditFixing {
             return url.path == rootPath || url.path.hasPrefix(rootPath + "/")
         }
         guard inside else {
-            throw SMPError.invalidArgument("SMP only changes permissions inside your key folders.")
+            throw SMPError.invalidArgument(String(localized: "SMP only changes permissions inside your key folders."))
         }
         let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
         guard attributes[.type] as? FileAttributeType != .typeSymbolicLink else {
-            throw SMPError.invalidArgument("\(url.lastPathComponent) is a symbolic link; fix its target instead.")
+            throw SMPError.invalidArgument(String(localized: """
+                \(url.lastPathComponent) is a symbolic link; fix its target instead.
+                """))
         }
         try FileManager.default.setAttributes([.posixPermissions: NSNumber(value: mode)], ofItemAtPath: url.path)
     }
