@@ -51,6 +51,12 @@ public struct SSHAgentSignRequest: Sendable, Hashable {
     public let keyBlob: Data
     public let data: Data
     public let flags: UInt32
+
+    public init(keyBlob: Data, data: Data, flags: UInt32) {
+        self.keyBlob = keyBlob
+        self.data = data
+        self.flags = flags
+    }
 }
 
 /// Encodes and decodes agent protocol messages. A message is `uint32 length || byte type || body`;
