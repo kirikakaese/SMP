@@ -61,7 +61,10 @@ struct KeyListView: View {
             ToolbarItem {
                 Menu {
                     Button("New Key…") { model.activeSheet = .newKey }
+                    Button("New Secure Enclave Key…") { model.activeSheet = .newSecureEnclaveKey }
+                    Divider()
                     Button("Import Key…") { model.activeSheet = .importKey(nil) }
+                    Button("Download Keys from Security Key…") { model.activeSheet = .downloadResidentKeys }
                 } label: {
                     Label("Add Key", systemImage: "plus")
                 } primaryAction: {
@@ -223,6 +226,21 @@ struct KeyEditMenuItems: View {
     let item: LibraryItem
 
     var body: some View {
+        if item.isSecureEnclave {
+            secureEnclaveItems
+        } else {
+            fileKeyItems
+        }
+    }
+
+    /// The private half of a Secure Enclave key cannot be renamed, re-encrypted or exported.
+    @ViewBuilder private var secureEnclaveItems: some View {
+        Button("Show QR Code") { model.activeSheet = .qrCode(item) }
+        Button("Save Public Key…") { KeyActions.savePublicKey(item, model: model) }
+        Button("Deploy to Server…") { model.activeSheet = .deploy(item) }
+    }
+
+    @ViewBuilder private var fileKeyItems: some View {
         let hasPrivateKey = item.key.privateKeyFile != nil
         let format = item.key.privateKeyInfo?.format
         Button("Rename…") { model.activeSheet = .rename(item) }
