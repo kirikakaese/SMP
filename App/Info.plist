@@ -33,5 +33,7 @@
 	<string>Copyright © 2026 kirikakaese. MIT License.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>SMP asks Terminal or iTerm2 to open a window and run the ssh command for the host you chose. It sends nothing else.</string>
 </dict>
 </plist>
