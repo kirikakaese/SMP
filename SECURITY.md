@@ -55,6 +55,8 @@ Until 1.0, only the latest release receives security fixes.
 | Token theft from disk | Provider tokens are stored only in the Keychain (`…ThisDeviceOnly`, never synchronized) and wiped from memory after each request. |
 | Token sent to the wrong server | HTTPS only; an ephemeral session without cookies or cache; redirects are refused and pagination links to other hosts are rejected. |
 | Malicious provider responses | Responses are size-capped and decoded into typed models; keys are parsed and fingerprinted locally before they are matched. |
+| Losing access during a key rotation | The new key is installed and tested with a real login before the old one is removed, and removal needs an explicit confirmation. Progress is saved after every step; the old key is archived, not deleted. |
+| Unwanted changes to git settings | Commit signing setup writes only the global git config, through `git config`, after listing every change. |
 | Unintended removal of keys on a provider | Removal asks for Touch ID or the login password and shows the local key and hosts that depend on it. |
 
 ### Out of scope

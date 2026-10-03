@@ -22,11 +22,35 @@ final class AgentController {
         accessGroup: SecureEnclaveKeyStore.bundleAccessGroup()
     )
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
+    @ObservationIgnored private var reminderTimer: Timer?
+    private static let shownRemindersKey = "reminders.shown"
 
     init() {
         start()
         observeLockAndSleep()
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { _, _ in }
+        checkReminders()
+        // Expiry and rotation reminders are checked every six hours while the helper runs.
+        reminderTimer = Timer.scheduledTimer(withTimeInterval: 6 * 3600, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.checkReminders() }
+        }
+    }
+
+    /// Shows expiry and rotation reminders the app scheduled, each one once.
+    func checkReminders() {
+        guard let url = try? ReminderSchedule.fileURL() else { return }
+        let defaults = UserDefaults.standard
+        var shown = Set(defaults.stringArray(forKey: Self.shownRemindersKey) ?? [])
+        for reminder in ReminderSchedule.load(from: url).dueReminders(alreadyShown: shown) {
+            let content = UNMutableNotificationContent()
+            content.title = reminder.title
+            content.body = reminder.body
+            UNUserNotificationCenter.current().add(
+                UNNotificationRequest(identifier: reminder.id, content: content, trigger: nil)
+            )
+            shown.insert(reminder.id)
+        }
+        defaults.set(Array(shown), forKey: Self.shownRemindersKey)
     }
 
     func start() {

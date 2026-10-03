@@ -26,6 +26,8 @@ public struct ServiceContainer: Sendable {
     public var secureEnclave: any SecureEnclaveKeyStoring
     public var agentHelper: any AgentHelperControlling
     public var providers: any ProviderServicing
+    public var gitSigning: any GitSigningServicing
+    public var auditFixer: any AuditFixing
     /// Set when a service could not start normally (for example, the metadata store could not be
     /// opened and an in-memory store is used instead). Shown to the user.
     public var startupIssue: SMPError?
@@ -50,6 +52,8 @@ public struct ServiceContainer: Sendable {
         secureEnclave: any SecureEnclaveKeyStoring,
         agentHelper: any AgentHelperControlling,
         providers: any ProviderServicing,
+        gitSigning: any GitSigningServicing,
+        auditFixer: any AuditFixing,
         startupIssue: SMPError? = nil
     ) {
         self.environment = environment
@@ -71,6 +75,8 @@ public struct ServiceContainer: Sendable {
         self.secureEnclave = secureEnclave
         self.agentHelper = agentHelper
         self.providers = providers
+        self.gitSigning = gitSigning
+        self.auditFixer = auditFixer
         self.startupIssue = startupIssue
     }
 
@@ -112,6 +118,8 @@ public struct ServiceContainer: Sendable {
             secureEnclave: secureEnclave,
             agentHelper: agentHelper ?? FakeAgentHelper(),
             providers: ProviderService(keychain: keychain, metadata: metadata, factory: providerClients),
+            gitSigning: GitSigningService(runner: runner, environment: environment, writer: writer),
+            auditFixer: AuditFixer(),
             startupIssue: startupIssue
         )
     }

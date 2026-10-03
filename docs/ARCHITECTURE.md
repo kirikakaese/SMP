@@ -158,6 +158,29 @@ temporary file → atomic rename. Symlinked configs (dotfile managers) are writt
 - **Removing** a key from a provider needs Touch ID or the login password and lists the local key and
   the `~/.ssh/config` hosts that use it. Removing an account from SMP only deletes its token and cache.
 
+## Security audit, rotation, commit signing and reminders
+
+- **Audit** (`AuditEngine`, pure): turns key discovery issues, expiry/rotation dates and risky
+  `~/.ssh/config` settings (ForwardAgent for `Host *`, StrictHostKeyChecking no, UserKnownHostsFile
+  /dev/null, ForwardX11Trusted) into findings with a severity and an optional one-click fix. The score
+  is 100 minus a weight per finding. Fixes: file modes (inside key folders only, never through
+  symlinks), the passphrase/format sheets, the rotation assistant, or removing a config line through
+  the usual diff review.
+- **Rotation** (`RotationService` + `RotationJob`, persisted in the metadata database after every
+  step): plan (provider accounts holding the key, `Host` aliases whose `IdentityFile` uses it) →
+  create the new key → upload/install it (connecting with the old key) → rewrite `IdentityFile`
+  lines → test logins with only the new key (`ssh -T git@<provider>` for providers) → after an
+  explicit confirmation, remove the old key from providers and servers and archive it locally.
+  Each target records its own result; failed targets can be retried or skipped.
+- **Commit signing** (`GitSigningService`): reads and writes only the global git config through
+  `/usr/bin/git config --global` (`gpg.format ssh`, `user.signingkey`, `commit.gpgsign`, optional
+  `tag.gpgsign`, `gpg.ssh.allowedSignersFile`, `user.email` if unset) and adds the key to
+  `~/.ssh/allowed_signers`. Every change is listed before it is applied.
+- **Reminders:** keys can carry a rotation date (`KeyMetadata.rotateAt`) next to the expiry date. The
+  app writes `reminders.json` (key names, fingerprints, dates; mode 0600) to Application Support;
+  SMP Agent checks it at launch and every six hours and shows each reminder once, 14 days and 1 day
+  before and on the date.
+
 ## Archive
 
 `ArchiveService` stores archived keys in `Application Support/Archive`: a public JSON manifest
@@ -231,8 +254,8 @@ release. The metadata store never contains secrets.
 | `ProviderAccount` | id, provider kind, server URL, username, login email (Bitbucket), last sync; token in the Keychain under the account id |
 | `RemoteKey` (cache) | account, remote id, title, public key line, fingerprint, usages (authentication/signing), created/last used/expires |
 | `Deployment` | key record, target (provider account or `user@host:port`), remote key id, usage (auth/signing), deployed/verified dates, status |
-| `RotationJob` | id, old key, new key, state (generated → deployed → configUpdated → verified → retired), step log, timestamps; resumable |
-| `AuditSnapshot` | date, score, findings (rule id, severity, subject, fix available) |
+| `RotationJob` | id, old key (name, fingerprint, paths), new key (name, path, public key), targets with per-target deployed/verified/retired/skipped/error, completed steps, log, timestamps; stored as JSON, resumable |
+| Audit | computed on demand (findings: rule, severity, subject, fix); not stored |
 | Settings | `UserDefaults`: watched folders, terminal app, lock policy, backup schedule |
 
 ## Third-party dependencies

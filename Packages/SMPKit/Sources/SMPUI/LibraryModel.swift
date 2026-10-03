@@ -10,6 +10,7 @@ public enum SidebarSelection: Hashable, Sendable {
     case group(Int64)
     case ssh(SSHSection)
     case provider(UUID)
+    case security(SecuritySection)
 }
 
 /// The SSH sections below the key library.
@@ -132,9 +133,13 @@ public final class LibraryModel {
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var watchTask: Task<Void, Never>?
 
-    public init(services: ServiceContainer, defaults: UserDefaults = .standard) {
+    /// Where expiry and rotation dates are shared with SMP Agent; `nil` (tests, previews) writes nothing.
+    @ObservationIgnored let reminderScheduleURL: URL?
+
+    public init(services: ServiceContainer, defaults: UserDefaults = .standard, reminderScheduleURL: URL? = nil) {
         self.services = services
         self.defaults = defaults
+        self.reminderScheduleURL = reminderScheduleURL
         self.additionalFolders = KeyFolderSettings.additionalFolders(in: defaults)
         self.lastError = services.startupIssue
     }
@@ -214,6 +219,7 @@ public final class LibraryModel {
                 )
             }
             items = Self.attachSecureEnclaveKeys(secureEnclaveKeys(), to: onDisk) + inArchive
+            writeReminderSchedule()
             selectedKeyIDs.formIntersection(items.map(\.id))
         } catch {
             report(error, whatHappened: "SMP could not scan your key folders.")
@@ -261,6 +267,35 @@ public final class LibraryModel {
 
     public func setExpiry(_ date: Date?, for item: LibraryItem) {
         updateMetadata(for: item) { $0.expiresAt = date }
+    }
+
+    public func setRotationDate(_ date: Date?, for item: LibraryItem) {
+        updateMetadata(for: item) { $0.rotateAt = date }
+    }
+
+    /// The expiry and rotation dates of keys on disk, for SMP Agent's reminders.
+    nonisolated static func reminderSchedule(for items: [LibraryItem]) -> ReminderSchedule {
+        var entries: [ReminderSchedule.Entry] = []
+        var seen = Set<String>()
+        for item in items where !item.isArchived {
+            guard let fingerprint = item.key.fingerprint, seen.insert(fingerprint).inserted else { continue }
+            if let date = item.metadata?.expiresAt {
+                entries.append(.init(fingerprint: fingerprint, keyName: item.displayName, kind: .expiry, date: date))
+            }
+            if let date = item.metadata?.rotateAt {
+                entries.append(.init(fingerprint: fingerprint, keyName: item.displayName, kind: .rotation, date: date))
+            }
+        }
+        return ReminderSchedule(entries: entries)
+    }
+
+    func writeReminderSchedule() {
+        guard let reminderScheduleURL else { return }
+        do {
+            try Self.reminderSchedule(for: items).save(to: reminderScheduleURL)
+        } catch {
+            Log.app.error("Could not write the reminder schedule")
+        }
     }
 
     public func toggleTag(_ tagID: Int64, for item: LibraryItem) {
@@ -345,6 +380,7 @@ public final class LibraryModel {
         perform("SMP could not save your changes to this key.") {
             try services.metadata.save(metadata)
             updateItems(withFingerprint: fingerprint) { $0.metadata = metadata }
+            writeReminderSchedule()
         }
     }
 
@@ -403,7 +439,7 @@ public final class LibraryModel {
             return item.tagIDs.contains(id)
         case .group(let id):
             return item.groupIDs.contains(id)
-        case .ssh, .provider:
+        case .ssh, .provider, .security:
             return false
         case nil:
             return !item.isArchived

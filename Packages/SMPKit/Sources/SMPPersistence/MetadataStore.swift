@@ -48,6 +48,11 @@ public protocol MetadataStoring: Sendable {
     func providerKeys() throws -> [RemoteKey]
     /// Replaces the cached keys of one account (after a refresh).
     func replaceProviderKeys(_ keys: [RemoteKey], for accountID: UUID) throws
+
+    // Key rotations (resumable)
+    func rotationJobs() throws -> [RotationJob]
+    func saveRotationJob(_ job: RotationJob) throws
+    func deleteRotationJob(id: UUID) throws
 }
 
 /// `MetadataStoring` backed by SQLite through GRDB.
@@ -144,6 +149,16 @@ public final class GRDBMetadataStore: MetadataStoring, Sendable {
                 table.column("accountID", .text).notNull()
                     .references(ProviderAccountRecord.databaseTableName, onDelete: .cascade)
                 table.column("fingerprint", .text).indexed()
+                table.column("data", .blob).notNull()
+            }
+        }
+        migrator.registerMigration("v4-rotation") { db in
+            try db.alter(table: KeyMetadataRecord.databaseTableName) { table in
+                table.add(column: "rotateAt", .datetime)
+            }
+            try db.create(table: RotationJobRecord.databaseTableName) { table in
+                table.primaryKey("id", .text)
+                table.column("updatedAt", .datetime).notNull()
                 table.column("data", .blob).notNull()
             }
         }
@@ -369,6 +384,7 @@ struct KeyMetadataRecord: Codable, FetchableRecord, PersistableRecord {
     var notes: String
     var isFavorite: Bool
     var expiresAt: Date?
+    var rotateAt: Date?
     var archivedAt: Date?
     var firstSeenAt: Date
     var lastSeenPath: String?
@@ -379,6 +395,7 @@ struct KeyMetadataRecord: Codable, FetchableRecord, PersistableRecord {
         notes = model.notes
         isFavorite = model.isFavorite
         expiresAt = model.expiresAt
+        rotateAt = model.rotateAt
         archivedAt = model.archivedAt
         firstSeenAt = model.firstSeenAt
         lastSeenPath = model.lastSeenPath
@@ -391,6 +408,7 @@ struct KeyMetadataRecord: Codable, FetchableRecord, PersistableRecord {
             notes: notes,
             isFavorite: isFavorite,
             expiresAt: expiresAt,
+            rotateAt: rotateAt,
             archivedAt: archivedAt,
             firstSeenAt: firstSeenAt,
             lastSeenPath: lastSeenPath

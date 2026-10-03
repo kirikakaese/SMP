@@ -25,6 +25,7 @@ extension TagColor {
 struct SidebarView: View {
     @Bindable var model: LibraryModel
     let providers: ProvidersModel
+    let security: SecurityModel
 
     @State private var isAddingTag = false
     @State private var newGroupName = ""
@@ -39,6 +40,13 @@ struct SidebarView: View {
                     Label(item.title, systemImage: item.systemImage)
                         .badge(model.count(for: item))
                         .tag(SidebarSelection.library(item))
+                }
+            }
+            Section("Security") {
+                ForEach(SecuritySection.allCases) { section in
+                    Label(section.title, systemImage: section.systemImage)
+                        .badge(section == .audit ? security.importantCount : 0)
+                        .tag(SidebarSelection.security(section))
                 }
             }
             Section("SSH") {

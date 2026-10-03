@@ -29,6 +29,10 @@ struct LibrarySheetHost: View {
             QRCodeSheet(item: item)
         case .deploy(let item):
             DeployKeySheet(library: model, item: item)
+        case .rotate(let item):
+            RotationSheet(library: model, start: .key(item))
+        case .resumeRotation(let job):
+            RotationSheet(library: model, start: .job(job))
         }
     }
 }
