@@ -2,14 +2,16 @@ import SMPCore
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// The Settings window.
-public struct SettingsView: View {
+/// The Settings window. The app adds tabs SMPKit doesn't know about (Updates) through `extraTabs`.
+public struct SettingsView<ExtraTabs: View>: View {
     private let library: LibraryModel
     private let appLock: AppLockModel
+    private let extraTabs: ExtraTabs
 
-    public init(library: LibraryModel, appLock: AppLockModel) {
+    public init(library: LibraryModel, appLock: AppLockModel, @ViewBuilder extraTabs: () -> ExtraTabs) {
         self.library = library
         self.appLock = appLock
+        self.extraTabs = extraTabs()
     }
 
     public var body: some View {
@@ -20,8 +22,15 @@ public struct SettingsView: View {
                 .tabItem { Label("App Lock", systemImage: "lock") }
             KeyFoldersSettingsView(library: library)
                 .tabItem { Label("Key Folders", systemImage: "folder") }
+            extraTabs
         }
         .frame(width: 520, height: 340)
+    }
+}
+
+extension SettingsView where ExtraTabs == EmptyView {
+    public init(library: LibraryModel, appLock: AppLockModel) {
+        self.init(library: library, appLock: appLock) { EmptyView() }
     }
 }
 

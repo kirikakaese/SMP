@@ -41,8 +41,22 @@ first-party Apple utility: fast, safe and keyboard-friendly.
 
 ## Install
 
-Signed and notarized releases (DMG, Sparkle auto-updates and a Homebrew cask) will be published
-once milestone 9 is complete.
+Download the latest `SMP-<version>.dmg` from
+[Releases](https://github.com/kirikakaese/SMP/releases) and drag SMP to Applications, or use
+Homebrew:
+
+```sh
+brew install --cask kirikakaese/tap/smp
+```
+
+**First launch:** SMP is ad-hoc signed and not notarized (that needs a paid Apple Developer
+account), so macOS blocks it the first time. Open **System Settings → Privacy & Security**, scroll
+to the message about SMP and click **Open Anyway**. You only do this once. Each release lists
+SHA-256 checksums in `SHA256SUMS.txt` if you want to check your download.
+
+**Updates:** SMP updates itself (Settings → Updates: automatic checks, how often, automatic
+installation, beta versions). Updates are only installed if they carry a valid EdDSA signature
+from SMP's release key.
 
 ## Build from source
 
@@ -107,8 +121,8 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for details.
   environment variables.
 - There is no telemetry. The only network requests go to the provider servers you add, when SMP
   launches, when you open an account or when you upload or remove a key.
-- The app uses the Hardened Runtime and is intentionally not sandboxed, so it can read `~/.ssh`
-  and reach the `ssh-agent` socket.
+- The app is intentionally not sandboxed, so it can read `~/.ssh` and reach the `ssh-agent`
+  socket. Release builds are ad-hoc signed (see SECURITY.md for what that means).
 
 See [SECURITY.md](SECURITY.md) for the threat model and how to report a vulnerability.
 
