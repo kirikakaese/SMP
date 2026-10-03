@@ -32,6 +32,10 @@ settings:
 packages:
   SMPKit:
     path: Packages/SMPKit
+  # Auto-updates. Updates are verified with SMP's EdDSA key before they are installed.
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.6.0"
 
 targets:
   SMP:
@@ -48,6 +52,7 @@ targets:
         product: SMPServices
       - package: SMPKit
         product: SMPUI
+      - package: Sparkle
       # The agent helper is embedded as a login item and registered with SMAppService.
       - target: SMPAgentHelper
         embed: true

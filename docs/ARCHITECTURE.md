@@ -320,6 +320,28 @@ release. The metadata store never contains secrets.
 
 - **GRDB** (SQLite toolkit, `SMPPersistence`): explicit, versioned migrations, mature, and works
   with Swift 6 strict concurrency. Chosen over SwiftData. Stores metadata only.
-- Planned: Sparkle 2 (updates, milestone 9).
+- **Sparkle 2** (updates, app target only): the standard for updating apps outside the App Store;
+  verifies EdDSA signatures and replaces the app bundle (including SMP Agent) atomically.
+
+## Releases and updates
+
+- **Release workflow** (`.github/workflows/release.yml`, on tags `vX.Y.Z` or `vX.Y.Z-beta.N`):
+  builds a universal, ad-hoc signed app with `MARKETING_VERSION` from the tag and
+  `CURRENT_PROJECT_VERSION` = commit count (Sparkle compares the build number), verifies the
+  signature, architectures, version and update key, then packages `SMP-<version>.zip` (for
+  Sparkle) and `SMP-<version>.dmg` (for people and Homebrew) with SHA-256 checksums.
+- **Appcast:** `sign_update` (from the latest Sparkle release) signs the zip with the EdDSA key
+  from the `SPARKLE_PRIVATE_KEY` secret; `scripts/appcast.py` adds the entry to the previous
+  `appcast.xml` (newest 20 kept) and the workflow attaches it to the release. The app reads
+  `releases/latest/download/appcast.xml`. Betas are prereleases with
+  `<sparkle:channel>beta</sparkle:channel>`; their appcast is also uploaded to the latest stable
+  release so opted-in users see them.
+- **Homebrew:** for stable releases the workflow writes `Casks/smp.rb` (from
+  `scripts/smp.rb.template`) into `kirikakaese/homebrew-tap` with the DMG's SHA-256, using the
+  `TAP_TOKEN` secret. `auto_updates true` leaves updating to Sparkle.
+- **App:** `UpdateModel` (`App/Sources/Updates.swift`) wraps `SPUStandardUpdaterController`.
+  Settings → Updates exposes automatic checks, the interval (daily, weekly, monthly), automatic
+  download and install, the beta channel (`allowedChannels`), the last check and Check Now; the
+  app menu has Check for Updates…. Builds without `SUPublicEDKey` (local builds) never check.
 
 Any other dependency must be justified in the pull request that adds it.

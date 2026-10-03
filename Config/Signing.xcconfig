@@ -1,8 +1,12 @@
-// Signing settings shared by every target. Your own team lives in Config/Local.xcconfig,
-// which git ignores; copy Config/Local.xcconfig.example to create it. Without it the
-// project still generates, and an unsigned build works (CODE_SIGNING_ALLOWED=NO), but
-// Secure Enclave keys and SMP Agent need a signed build.
+// Build settings shared by every target. Your own values live in Config/Local.xcconfig,
+// which git ignores; copy Config/Local.xcconfig.example to create it.
+//
+// DEVELOPMENT_TEAM: optional. Without a team, Xcode signs ad-hoc ("Sign to Run Locally"),
+// which is also how releases are built.
+// SPARKLE_PUBLIC_KEY: the EdDSA public key that update archives must be signed with. Empty in
+// local builds, which therefore never check for updates; release builds get it from CI.
 
 DEVELOPMENT_TEAM =
+SPARKLE_PUBLIC_KEY =
 
 #include? "Local.xcconfig"
