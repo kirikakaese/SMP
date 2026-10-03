@@ -8,7 +8,9 @@ first-party Apple utility: fast, safe and keyboard-friendly.
 > PuTTY conversion, export, rename, passphrase and comment changes, format upgrade, archive with
 > undo, and safe permanent deletion) and the host tools (`~/.ssh/config` editor with diff review,
 > connection tests, connect in your terminal, `known_hosts` manager, tunnels, deploying keys to
-> servers) work; the remaining features below are planned.
+> servers) and the agent (Secure Enclave keys with Touch ID, a proxy to the macOS ssh-agent,
+> menu bar activity, resident keys from FIDO2 security keys) work; the remaining features below are
+> planned.
 
 ## Features (planned)
 
@@ -54,6 +56,10 @@ open SMP.xcodeproj
 ```
 
 The Xcode project is generated from `project.yml` and is not checked in.
+
+Secure Enclave keys and SMP Agent need a signed build: select your development team in Xcode
+(the shared Keychain group needs a provisioning profile). Unsigned builds run, but cannot create or
+use Secure Enclave keys.
 
 ## Project layout
 
