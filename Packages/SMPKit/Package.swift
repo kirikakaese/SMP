@@ -11,6 +11,7 @@ let package = Package(
         .library(name: "SMPServices", targets: ["SMPServices"]),
         .library(name: "SMPUI", targets: ["SMPUI"]),
         .library(name: "SMPAgent", targets: ["SMPAgent"]),
+        .library(name: "SMPProviders", targets: ["SMPProviders"]),
     ],
     dependencies: [
         // SQLite toolkit for the metadata store (tags, groups, notes). Chosen over SwiftData for
@@ -25,7 +26,9 @@ let package = Package(
         // Metadata store (GRDB/SQLite). Metadata only: no secrets.
         .target(name: "SMPPersistence", dependencies: ["SMPCore", .product(name: "GRDB", package: "GRDB.swift")]),
         // Protocol-based services with live and in-memory implementations.
-        .target(name: "SMPServices", dependencies: ["SMPCore", "SMPSSH", "SMPPersistence"]),
+        // HTTPS clients for GitHub, GitLab, Bitbucket and Gitea/Forgejo. Tokens are passed in, never stored.
+        .target(name: "SMPProviders", dependencies: ["SMPCore", "SMPSSH"]),
+        .target(name: "SMPServices", dependencies: ["SMPCore", "SMPSSH", "SMPPersistence", "SMPProviders"]),
         // SwiftUI feature views. Depends on service protocols only.
         .target(name: "SMPUI", dependencies: ["SMPCore", "SMPServices"]),
         // The built-in SSH agent (Secure Enclave keys + proxy to the system agent). Runs in the
@@ -37,8 +40,9 @@ let package = Package(
         .testTarget(name: "SMPCoreTests", dependencies: ["SMPCore"]),
         .testTarget(name: "SMPSSHTests", dependencies: ["SMPSSH", "SMPTestFixtures"]),
         .testTarget(name: "SMPPersistenceTests", dependencies: ["SMPPersistence"]),
-        .testTarget(name: "SMPServicesTests", dependencies: ["SMPServices", "SMPTestFixtures"]),
-        .testTarget(name: "SMPUITests", dependencies: ["SMPUI", "SMPTestFixtures"]),
+        .testTarget(name: "SMPServicesTests", dependencies: ["SMPServices", "SMPProviders", "SMPTestFixtures"]),
+        .testTarget(name: "SMPUITests", dependencies: ["SMPUI", "SMPProviders", "SMPTestFixtures"]),
+        .testTarget(name: "SMPProvidersTests", dependencies: ["SMPProviders", "SMPTestFixtures"]),
         .testTarget(name: "SMPAgentTests", dependencies: ["SMPAgent", "SMPServices", "SMPTestFixtures"]),
     ]
 )
