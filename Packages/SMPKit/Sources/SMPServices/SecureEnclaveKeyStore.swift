@@ -34,24 +34,16 @@ extension SecureEnclaveKeyInfo {
     }
 }
 
-/// Keeps Secure Enclave keys as Keychain items: the device-bound key reference is the item's
-/// secret, `SecureEnclaveKeyInfo` (public data only) its generic attribute. Items use the data
-/// protection keychain and, in signed builds, an access group shared with the agent helper.
+/// Keeps Secure Enclave keys as items in the login keychain: the device-bound key reference is
+/// the item's secret, `SecureEnclaveKeyInfo` (public data only) its generic attribute.
+///
+/// Only SMP Agent uses this store. The login keychain needs no entitlement, so ad-hoc signed
+/// builds work; macOS ties each item to the agent that created it and asks the user before any
+/// other program (or an updated agent with a new signature) reads the key reference.
 public struct SecureEnclaveKeyStore: SecureEnclaveKeyStoring {
     public static let service = "com.kirikakaese.smp.secure-enclave"
-    private let accessGroup: String?
 
-    public init(accessGroup: String?) {
-        self.accessGroup = accessGroup
-    }
-
-    /// Reads the shared access group from the running app's Info.plist (`SMPKeychainAccessGroup`).
-    public static func bundleAccessGroup(_ bundle: Bundle = .main) -> String? {
-        guard let value = bundle.object(forInfoDictionaryKey: "SMPKeychainAccessGroup") as? String,
-              !value.isEmpty, !value.hasPrefix("$(")
-        else { return nil }
-        return value
-    }
+    public init() {}
 
     public var isAvailable: Bool { SecureEnclave.isAvailable }
 
@@ -96,8 +88,7 @@ public struct SecureEnclaveKeyStore: SecureEnclaveKeyStoring {
             throw SMPError(
                 .keyOperationFailed,
                 whatHappened: "The Secure Enclave could not create a key.",
-                howToFix: "Secure Enclave keys need a signed copy of SMP. Builds you compile yourself "
-                    + "without a development team cannot use the Secure Enclave.",
+                howToFix: "Try again. If it keeps failing, restart SMP Agent from its menu bar icon.",
                 details: error.localizedDescription
             )
         }
@@ -111,8 +102,7 @@ public struct SecureEnclaveKeyStore: SecureEnclaveKeyStoring {
         item[kSecAttrAccount] = info.id.uuidString
         item[kSecAttrLabel] = "SMP Secure Enclave key “\(name)”"
         item[kSecAttrGeneric] = try JSONEncoder().encode(info)
-        // The reference is useless on any other device, but it still never leaves this Mac.
-        item[kSecAttrAccessible] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        // The reference is useless on any other device; the login keychain never syncs it.
         item[kSecValueData] = privateKey.dataRepresentation
         try Self.check(SecItemAdd(item as CFDictionary, nil), action: "save the Secure Enclave key")
         return info
@@ -162,26 +152,20 @@ public struct SecureEnclaveKeyStore: SecureEnclaveKeyStoring {
     }
 
     private func baseQuery() -> [CFString: Any] {
-        var query: [CFString: Any] = [
+        [
             kSecClass: kSecClassGenericPassword,
             kSecAttrService: Self.service,
-            kSecUseDataProtectionKeychain: true,
-            kSecAttrSynchronizable: false,
         ]
-        if let accessGroup {
-            query[kSecAttrAccessGroup] = accessGroup
-        }
-        return query
     }
 
     private static func check(_ status: OSStatus, action: String) throws {
         guard status != errSecSuccess else { return }
-        if status == errSecMissingEntitlement {
+        if status == errSecUserCanceled || status == errSecAuthFailed {
             throw SMPError(
                 .keychain,
-                whatHappened: "SMP could not \(action).",
-                howToFix: "Secure Enclave keys need a signed copy of SMP (the shared Keychain group "
-                    + "is only available to signed builds).",
+                whatHappened: "SMP Agent was not allowed to \(action).",
+                howToFix: "When macOS asks whether SMP Agent may use its keychain item, choose "
+                    + "“Always Allow”. This can happen once after an update.",
                 details: "OSStatus \(status)"
             )
         }

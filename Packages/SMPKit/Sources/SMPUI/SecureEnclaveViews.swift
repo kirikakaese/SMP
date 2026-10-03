@@ -59,6 +59,46 @@ struct SecureEnclaveSection: View {
     }
 }
 
+/// Shown instead of the Secure Enclave key list when SMP Agent, which keeps the keys, does not answer.
+struct AgentProblemView: View {
+    let model: LibraryModel
+    let problem: SMPError
+    @State private var isStarting = false
+
+    var body: some View {
+        ContentUnavailableView {
+            Label(problem.whatHappened, systemImage: "lock.shield")
+        } description: {
+            Text(problem.howToFix ?? "")
+        } actions: {
+            StartAgentButton(model: model, isStarting: $isStarting)
+        }
+    }
+}
+
+/// Starts SMP Agent, for places where Secure Enclave keys need it.
+struct StartAgentButton: View {
+    let model: LibraryModel
+    @Binding var isStarting: Bool
+
+    var body: some View {
+        Button {
+            Task {
+                isStarting = true
+                defer { isStarting = false }
+                await model.startAgent()
+            }
+        } label: {
+            if isStarting {
+                ProgressView().controlSize(.small)
+            } else {
+                Text("Start SMP Agent")
+            }
+        }
+        .disabled(isStarting)
+    }
+}
+
 /// Creates a key in the Secure Enclave.
 struct NewSecureEnclaveKeySheet: View {
     let model: LibraryModel
@@ -69,6 +109,7 @@ struct NewSecureEnclaveKeySheet: View {
     @State private var policy: PolicyChoice = .everyUse
     @State private var savePublicKey = true
     @State private var isWorking = false
+    @State private var isStartingAgent = false
     @State private var error: SMPError?
 
     private var policyNote: String {
@@ -101,11 +142,20 @@ struct NewSecureEnclaveKeySheet: View {
                 Toggle("Save the public key as ~/.ssh/\(name).pub", isOn: $savePublicKey)
             } footer: {
                 Text("The private key can never leave this Mac: it is not part of backups or archives, "
-                    + "and it is gone if this Mac is erased. Keep a second way into your servers.")
+                    + "and it is gone if this Mac is erased. Keep a second way into your servers. "
+                    + "SMP Agent keeps the key and signs with it.")
                     .foregroundStyle(.secondary)
             }
             if let error {
-                Section { ErrorBanner(error: error) }
+                Section {
+                    ErrorBanner(error: error)
+                    if error.code == .agentNotRunning {
+                        StartAgentButton(model: model, isStarting: $isStartingAgent)
+                            .onChange(of: isStartingAgent) { _, starting in
+                                if !starting, model.secureEnclaveProblem == nil { self.error = nil }
+                            }
+                    }
+                }
             }
         }
         .formStyle(.grouped)
