@@ -202,6 +202,27 @@ generated on first use and kept in the Keychain. Archiving decrypts the result a
 with the files on disk before the originals are deleted. Restoring never overwrites; on a name
 conflict the key is restored as `<name>_restored`.
 
+## Backups (`BackupService`)
+
+File → Back Up… writes one encrypted `.smpbackup` file (mode 0600) to a place the user chooses:
+
+- **Contents:** every key file in the key folders (private keys, `.pub`, certificates), not
+  archived keys and not Secure Enclave keys (they cannot leave the Mac); `~/.ssh/config` and
+  `known_hosts`; SMP's metadata (key notes and dates, tags, groups and their assignments, host
+  settings and tags, tunnels). Provider tokens and rotation jobs are left out.
+- **Format:** `"SMPBACKUP" || version || PBKDF2 iterations || salt || AES-256-GCM box`. The key
+  comes from the user's passphrase through PBKDF2-HMAC-SHA256 (600,000 rounds, 16-byte random
+  salt); the header is authenticated data, so changing the iterations or salt breaks decryption.
+  The plaintext is the manifest JSON followed by each file's contents, as SSH `string`s, so the
+  file names are encrypted too. Key material is built and parsed in `SecureBytes`.
+- **Restore** (File → Restore from Backup…) decrypts into memory, then shows a plan before
+  anything is written. Files are never overwritten: identical files are skipped, a different file
+  with the same name gets the backup's version next to it as `<name>-restored` (keeping `.pub`
+  and `-cert.pub` so pairs stay pairs). Config files can only go to `~/.ssh/config` and
+  `~/.ssh/known_hosts`; key files only to `~/.ssh` or a folder SMP watches, otherwise into
+  `~/.ssh`, so a crafted backup cannot write anywhere else. Metadata is merged: tags and groups
+  are matched by name, existing notes, host settings and tunnels are kept.
+
 ## Deletion and export
 
 Permanent deletion shows an impact report (config references, agent, git signing), lets the
@@ -217,7 +238,7 @@ never read into SMP's memory.
 their metadata): Copy Public Key, List SSH Keys, Connect to SSH Host, Start / Stop SSH Tunnel and
 Check SSH Security, with entities for keys, hosts and tunnels and suggested phrases for Siri and
 Spotlight. They use the running app's `ServiceContainer` (`AppContext`), so a tunnel started from
-Shortcuts is the same one SMP's window shows. The logic is in `ServiceContainer+ShortcutSupport`
+Shortcuts is the same one SMP's window shows. The logic is in `SMPServices/ShortcutSupport.swift`
 (tested in the package). Actions only read and return public data (public key lines,
 fingerprints, aliases, tunnel names, the audit score); none touches private keys.
 
