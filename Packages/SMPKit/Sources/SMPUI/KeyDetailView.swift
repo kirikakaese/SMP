@@ -102,7 +102,7 @@ struct KeyDetailView: View {
         Section("Details") {
             LabeledContent("Type", value: item.key.algorithm.displayName)
             if let bits = item.key.publicKey?.bitLength {
-                LabeledContent("Size", value: "\(bits) bits")
+                LabeledContent("Size", value: String(localized: "\(bits) bits"))
             }
             LabeledContent("Passphrase", value: passphraseText)
             if let info = item.key.privateKeyInfo {
@@ -113,7 +113,7 @@ struct KeyDetailView: View {
             }
             LabeledContent("Agent", value: agentText)
             if item.key.certificate != nil {
-                LabeledContent("Certificate", value: "Present")
+                LabeledContent("Certificate", value: String(localized: "Present"))
             }
         }
     }
@@ -299,16 +299,16 @@ struct KeyDetailView: View {
 
     private var passphraseText: String {
         switch item.key.isPassphraseProtected {
-        case true?: "Protected"
-        case false?: "None"
-        case nil: item.key.privateKeyFile == nil ? "No private key" : "Unknown"
+        case true?: String(localized: "Protected")
+        case false?: String(localized: "None")
+        case nil: item.key.privateKeyFile == nil ? String(localized: "No private key") : String(localized: "Unknown")
         }
     }
 
     private var agentText: String {
         switch model.agentStatus {
-        case .unavailable: "Agent not available"
-        case .running: item.isLoadedInAgent ? "Loaded" : "Not loaded"
+        case .unavailable: String(localized: "Agent not available")
+        case .running: item.isLoadedInAgent ? String(localized: "Loaded") : String(localized: "Not loaded")
         }
     }
 

@@ -13,8 +13,10 @@ public enum PuTTYKeyConverter {
             guard file.encryption == "none" else {
                 throw SMPError.keyOperationFailed(
                     "Passphrase-protected PuTTY keys can't be imported directly.",
-                    howToFix: "Open the key in PuTTYgen and choose Conversions → Export OpenSSH key, "
-                        + "then import the exported file."
+                    howToFix: String(localized: """
+                        Open the key in PuTTYgen and choose Conversions → Export OpenSSH key, \
+                        then import the exported file.
+                        """)
                 )
             }
             guard let publicBlob = Data(base64Encoded: file.publicBase64),
@@ -78,7 +80,9 @@ public enum PuTTYKeyConverter {
     }
 
     static func invalid(_ message: String) -> SMPError {
-        SMPError.keyOperationFailed(message, howToFix: "Export the key again from PuTTYgen and retry.")
+        SMPError.keyOperationFailed(message, howToFix: String(localized: """
+            Export the key again from PuTTYgen and retry.
+            """))
     }
 }
 
@@ -252,7 +256,7 @@ enum OpenSSHPrivateKeyBuilder {
         default:
             throw SMPError.keyOperationFailed(
                 "\(algorithm.displayName) keys can't be converted from PuTTY.",
-                howToFix: "Export the key from PuTTYgen with Conversions → Export OpenSSH key."
+                howToFix: String(localized: "Export the key from PuTTYgen with Conversions → Export OpenSSH key.")
             )
         }
     }

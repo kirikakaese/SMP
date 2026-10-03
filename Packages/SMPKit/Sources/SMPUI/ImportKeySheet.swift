@@ -49,7 +49,9 @@ struct ImportKeySheet: View {
                 Button("Cancel") { close() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button(isWorking ? "Importing…" : "Import") { Task { await runImport() } }
+                Button(isWorking
+                    ? String(localized: "Importing…")
+                    : String(localized: "Import")) { Task { await runImport() } }
                     .disabled(!canImport)
             }
         }
@@ -67,9 +69,11 @@ struct ImportKeySheet: View {
                 Image(systemName: source == nil ? "square.and.arrow.down" : "checkmark.circle.fill")
                     .font(.largeTitle)
                     .foregroundStyle(source == nil ? Color.secondary : Color.green)
-                Text(source == nil ? "Drop a key file here" : sourceLabel)
+                Text(source == nil ? String(localized: "Drop a key file here") : sourceLabel)
                     .font(.headline)
-                Button(source == nil ? "Choose File…" : "Choose Another File…") { isChoosingFile = true }
+                Button(source == nil
+                    ? String(localized: "Choose File…")
+                    : String(localized: "Choose Another File…")) { isChoosingFile = true }
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
@@ -112,7 +116,7 @@ struct ImportKeySheet: View {
                         .font(.callout).foregroundStyle(.secondary)
                 }
             } else if isPublicKeyOnly {
-                LabeledContent("Contents", value: "Public key only")
+                LabeledContent("Contents", value: String(localized: "Public key only"))
             }
             TextField("File name in ~/.ssh", text: $fileName)
             if let problem = KeyFileName.problem(with: fileName) {

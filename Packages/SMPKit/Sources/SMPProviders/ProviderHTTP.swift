@@ -27,7 +27,7 @@ public final class URLSessionTransport: HTTPTransport {
         do {
             let (data, response) = try await session.data(for: request, delegate: NoRedirects())
             guard let http = response as? HTTPURLResponse else {
-                throw SMPError(.network, whatHappened: "The server sent an unexpected response.")
+                throw SMPError(.network, whatHappened: String(localized: "The server sent an unexpected response."))
             }
             return (data, http)
         } catch let error as SMPError {
@@ -36,7 +36,7 @@ public final class URLSessionTransport: HTTPTransport {
             throw SMPError(
                 .network,
                 whatHappened: "SMP could not reach \(request.url?.host() ?? "the server").",
-                howToFix: "Check your internet connection and the server address.",
+                howToFix: String(localized: "Check your internet connection and the server address."),
                 details: error.localizedDescription
             )
         }
@@ -81,7 +81,7 @@ struct ProviderAPI: Sendable {
         transport: any HTTPTransport
     ) throws {
         guard baseURL.scheme?.lowercased() == "https", baseURL.host() != nil else {
-            throw SMPError.invalidArgument("Provider addresses must start with https://.")
+            throw SMPError.invalidArgument(String(localized: "Provider addresses must start with https://."))
         }
         self.kind = kind
         self.baseURL = baseURL
@@ -107,7 +107,9 @@ struct ProviderAPI: Sendable {
     ) async throws -> (Data, HTTPURLResponse) {
         // Never follow pagination links to a different server.
         guard url.host() == baseURL.host(), url.scheme == "https" else {
-            throw SMPError(.providerRejected, whatHappened: "The provider pointed SMP to a different server.")
+            throw SMPError(.providerRejected, whatHappened: String(localized: """
+                The provider pointed SMP to a different server.
+                """))
         }
         var request = URLRequest(url: url)
         request.httpMethod = method
@@ -123,7 +125,9 @@ struct ProviderAPI: Sendable {
         }
         let (data, response) = try await transport.send(request)
         guard data.count <= Self.maxResponseBytes else {
-            throw SMPError(.providerRejected, whatHappened: "The provider sent an unexpectedly large response.")
+            throw SMPError(.providerRejected, whatHappened: String(localized: """
+                The provider sent an unexpectedly large response.
+                """))
         }
         guard (200..<300).contains(response.statusCode) else {
             throw Self.error(status: response.statusCode, data: data, response: response, kind: kind)
@@ -138,7 +142,7 @@ struct ProviderAPI: Sendable {
         } catch {
             throw SMPError(
                 .providerRejected,
-                whatHappened: "SMP did not understand the response from \(kind.displayName).",
+                whatHappened: String(localized: "SMP did not understand the response from \(kind.displayName)."),
                 details: String(describing: error)
             )
         }
@@ -150,7 +154,7 @@ struct ProviderAPI: Sendable {
         } catch {
             throw SMPError(
                 .providerRejected,
-                whatHappened: "SMP did not understand the response from \(kind.displayName).",
+                whatHappened: String(localized: "SMP did not understand the response from \(kind.displayName)."),
                 details: String(describing: error)
             )
         }
@@ -164,8 +168,8 @@ struct ProviderAPI: Sendable {
         if status == 429 || (status == 403 && remaining == "0") {
             return SMPError(
                 .providerRejected,
-                whatHappened: "\(kind.displayName) is limiting requests right now.",
-                howToFix: "Wait a few minutes and try again.",
+                whatHappened: String(localized: "\(kind.displayName) is limiting requests right now."),
+                howToFix: String(localized: "Wait a few minutes and try again."),
                 details: message
             )
         }
@@ -173,15 +177,17 @@ struct ProviderAPI: Sendable {
         case 401:
             return SMPError(
                 .providerRejected,
-                whatHappened: "\(kind.displayName) rejected the token.",
-                howToFix: "The token may have expired or been revoked. Create a new one and update the account.",
+                whatHappened: String(localized: "\(kind.displayName) rejected the token."),
+                howToFix: String(localized: """
+                    The token may have expired or been revoked. Create a new one and update the account.
+                    """),
                 details: message
             )
         case 403, 404 where kind == .github:
             return SMPError(
                 .providerRejected,
-                whatHappened: "The token is not allowed to do this.",
-                howToFix: "Create a token with these permissions: \(kind.requiredScopes).",
+                whatHappened: String(localized: "The token is not allowed to do this."),
+                howToFix: String(localized: "Create a token with these permissions: \(kind.requiredScopes)."),
                 details: message
             )
         case 400, 409, 422:
@@ -197,7 +203,7 @@ struct ProviderAPI: Sendable {
         default:
             return SMPError(
                 .providerRejected,
-                whatHappened: "\(kind.displayName) answered with HTTP \(status).",
+                whatHappened: String(localized: "\(kind.displayName) answered with HTTP \(status)."),
                 howToFix: status >= 500 ? "The service may be having problems. Try again later." : nil,
                 details: message
             )

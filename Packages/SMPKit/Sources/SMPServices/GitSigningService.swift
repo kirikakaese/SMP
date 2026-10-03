@@ -95,10 +95,10 @@ public struct GitSigningService: GitSigningServicing {
     ) async throws -> GitSigningPlan {
         let email = email.trimmingCharacters(in: .whitespaces)
         guard !email.isEmpty, !email.contains(where: { $0.isWhitespace || $0 == "\"" }) else {
-            throw SMPError.invalidArgument("Enter the email address you commit with.")
+            throw SMPError.invalidArgument(String(localized: "Enter the email address you commit with."))
         }
         guard !publicKey.isCertificate else {
-            throw SMPError.invalidArgument("Choose the key itself, not its certificate.")
+            throw SMPError.invalidArgument(String(localized: "Choose the key itself, not its certificate."))
         }
         let state = try await currentState()
         let allowedSigners = environment.sshDirectory.appending(path: "allowed_signers")
@@ -179,7 +179,7 @@ public struct GitSigningService: GitSigningServicing {
         let missingTools = stderr.contains("xcrun") || stderr.contains("developer tools")
         return SMPError(
             .toolFailed,
-            whatHappened: "git could not change its settings.",
+            whatHappened: String(localized: "git could not change its settings."),
             howToFix: missingTools ? "Install the Xcode Command Line Tools (xcode-select --install)." : nil,
             details: stderr
         )

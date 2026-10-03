@@ -110,10 +110,10 @@ public struct ProviderService: ProviderServicing {
     ) async throws -> [RemoteKey] {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, trimmed.count <= 200, !trimmed.contains(where: \.isNewline) else {
-            throw SMPError.invalidArgument("The title must be a single line of 1 to 200 characters.")
+            throw SMPError.invalidArgument(String(localized: "The title must be a single line of 1 to 200 characters."))
         }
         guard !key.isCertificate else {
-            throw SMPError.invalidArgument("Upload the key itself, not its certificate.")
+            throw SMPError.invalidArgument(String(localized: "Upload the key itself, not its certificate."))
         }
         let added = try await withClient(for: account) {
             try await $0.addKey(title: trimmed, publicKey: key, usages: usages)
@@ -137,8 +137,8 @@ public struct ProviderService: ProviderServicing {
         guard let token = try keychain.secret(for: .providerToken(accountID: account.id.uuidString)) else {
             throw SMPError(
                 .keychain,
-                whatHappened: "The token for \(account.displayName) is missing from the Keychain.",
-                howToFix: "Enter a new token for the account."
+                whatHappened: String(localized: "The token for \(account.displayName) is missing from the Keychain."),
+                howToFix: String(localized: "Enter a new token for the account.")
             )
         }
         defer { token.wipe() }
@@ -148,7 +148,7 @@ public struct ProviderService: ProviderServicing {
     /// `https://host[:port][/path]` without a trailing slash, query or fragment.
     static func normalizedServer(_ url: URL?) throws -> URL {
         guard let url, url.scheme?.lowercased() == "https", let host = url.host(), !host.isEmpty else {
-            throw SMPError.invalidArgument("Enter the server address, starting with https://.")
+            throw SMPError.invalidArgument(String(localized: "Enter the server address, starting with https://."))
         }
         var components = URLComponents()
         components.scheme = "https"
@@ -157,7 +157,7 @@ public struct ProviderService: ProviderServicing {
         let path = url.path(percentEncoded: false)
         components.path = path.hasSuffix("/") ? String(path.dropLast()) : path
         guard let normalized = components.url else {
-            throw SMPError.invalidArgument("The server address is not valid.")
+            throw SMPError.invalidArgument(String(localized: "The server address is not valid."))
         }
         return normalized
     }

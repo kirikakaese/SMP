@@ -109,14 +109,14 @@ public final class ProvidersModel {
         )
         reload()
         await refresh(account)
-        notice = "Added \(account.displayName)."
+        notice = String(localized: "Added \(account.displayName).")
         return account
     }
 
     public func updateToken(for account: ProviderAccount, token: SecureBytes) async throws {
         try await services.providers.updateToken(for: account, token: token)
         await refresh(account)
-        notice = "Updated the token for \(account.displayName)."
+        notice = String(localized: "Updated the token for \(account.displayName).")
     }
 
     /// Forgets the account in SMP. Keys on the provider are not touched.
@@ -124,7 +124,9 @@ public final class ProvidersModel {
         do {
             try services.providers.removeAccount(account)
             reload()
-            notice = "Removed \(account.displayName) from SMP. Its keys on the provider were not changed."
+            notice = String(localized: """
+                Removed \(account.displayName) from SMP. Its keys on the provider were not changed.
+                """)
         } catch {
             lastError = error.asSMPError
         }
@@ -139,11 +141,11 @@ public final class ProvidersModel {
         usages: Set<RemoteKeyUsage>
     ) async throws {
         guard let publicKey = item.key.publicKey else {
-            throw SMPError.invalidArgument("“\(item.displayName)” has no public key to upload.")
+            throw SMPError.invalidArgument(String(localized: "“\(item.displayName)” has no public key to upload."))
         }
         _ = try await services.providers.upload(publicKey, title: title, usages: usages, to: account)
         reload()
-        notice = "Uploaded “\(item.displayName)” to \(account.displayName)."
+        notice = String(localized: "Uploaded “\(item.displayName)” to \(account.displayName).")
     }
 
     /// Removes a key from the provider after Touch ID or the login password.
@@ -158,7 +160,7 @@ public final class ProvidersModel {
                 selectedKeyID = nil
             }
             reload()
-            notice = "Removed “\(key.title)” from \(account.displayName)."
+            notice = String(localized: "Removed “\(key.title)” from \(account.displayName).")
         } catch {
             lastError = error.asSMPError
         }

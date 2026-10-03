@@ -97,7 +97,7 @@ public final class AppLockModel {
             message = nil
             lastActivity = now()
         } catch {
-            message = "SMP stays locked until you confirm with Touch ID or your password."
+            message = String(localized: "SMP stays locked until you confirm with Touch ID or your password.")
         }
     }
 

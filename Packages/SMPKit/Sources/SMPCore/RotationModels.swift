@@ -17,11 +17,11 @@ public struct RotationJob: Sendable, Hashable, Codable, Identifiable {
 
         public var title: String {
             switch self {
-            case .generate: "Create the new key"
-            case .deploy: "Upload and install it"
-            case .updateConfig: "Update ~/.ssh/config"
-            case .verify: "Test logins"
-            case .retire: "Retire the old key"
+            case .generate: String(localized: "Create the new key")
+            case .deploy: String(localized: "Upload and install it")
+            case .updateConfig: String(localized: "Update ~/.ssh/config")
+            case .verify: String(localized: "Test logins")
+            case .retire: String(localized: "Retire the old key")
             }
         }
     }

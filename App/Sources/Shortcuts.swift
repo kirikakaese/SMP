@@ -11,7 +11,7 @@ enum AppContext {
 
     static func current() throws -> ServiceContainer {
         guard let services else {
-            throw SMPError(.toolFailed, whatHappened: "SMP is still starting. Try again.")
+            throw SMPError(.toolFailed, whatHappened: String(localized: "SMP is still starting. Try again."))
         }
         return services
     }
@@ -156,7 +156,7 @@ struct StartTunnelIntent: AppIntent {
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let services = try AppContext.current()
         guard let profile = try services.metadata.allTunnels().first(where: { $0.id == tunnel.id }) else {
-            throw SMPError.invalidArgument("The tunnel “\(tunnel.name)” no longer exists.")
+            throw SMPError.invalidArgument(String(localized: "The tunnel “\(tunnel.name)” no longer exists."))
         }
         try services.tunnels.start(profile)
         return .result(dialog: "Started the tunnel \(tunnel.name).")

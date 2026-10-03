@@ -51,8 +51,10 @@ struct SecureEnclaveSection: View {
                 }
             }
             LabeledContent("Created", value: key.createdAt.formatted(date: .abbreviated, time: .shortened))
-            Text("Use it through SMP's agent: see SSH → Agent. To pick this key for a host, set "
-                + "IdentityFile to its .pub file.")
+            Text("""
+                Use it through SMP's agent: see SSH → Agent. To pick this key for a host, set \
+                IdentityFile to its .pub file.
+                """)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -114,8 +116,12 @@ struct NewSecureEnclaveKeySheet: View {
 
     private var policyNote: String {
         policy == .notifyOnly
-            ? "Signatures happen without a prompt while your Mac is unlocked. This cannot be changed later."
-            : "Signatures need Touch ID or your login password. This requirement cannot be removed later."
+            ? String(localized: """
+                Signatures happen without a prompt while your Mac is unlocked. This cannot be changed later.
+                """)
+            : String(localized: """
+                Signatures need Touch ID or your login password. This requirement cannot be removed later.
+                """)
     }
 
     var body: some View {
@@ -126,7 +132,9 @@ struct NewSecureEnclaveKeySheet: View {
                     Text(problem).font(.callout).foregroundStyle(.red)
                 }
                 TextField("Comment", text: $comment)
-                LabeledContent("Type", value: "ECDSA P-256 (the only type the Secure Enclave supports)")
+                LabeledContent("Type", value: String(localized: """
+                    ECDSA P-256 (the only type the Secure Enclave supports)
+                    """))
             }
             Section {
                 Picker("Signing", selection: $policy) {
@@ -141,9 +149,11 @@ struct NewSecureEnclaveKeySheet: View {
             Section {
                 Toggle("Save the public key as ~/.ssh/\(name).pub", isOn: $savePublicKey)
             } footer: {
-                Text("The private key can never leave this Mac: it is not part of backups or archives, "
-                    + "and it is gone if this Mac is erased. Keep a second way into your servers. "
-                    + "SMP Agent keeps the key and signs with it.")
+                Text("""
+                    The private key can never leave this Mac: it is not part of backups or archives, \
+                    and it is gone if this Mac is erased. Keep a second way into your servers. \
+                    SMP Agent keeps the key and signs with it.
+                    """)
                     .foregroundStyle(.secondary)
             }
             if let error {
@@ -202,9 +212,11 @@ struct DownloadResidentKeysSheet: View {
                 SecureField("PIN", text: $pin)
                 TextField("FIDO provider library", text: $providerPath, prompt: Text("optional"))
             } footer: {
-                Text("Keys created with “Resident key” live on the security key itself. Downloading saves "
-                    + "small handle files to ~/.ssh; they only work while the security key is plugged in. "
-                    + "The OpenSSH built into macOS needs a FIDO provider library for this.")
+                Text("""
+                    Keys created with “Resident key” live on the security key itself. Downloading saves \
+                    small handle files to ~/.ssh; they only work while the security key is plugged in. \
+                    The OpenSSH built into macOS needs a FIDO provider library for this.
+                    """)
                     .foregroundStyle(.secondary)
             }
             if isWorking {

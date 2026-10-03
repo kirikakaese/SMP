@@ -64,8 +64,10 @@ struct AppLockSettingsView: View {
                 Text("The app lock needs a login password on this Mac.")
                     .foregroundStyle(.secondary)
             }
-            Text("SMP also locks when your screen locks or the Mac goes to sleep. Deleting or exporting keys "
-                + "always asks again, whether the lock is on or not.")
+            Text("""
+                SMP also locks when your screen locks or the Mac goes to sleep. Deleting or exporting keys \
+                always asks again, whether the lock is on or not.
+                """)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -102,8 +104,10 @@ struct KeyFoldersSettingsView: View {
                 }
             } footer: {
                 Text(
-                    "Folders are scanned without subfolders and watched for changes. "
-                        + "Removing a folder never deletes keys."
+                    """
+                        Folders are scanned without subfolders and watched for changes. \
+                        Removing a folder never deletes keys.
+                        """
                 )
                     .foregroundStyle(.secondary)
             }

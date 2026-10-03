@@ -57,17 +57,19 @@ extension SMPError {
     public static func toolNotFound(_ name: String, path: String) -> SMPError {
         SMPError(
             .toolNotFound,
-            whatHappened: "SMP could not find the \(name) tool at \(path).",
-            howToFix: "OpenSSH ships with macOS. Check that \(path) exists and is executable, "
-                + "or reinstall the Command Line Tools with “xcode-select --install”."
+            whatHappened: String(localized: "SMP could not find the \(name) tool at \(path)."),
+            howToFix: String(localized: """
+                OpenSSH ships with macOS. Check that \(path) exists and is executable, \
+                or reinstall the Command Line Tools with “xcode-select --install”.
+                """)
         )
     }
 
     public static func toolLaunchFailed(_ name: String, reason: String) -> SMPError {
         SMPError(
             .toolLaunchFailed,
-            whatHappened: "SMP could not start \(name).",
-            howToFix: "Try again. If the problem persists, restart your Mac.",
+            whatHappened: String(localized: "SMP could not start \(name)."),
+            howToFix: String(localized: "Try again. If the problem persists, restart your Mac."),
             details: reason
         )
     }
@@ -75,7 +77,7 @@ extension SMPError {
     public static func toolFailed(_ name: String, exitCode: Int32, stderr: String) -> SMPError {
         SMPError(
             .toolFailed,
-            whatHappened: "\(name) reported an error (exit code \(exitCode)).",
+            whatHappened: String(localized: "\(name) reported an error (exit code \(exitCode))."),
             howToFix: nil,
             details: stderr.isEmpty ? nil : stderr
         )
@@ -84,13 +86,17 @@ extension SMPError {
     public static func toolTimedOut(_ name: String, after seconds: Double) -> SMPError {
         SMPError(
             .toolTimedOut,
-            whatHappened: "\(name) did not finish within \(Int(seconds.rounded())) seconds and was stopped.",
-            howToFix: "Check your network connection or the host you are connecting to, then try again."
+            whatHappened: String(localized: """
+                \(name) did not finish within \(Int(seconds.rounded())) seconds and was stopped.
+                """),
+            howToFix: String(localized: """
+                Check your network connection or the host you are connecting to, then try again.
+                """)
         )
     }
 
     public static func toolCancelled(_ name: String) -> SMPError {
-        SMPError(.toolCancelled, whatHappened: "\(name) was cancelled.")
+        SMPError(.toolCancelled, whatHappened: String(localized: "\(name) was cancelled."))
     }
 
     public static func invalidArgument(_ message: String) -> SMPError {
@@ -102,24 +108,28 @@ extension SMPError {
     public static func fileChangedOnDisk(_ name: String) -> SMPError {
         SMPError(
             .fileChangedOnDisk,
-            whatHappened: "\(name) was changed by another program after SMP read it. Nothing was saved.",
-            howToFix: "Review the file, then try again. SMP reloads it before saving."
+            whatHappened: String(localized: """
+                \(name) was changed by another program after SMP read it. Nothing was saved.
+                """),
+            howToFix: String(localized: "Review the file, then try again. SMP reloads it before saving.")
         )
     }
 
     public static func alreadyExists(_ name: String) -> SMPError {
         SMPError(
             .alreadyExists,
-            whatHappened: "A file named “\(name)” already exists.",
-            howToFix: "Choose another name, or confirm that the existing key should be archived and replaced."
+            whatHappened: String(localized: "A file named “\(name)” already exists."),
+            howToFix: String(localized: """
+                Choose another name, or confirm that the existing key should be archived and replaced.
+                """)
         )
     }
 
     public static func wrongPassphrase(_ keyName: String) -> SMPError {
         SMPError(
             .passphraseRequired,
-            whatHappened: "The passphrase for “\(keyName)” is missing or incorrect.",
-            howToFix: "Enter the key's current passphrase and try again."
+            whatHappened: String(localized: "The passphrase for “\(keyName)” is missing or incorrect."),
+            howToFix: String(localized: "Enter the key's current passphrase and try again.")
         )
     }
 

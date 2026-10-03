@@ -34,7 +34,7 @@ final class AskpassBroker: @unchecked Sendable {
 
     init(responses: [SecureBytes], temporaryDirectory: URL) throws {
         guard responses.count <= 100 else {
-            throw SMPError.invalidArgument("Too many passphrase responses were queued.")
+            throw SMPError.invalidArgument(String(localized: "Too many passphrase responses were queued."))
         }
         self.responses = responses
 
@@ -49,8 +49,8 @@ final class AskpassBroker: @unchecked Sendable {
         guard let createdPath else {
             throw SMPError(
                 .fileSystem,
-                whatHappened: "SMP could not create a private temporary folder.",
-                howToFix: "Check that your disk is not full, then try again."
+                whatHappened: String(localized: "SMP could not create a private temporary folder."),
+                howToFix: String(localized: "Check that your disk is not full, then try again.")
             )
         }
         directoryPath = createdPath
@@ -60,7 +60,9 @@ final class AskpassBroker: @unchecked Sendable {
         do {
             for index in responses.indices {
                 guard mkfifo(Self.pipePath(in: createdPath, prefix: "a", index: index), 0o600) == 0 else {
-                    throw SMPError(.fileSystem, whatHappened: "SMP could not create a private pipe for the passphrase.")
+                    throw SMPError(.fileSystem, whatHappened: String(localized: """
+                        SMP could not create a private pipe for the passphrase.
+                        """))
                 }
             }
             guard FileManager.default.createFile(
@@ -68,7 +70,9 @@ final class AskpassBroker: @unchecked Sendable {
                 contents: Data(Self.script(directoryPath: createdPath).utf8),
                 attributes: [.posixPermissions: 0o700]
             ) else {
-                throw SMPError(.fileSystem, whatHappened: "SMP could not create the passphrase helper.")
+                throw SMPError(.fileSystem, whatHappened: String(localized: """
+                    SMP could not create the passphrase helper.
+                    """))
             }
         } catch {
             try? FileManager.default.removeItem(at: directory)

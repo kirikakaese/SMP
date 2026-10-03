@@ -84,7 +84,7 @@ struct DeployKeySheet: View {
         }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button(isDone ? "Close" : "Cancel") { dismiss() }
+                Button(isDone ? String(localized: "Close") : String(localized: "Cancel")) { dismiss() }
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Deploy") { Task { await deploy() } }
@@ -163,7 +163,9 @@ struct AuthorizedKeysSheet: View {
                 if usePassword {
                     SecureField("Server password", text: $password)
                 }
-                Button(isLoading ? "Loading…" : (loaded ? "Reload" : "Load Keys")) { Task { await load() } }
+                Button(isLoading
+                    ? String(localized: "Loading…")
+                    : (loaded ? String(localized: "Reload") : String(localized: "Load Keys"))) { Task { await load() } }
                     .disabled(isLoading)
             } header: {
                 Text("~/.ssh/authorized_keys on \(host)")
@@ -209,14 +211,16 @@ struct AuthorizedKeysSheet: View {
                 }
             }
         } message: {
-            Text("Anyone using this key loses access to \(host). If it is the key you are logged in with, "
-                + "make sure you have another way in. A backup is kept on the server as authorized_keys.smp-backup.")
+            Text("""
+                Anyone using this key loses access to \(host). If it is the key you are logged in with, \
+                make sure you have another way in. A backup is kept on the server as authorized_keys.smp-backup.
+                """)
         }
     }
 
     private func title(for entry: AuthorizedKeysEntry) -> String {
         if let name = localName(for: entry) { return name }
-        return entry.publicKey.comment.isEmpty ? "No comment" : entry.publicKey.comment
+        return entry.publicKey.comment.isEmpty ? String(localized: "No comment") : entry.publicKey.comment
     }
 
     /// The local key with the same fingerprint, if any.

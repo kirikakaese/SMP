@@ -33,9 +33,15 @@ public struct ShortcutAuditSummary: Sendable, Hashable {
 
     public var sentence: String {
         switch findings {
-        case 0: "Security score \(score) of 100. Nothing to fix."
-        case 1: "Security score \(score) of 100. 1 finding: \(topFindings.first ?? "")."
-        default: "Security score \(score) of 100. \(findings) findings, \(important) of them important."
+        case 0:
+            return String(localized: "Security score \(score) of 100. Nothing to fix.")
+        case 1:
+            let finding = topFindings.first ?? ""
+            return String(localized: "Security score \(score) of 100. 1 finding: \(finding).")
+        default:
+            return String(localized: """
+                Security score \(score) of 100. \(findings) findings, \(important) of them important.
+                """)
         }
     }
 }

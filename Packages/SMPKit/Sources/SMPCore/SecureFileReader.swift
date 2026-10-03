@@ -22,7 +22,9 @@ public enum SecureFileReader {
             throw fileError(url, errno: errno)
         }
         guard (info.st_mode & S_IFMT) == S_IFREG else {
-            throw SMPError(.fileSystem, whatHappened: "\(url.lastPathComponent) is not a regular file.")
+            throw SMPError(.fileSystem, whatHappened: String(localized: """
+                \(url.lastPathComponent) is not a regular file.
+                """))
         }
 
         let capacity = max(0, min(Int(info.st_size), maxBytes))
@@ -60,7 +62,7 @@ public enum SecureFileReader {
     private static func fileError(_ url: URL, errno code: Int32) -> SMPError {
         SMPError(
             .fileSystem,
-            whatHappened: "SMP could not read \(url.lastPathComponent).",
+            whatHappened: String(localized: "SMP could not read \(url.lastPathComponent)."),
             howToFix: code == EACCES ? "Check the file's permissions in Finder or with “ls -l”." : nil,
             details: String(cString: strerror(code))
         )

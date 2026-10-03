@@ -76,8 +76,10 @@ struct OnboardingView: View {
             bullet("key", "Create, import and organise keys, and see which ones need attention.")
             bullet("server.rack", "Edit ~/.ssh/config safely: every change is shown as a diff and backed up.")
             bullet("lock.shield", "Keep keys in the Secure Enclave and confirm each use with Touch ID.")
-            bullet("hand.raised", "Your keys stay on this Mac. SMP collects no telemetry and only talks to the "
-                + "providers you add.")
+            bullet("hand.raised", """
+                Your keys stay on this Mac. SMP collects no telemetry and only talks to the \
+                providers you add.
+                """)
         }
     }
 
@@ -89,11 +91,13 @@ struct OnboardingView: View {
                 ? "SMP found no keys in ~/.ssh yet. Create one with File → New Key (⌘N)."
                 : "SMP found \(count) \(count == 1 ? "key" : "keys") in ~/.ssh.")
             if count > 0 {
-                LabeledContent("Security score", value: "\(security.score) of 100")
+                LabeledContent("Security score", value: String(localized: "\(security.score) of 100"))
                 Text(security.importantCount == 0
                     ? "Nothing important needs fixing."
-                    : "\(security.importantCount) findings are worth a look in Security → Audit, most with "
-                        + "a one-click fix.")
+                    : """
+                        \(security.importantCount) findings are worth a look in Security → Audit, most with \
+                        a one-click fix.
+                        """)
                     .foregroundStyle(.secondary)
             }
             Text("Add more folders to scan in Settings → Key Folders.").foregroundStyle(.secondary)
@@ -103,8 +107,10 @@ struct OnboardingView: View {
     private var lock: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("App lock").font(.title2.weight(.semibold))
-            Text("SMP can hide its window until you confirm with Touch ID or your password: when it opens, "
-                + "after a while without use, and when your screen locks.")
+            Text("""
+                SMP can hide its window until you confirm with Touch ID or your password: when it opens, \
+                after a while without use, and when your screen locks.
+                """)
             if appLock.isAvailable {
                 Toggle("Lock SMP", isOn: $appLock.settings.isEnabled)
                 IdleLockPicker(settings: $appLock.settings)
@@ -121,10 +127,14 @@ struct OnboardingView: View {
     private var agentStep: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("SMP Agent").font(.title2.weight(.semibold))
-            Text("SMP Agent runs in the menu bar. It holds your Secure Enclave keys, signs with them after "
-                + "Touch ID, and passes everything else on to the macOS ssh-agent.")
+            Text("""
+                SMP Agent runs in the menu bar. It holds your Secure Enclave keys, signs with them after \
+                Touch ID, and passes everything else on to the macOS ssh-agent.
+                """)
             HStack {
-                Button(agent.helperStatus == .enabled ? "SMP Agent Is Running" : "Start SMP Agent") {
+                Button(agent.helperStatus == .enabled
+                    ? String(localized: "SMP Agent Is Running")
+                    : String(localized: "Start SMP Agent")) {
                     Task {
                         isStartingAgent = true
                         defer { isStartingAgent = false }
@@ -138,8 +148,10 @@ struct OnboardingView: View {
                 Text("Allow “SMP Agent” in System Settings → General → Login Items.")
                     .foregroundStyle(.orange)
             }
-            Text("To let ssh use it, open SSH → Agent later; SMP shows the ~/.ssh/config change first. "
-                + "You can skip this step.")
+            Text("""
+                To let ssh use it, open SSH → Agent later; SMP shows the ~/.ssh/config change first. \
+                You can skip this step.
+                """)
                 .foregroundStyle(.secondary)
         }
         .task { await agent.refresh() }

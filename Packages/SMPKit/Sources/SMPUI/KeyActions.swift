@@ -31,12 +31,12 @@ extension KeyActions {
     static func savePublicKey(_ item: LibraryItem, model: LibraryModel) {
         let panel = NSSavePanel()
         panel.nameFieldStringValue = item.key.name + ".pub"
-        panel.title = "Save Public Key"
+        panel.title = String(localized: "Save Public Key")
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {
             try model.exportPublicKey(item, to: url)
         } catch {
-            model.report(error, whatHappened: "SMP could not save the public key.")
+            model.report(error, whatHappened: String(localized: "SMP could not save the public key."))
         }
     }
 
@@ -44,14 +44,16 @@ extension KeyActions {
     static func exportPrivateKey(_ item: LibraryItem, model: LibraryModel) {
         let panel = NSSavePanel()
         panel.nameFieldStringValue = item.key.name
-        panel.title = "Export Private Key"
-        panel.message = "Anyone with this file can use the key unless it has a passphrase. Store it securely."
+        panel.title = String(localized: "Export Private Key")
+        panel.message = String(localized: """
+            Anyone with this file can use the key unless it has a passphrase. Store it securely.
+            """)
         guard panel.runModal() == .OK, let url = panel.url else { return }
         Task {
             do {
                 try await model.exportPrivateKey(item, to: url)
             } catch {
-                model.report(error, whatHappened: "SMP could not export the private key.")
+                model.report(error, whatHappened: String(localized: "SMP could not export the private key."))
             }
         }
     }

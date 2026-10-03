@@ -115,7 +115,7 @@ public struct KeychainService: KeychainServicing {
         }
         try check(status, action: "read")
         guard var data = result as? Data else {
-            throw SMPError(.keychain, whatHappened: "The Keychain returned an unexpected value.")
+            throw SMPError(.keychain, whatHappened: String(localized: "The Keychain returned an unexpected value."))
         }
         // Best effort: the CFData returned by Security may still hold a copy until released.
         return SecureBytes(consuming: &data)
@@ -161,7 +161,7 @@ public struct KeychainService: KeychainServicing {
         Log.keychain.error("Keychain \(action, privacy: .public) failed with status \(status)")
         throw SMPError(
             .keychain,
-            whatHappened: "SMP could not \(action) an item in your Keychain.",
+            whatHappened: String(localized: "SMP could not \(action) an item in your Keychain."),
             howToFix: status == errSecInteractionNotAllowed
                 ? "Unlock your Mac and try again."
                 : "Open Keychain Access and check that your login keychain is unlocked, then try again.",

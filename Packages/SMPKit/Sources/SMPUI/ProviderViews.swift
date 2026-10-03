@@ -68,9 +68,10 @@ struct ProviderKeysView: View {
     }
 
     private var syncText: String {
-        if providers.refreshing.contains(account.id) { return "Refreshing…" }
-        guard let synced = account.lastSyncedAt else { return "Not refreshed yet" }
-        return "Updated " + synced.formatted(.relative(presentation: .named))
+        if providers.refreshing.contains(account.id) { return String(localized: "Refreshing…") }
+        guard let synced = account.lastSyncedAt else { return String(localized: "Not refreshed yet") }
+        let when = synced.formatted(.relative(presentation: .named))
+        return String(localized: "Updated \(when)")
     }
 
     private func localItem(for key: RemoteKey) -> LibraryItem? {
@@ -85,7 +86,7 @@ struct RemoteKeyRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack {
-                Text(key.title.isEmpty ? "Untitled key" : key.title).fontWeight(.medium).lineLimit(1)
+                Text(key.title.isEmpty ? String(localized: "Untitled key") : key.title).fontWeight(.medium).lineLimit(1)
                 Spacer()
                 Text(key.usageSummary).font(.caption).foregroundStyle(.secondary)
             }
@@ -168,12 +169,16 @@ struct RemoteKeyDetailView: View {
 
     private func removalMessage(local: LibraryItem?) -> String {
         guard let local else {
-            return "No local key matches it, so it may belong to another computer. This cannot be undone."
+            return String(localized: """
+                No local key matches it, so it may belong to another computer. This cannot be undone.
+                """)
         }
         let hosts = providers.hostsUsing(local)
         let hostText = hosts.isEmpty ? "" : " Hosts using it: \(hosts.joined(separator: ", "))."
-        return "Your local key “\(local.displayName)” will no longer work with this account.\(hostText) "
-            + "You can upload it again later. Touch ID or your password is required."
+        return String(localized: """
+            Your local key “\(local.displayName)” will no longer work with this account.\(hostText) \
+            You can upload it again later. Touch ID or your password is required.
+            """)
     }
 }
 
@@ -230,7 +235,9 @@ struct AddProviderAccountSheet: View {
                 Button("Cancel") { dismiss() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button(isWorking ? "Checking…" : "Add Account") { Task { await add() } }
+                Button(isWorking
+                    ? String(localized: "Checking…")
+                    : String(localized: "Add Account")) { Task { await add() } }
                     .disabled(token.isEmpty || (needsServer && server.isEmpty) || (kind.needsUsername && email.isEmpty))
             }
         }
@@ -335,7 +342,9 @@ struct UploadKeySheet: View {
                 Button("Cancel") { dismiss() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button(isWorking ? "Uploading…" : "Upload") { Task { await upload() } }
+                Button(isWorking
+                    ? String(localized: "Uploading…")
+                    : String(localized: "Upload")) { Task { await upload() } }
                     .disabled(item == nil || account == nil || usages.isEmpty || title.isEmpty)
             }
         }

@@ -19,7 +19,7 @@ public struct SignatureApproval: Sendable, Hashable {
 
     /// Shown in the Touch ID dialog after "SMP Agent is trying to …".
     public var reason: String {
-        "sign with “\(keyName)” for \(peer.displayName)"
+        String(localized: "sign with “\(keyName)” for \(peer.displayName)")
     }
 }
 
@@ -86,7 +86,7 @@ public final class LocalSignatureAuthorizer: SignatureAuthorizing, @unchecked Se
         guard outcome.success else {
             throw SMPError(
                 .authenticationFailed,
-                whatHappened: "The signature was not approved.",
+                whatHappened: String(localized: "The signature was not approved."),
                 details: outcome.error?.localizedDescription
             )
         }
@@ -108,7 +108,7 @@ public final class FixedSignatureAuthorizer: SignatureAuthorizing, @unchecked Se
 
     public func authorize(_ approval: SignatureApproval) throws -> LAContext? {
         lock.withLock { seen.append(approval) }
-        guard approves else { throw SMPError(.authenticationFailed, whatHappened: "Declined.") }
+        guard approves else { throw SMPError(.authenticationFailed, whatHappened: String(localized: "Declined.")) }
         return nil
     }
 }

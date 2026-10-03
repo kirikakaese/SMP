@@ -94,7 +94,7 @@ public struct ArchiveService: ArchiveServicing {
         try ensureDirectory()
         let files = [key.privateKeyFile, key.publicKeyFile, key.certificateFile].compactMap { $0 }
         guard let first = files.first else {
-            throw SMPError.keyOperationFailed("There are no files to archive for “\(key.name)”.")
+            throw SMPError.keyOperationFailed(String(localized: "There are no files to archive for “\(key.name)”."))
         }
         let manifest = ArchivedKey(
             id: UUID(),
@@ -123,7 +123,9 @@ public struct ArchiveService: ArchiveServicing {
         defer { check.wipe() }
         guard check.constantTimeEquals(payload) else {
             try? deleteArchived(id: manifest.id)
-            throw SMPError.keyOperationFailed("The archive could not be verified. Your key was not changed.")
+            throw SMPError.keyOperationFailed(String(localized: """
+                The archive could not be verified. Your key was not changed.
+                """))
         }
         for file in files {
             try SecureDelete.removeFile(at: file.url)
@@ -216,7 +218,7 @@ public struct ArchiveService: ArchiveServicing {
             try AES.GCM.seal(bytes, using: key, authenticating: Data(id.uuidString.utf8))
         }
         guard let combined = box.combined else {
-            throw SMPError.keyOperationFailed("SMP could not encrypt the archive.")
+            throw SMPError.keyOperationFailed(String(localized: "SMP could not encrypt the archive."))
         }
         return combined
     }
@@ -230,7 +232,9 @@ public struct ArchiveService: ArchiveServicing {
         } catch {
             throw SMPError.keyOperationFailed(
                 "The archived key could not be decrypted.",
-                howToFix: "The archive key in your Keychain may have been removed or the archive was damaged."
+                howToFix: String(localized: """
+                    The archive key in your Keychain may have been removed or the archive was damaged.
+                    """)
             )
         }
     }
@@ -263,7 +267,7 @@ public struct ArchiveService: ArchiveServicing {
             attributes: [.posixPermissions: 0o600]
         )
         guard created else {
-            throw SMPError(.fileSystem, whatHappened: "SMP could not write to its archive folder.")
+            throw SMPError(.fileSystem, whatHappened: String(localized: "SMP could not write to its archive folder."))
         }
     }
 
@@ -309,7 +313,7 @@ public enum SecureDelete {
         guard unlink(url.path) == 0 else {
             throw SMPError(
                 .fileSystem,
-                whatHappened: "SMP could not delete \(url.lastPathComponent).",
+                whatHappened: String(localized: "SMP could not delete \(url.lastPathComponent)."),
                 details: String(cString: strerror(errno))
             )
         }
@@ -325,7 +329,7 @@ public enum SecureDelete {
             }
             throw SMPError(
                 .fileSystem,
-                whatHappened: "SMP could not create \(url.lastPathComponent).",
+                whatHappened: String(localized: "SMP could not create \(url.lastPathComponent)."),
                 details: String(cString: strerror(errno))
             )
         }
@@ -334,7 +338,9 @@ public enum SecureDelete {
         fchmod(descriptor, mode_t(mode))
         guard RawFileWriter.write(descriptor, contents), fsync(descriptor) == 0 else {
             unlink(url.path)
-            throw SMPError(.fileSystem, whatHappened: "SMP could not write \(url.lastPathComponent).")
+            throw SMPError(.fileSystem, whatHappened: String(localized: """
+                SMP could not write \(url.lastPathComponent).
+                """))
         }
     }
 }

@@ -29,8 +29,10 @@ struct ConfigDiffSheet: View {
                     }
                 }
             }
-            Text("A timestamped backup of the current file is saved first. "
-                + "If the file was changed by another program since it was loaded, nothing is written.")
+            Text("""
+                A timestamped backup of the current file is saved first. \
+                If the file was changed by another program since it was loaded, nothing is written.
+                """)
                 .font(.caption)
                 .foregroundStyle(.secondary)
             HStack {
@@ -40,7 +42,7 @@ struct ConfigDiffSheet: View {
                     dismiss()
                 }
                 .keyboardShortcut(.cancelAction)
-                Button(change.problems.isEmpty ? "Save" : "Save Anyway") {
+                Button(change.problems.isEmpty ? String(localized: "Save") : String(localized: "Save Anyway")) {
                     Task {
                         isSaving = true
                         if await model.applyPendingChange() {

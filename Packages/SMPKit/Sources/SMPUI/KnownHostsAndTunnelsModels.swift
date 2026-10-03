@@ -53,7 +53,9 @@ public final class KnownHostsModel {
         guard let loaded, !lines.isEmpty else { return }
         do {
             try services.knownHosts.remove(lines: lines, from: loaded)
-            notice = lines.count == 1 ? "Removed 1 host key." : "Removed \(lines.count) host keys."
+            notice = lines.count == 1
+                ? String(localized: "Removed 1 host key.")
+                : String(localized: "Removed \(lines.count) host keys.")
             selectedLines = []
             reload()
         } catch {
@@ -68,13 +70,13 @@ public final class KnownHostsModel {
 
     public func add(_ keys: [SSHPublicKey], for request: HostKeyRequest) throws {
         try services.knownHosts.add(host: request.host, port: request.port, keys: keys)
-        notice = "Added \(keys.count) key(s) for \(request.host)."
+        notice = String(localized: "Added \(keys.count) key(s) for \(request.host).")
         reload()
     }
 
     public func replace(_ keys: [SSHPublicKey], for request: HostKeyRequest) throws {
         try services.knownHosts.replace(host: request.host, port: request.port, with: keys)
-        notice = "Replaced the stored keys for \(request.host)."
+        notice = String(localized: "Replaced the stored keys for \(request.host).")
         reload()
     }
 

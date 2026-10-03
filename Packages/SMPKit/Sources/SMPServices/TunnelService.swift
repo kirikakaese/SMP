@@ -109,7 +109,7 @@ public final class TunnelService: TunnelServicing, @unchecked Sendable {
             throw SMPError.invalidArgument(problem)
         }
         guard !tunnel.forwards.isEmpty else {
-            throw SMPError.invalidArgument("Add at least one port forward.")
+            throw SMPError.invalidArgument(String(localized: "Add at least one port forward."))
         }
         var arguments = [
             "-N", "-o", "BatchMode=yes", "-o", "ExitOnForwardFailure=yes",

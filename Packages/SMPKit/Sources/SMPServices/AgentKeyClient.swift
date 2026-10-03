@@ -23,7 +23,9 @@ public struct AgentKeyClient: SecureEnclaveKeyStoring {
 
     public func create(name: String, comment: String, policy: SigningPolicy) throws -> SecureEnclaveKeyInfo {
         guard let key = try send(.create(name: name, comment: comment, policy: policy)).first else {
-            throw SMPError(.keyOperationFailed, whatHappened: "SMP Agent did not return the new key.")
+            throw SMPError(.keyOperationFailed, whatHappened: String(localized: """
+                SMP Agent did not return the new key.
+                """))
         }
         return key
     }
@@ -37,7 +39,7 @@ public struct AgentKeyClient: SecureEnclaveKeyStoring {
     }
 
     public func sign(_ data: Data, with id: UUID, context: LAContext?) throws -> Data {
-        throw SMPError.invalidArgument("Secure Enclave keys sign through SMP Agent, not in the app.")
+        throw SMPError.invalidArgument(String(localized: "Secure Enclave keys sign through SMP Agent, not in the app."))
     }
 
     private func send(_ command: AgentKeyCommand) throws -> [SecureEnclaveKeyInfo] {
@@ -57,9 +59,13 @@ public struct AgentKeyClient: SecureEnclaveKeyStoring {
         guard let contents = try? SSHAgentCodec.parseExtensionResponse(response) else {
             throw SMPError(
                 .agentNotRunning,
-                whatHappened: "SMP Agent refused to manage Secure Enclave keys for this copy of SMP.",
-                howToFix: "Open SMP from the same app bundle as the running SMP Agent. After updating "
-                    + "SMP, quit SMP Agent from its menu bar icon and start it again."
+                whatHappened: String(localized: """
+                    SMP Agent refused to manage Secure Enclave keys for this copy of SMP.
+                    """),
+                howToFix: String(localized: """
+                    Open SMP from the same app bundle as the running SMP Agent. After updating \
+                    SMP, quit SMP Agent from its menu bar icon and start it again.
+                    """)
             )
         }
         return try JSONDecoder().decode(AgentKeyReply.self, from: contents).result()
@@ -67,7 +73,7 @@ public struct AgentKeyClient: SecureEnclaveKeyStoring {
 
     static let notRunning = SMPError(
         .agentNotRunning,
-        whatHappened: "SMP Agent is not running.",
-        howToFix: "Secure Enclave keys are kept by SMP Agent. Start it to see and manage them."
+        whatHappened: String(localized: "SMP Agent is not running."),
+        howToFix: String(localized: "Secure Enclave keys are kept by SMP Agent. Start it to see and manage them.")
     )
 }

@@ -65,8 +65,10 @@ struct AgentView: View {
         } header: {
             Text("Status")
         } footer: {
-            Text("SMP Agent starts at login and shows its state in the menu bar. It serves Secure Enclave "
-                + "keys and passes everything else to the macOS ssh-agent.")
+            Text("""
+                SMP Agent starts at login and shows its state in the menu bar. It serves Secure Enclave \
+                keys and passes everything else to the macOS ssh-agent.
+                """)
                 .foregroundStyle(.secondary)
         }
     }
@@ -98,8 +100,10 @@ struct AgentView: View {
         } header: {
             Text("SSH")
         } footer: {
-            Text("Hosts that set their own IdentityAgent keep it. Terminal sessions that rely on "
-                + "SSH_AUTH_SOCK keep using the macOS agent directly.")
+            Text("""
+                Hosts that set their own IdentityAgent keep it. Terminal sessions that rely on \
+                SSH_AUTH_SOCK keep using the macOS agent directly.
+                """)
                 .foregroundStyle(.secondary)
         }
     }
@@ -123,19 +127,23 @@ struct AgentView: View {
         } header: {
             Text("Keys in the macOS agent")
         } footer: {
-            Text("Secure Enclave keys follow their own Touch ID setting (see the key's details). "
-                + "Approvals end when the screen locks or the Mac sleeps. Requests to add keys or lock "
-                + "the agent are refused; add file keys with ssh-add as usual.")
+            Text("""
+                Secure Enclave keys follow their own Touch ID setting (see the key's details). \
+                Approvals end when the screen locks or the Mac sleeps. Requests to add keys or lock \
+                the agent are refused; add file keys with ssh-add as usual.
+                """)
                 .foregroundStyle(.secondary)
         }
     }
 
     private var statusText: String {
         switch model.helperStatus {
-        case .enabled: model.identityCount == nil ? "Starting or not responding" : "Running"
-        case .requiresApproval: "Waiting for your approval"
-        case .notRegistered: "Off"
-        case .notFound: "Not available"
+        case .enabled: model.identityCount == nil
+            ? String(localized: "Starting or not responding")
+            : String(localized: "Running")
+        case .requiresApproval: String(localized: "Waiting for your approval")
+        case .notRegistered: String(localized: "Off")
+        case .notFound: String(localized: "Not available")
         }
     }
 
@@ -155,12 +163,18 @@ struct AgentDetailView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text("How SMP's agent works").font(.title2.weight(.semibold))
                 step("1", "ssh connects to SMP Agent through the IdentityAgent setting.")
-                step("2", "Requests for Secure Enclave keys are signed inside the Secure Enclave after "
-                    + "Touch ID. The private key never exists in memory or on disk.")
-                step("3", "Requests for other keys are passed on to the macOS ssh-agent, after Touch ID "
-                    + "if you turned that on.")
-                step("4", "The menu bar shows which program asked for which key, so unexpected requests "
-                    + "stand out.")
+                step("2", """
+                    Requests for Secure Enclave keys are signed inside the Secure Enclave after \
+                    Touch ID. The private key never exists in memory or on disk.
+                    """)
+                step("3", """
+                    Requests for other keys are passed on to the macOS ssh-agent, after Touch ID \
+                    if you turned that on.
+                    """)
+                step("4", """
+                    The menu bar shows which program asked for which key, so unexpected requests \
+                    stand out.
+                    """)
             }
             .padding(24)
             .frame(maxWidth: 560, alignment: .leading)

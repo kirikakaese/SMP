@@ -60,7 +60,7 @@ struct TunnelRow: View {
                     .font(.caption).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer()
-            Button(state.isRunning ? "Stop" : "Start") { model.toggle(tunnel) }
+            Button(state.isRunning ? String(localized: "Stop") : String(localized: "Start")) { model.toggle(tunnel) }
                 .controlSize(.small)
         }
         .accessibilityElement(children: .combine)
@@ -107,7 +107,9 @@ struct TunnelDetailView: View {
                 }
                 Section {
                     HStack {
-                        Button(state.isRunning ? "Stop" : "Start") { model.toggle(tunnel) }
+                        Button(state.isRunning
+                            ? String(localized: "Stop")
+                            : String(localized: "Start")) { model.toggle(tunnel) }
                         Button("Edit…") { model.editing = tunnel }
                         Spacer()
                         Button("Delete", role: .destructive) { model.delete(tunnel) }
@@ -137,7 +139,9 @@ struct TunnelEditSheet: View {
                 Picker("Host", selection: $tunnel.hostAlias) {
                     ForEach(hosts.connectableAliases, id: \.self) { Text($0).tag($0) }
                     if !hosts.connectableAliases.contains(tunnel.hostAlias) {
-                        Text(tunnel.hostAlias.isEmpty ? "Choose a host" : tunnel.hostAlias).tag(tunnel.hostAlias)
+                        Text(tunnel.hostAlias.isEmpty
+                            ? String(localized: "Choose a host")
+                            : tunnel.hostAlias).tag(tunnel.hostAlias)
                     }
                 }
             }

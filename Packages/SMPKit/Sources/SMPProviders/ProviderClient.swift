@@ -29,7 +29,7 @@ public struct ProviderClientFactory: ProviderClientMaking {
         let secret = token.withUnsafeBytes { String(decoding: $0, as: UTF8.self) }
             .trimmingCharacters(in: .whitespacesAndNewlines)
         guard !secret.isEmpty, !secret.contains(where: { $0.isNewline || $0 == " " }) else {
-            throw SMPError.invalidArgument("The token is empty or contains spaces.")
+            throw SMPError.invalidArgument(String(localized: "The token is empty or contains spaces."))
         }
         switch account.kind {
         case .github:
@@ -78,8 +78,10 @@ extension SSHPublicKey {
 
 /// Checks a requested usage set against what the provider supports.
 func requireSupported(_ usages: Set<RemoteKeyUsage>, by kind: ProviderKind) throws {
-    guard !usages.isEmpty else { throw SMPError.invalidArgument("Choose at least one use for the key.") }
+    guard !usages.isEmpty else { throw SMPError.invalidArgument(String(localized: """
+        Choose at least one use for the key.
+        """)) }
     if usages.contains(.signing), !kind.supportsSigningKeys {
-        throw SMPError.invalidArgument("\(kind.displayName) does not store SSH signing keys.")
+        throw SMPError.invalidArgument(String(localized: "\(kind.displayName) does not store SSH signing keys."))
     }
 }

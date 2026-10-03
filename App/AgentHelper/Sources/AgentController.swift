@@ -135,8 +135,8 @@ final class AgentController {
     /// Keys with the "notification only" policy sign without a prompt; tell the user each time.
     private func notify(_ entry: AgentActivity) {
         let content = UNMutableNotificationContent()
-        content.title = "Signed with “\(entry.keyName)”"
-        content.body = "Requested by \(entry.peer)."
+        content.title = String(localized: "Signed with “\(entry.keyName)”")
+        content.body = String(localized: "Requested by \(entry.peer).")
         let request = UNNotificationRequest(identifier: entry.id.uuidString, content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request)
     }
