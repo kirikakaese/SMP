@@ -246,6 +246,16 @@ never read into SMP's memory.
   do with data, the keys and audit score it found, the app lock settings, and starting SMP Agent.
   Settings → General can show it again.
 
+## Shortcuts
+
+`App/Sources/Shortcuts.swift` defines App Intents (they live in the app target so Xcode extracts
+their metadata): Copy Public Key, List SSH Keys, Connect to SSH Host, Start / Stop SSH Tunnel and
+Check SSH Security, with entities for keys, hosts and tunnels and suggested phrases for Siri and
+Spotlight. They use the running app's `ServiceContainer` (`AppContext`), so a tunnel started from
+Shortcuts is the same one SMP's window shows. The logic is in `SMPServices/ShortcutSupport.swift`
+(tested in the package). Actions only read and return public data (public key lines,
+fingerprints, aliases, tunnel names, the audit score); none touches private keys.
+
 ## Services and dependency injection
 
 Every service is a protocol (`SSHToolRunning`, `KeychainServicing`, …) with a live
