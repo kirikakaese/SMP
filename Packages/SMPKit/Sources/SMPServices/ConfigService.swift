@@ -3,10 +3,17 @@ import SMPCore
 import SMPSSH
 
 /// A loaded config file and the snapshot needed to save it safely.
-public struct LoadedConfigFile: Sendable {
+public struct LoadedConfigFile: Sendable, Identifiable {
+    public var id: URL { url }
     public let url: URL
     public var document: SSHConfigDocument
     public let snapshot: FileSnapshot?
+
+    public init(url: URL, document: SSHConfigDocument, snapshot: FileSnapshot?) {
+        self.url = url
+        self.document = document
+        self.snapshot = snapshot
+    }
 }
 
 /// An `IdentityFile` line that points at a given key.
