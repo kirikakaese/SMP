@@ -27,9 +27,11 @@ struct AgentView: View {
                 .disabled(model.isChecking)
             }
         }
-        .sheet(item: $hosts.pendingChange, onDismiss: { Task { await model.refresh() } }) { change in
-            ConfigDiffSheet(model: hosts, change: change)
-        }
+        .sheet(
+            item: $hosts.pendingChange,
+            onDismiss: { Task { await model.refresh() } },
+            content: { change in ConfigDiffSheet(model: hosts, change: change) }
+        )
         .task { await model.refresh() }
     }
 
