@@ -3,12 +3,8 @@
 <plist version="1.0">
 <!--
   SMP Agent (login-item helper). Hardened Runtime, not sandboxed (it must reach the system
-  ssh-agent socket). Documented in docs/ENTITLEMENTS.md.
+  ssh-agent socket). It needs no entitlements: Secure Enclave keys live in the login keychain,
+  which ad-hoc signed builds can use. Documented in docs/ENTITLEMENTS.md.
 -->
-<dict>
-	<key>keychain-access-groups</key>
-	<array>
-		<string>$(AppIdentifierPrefix)com.kirikakaese.smp.shared</string>
-	</array>
-</dict>
+<dict/>
 </plist>

@@ -66,10 +66,11 @@ open SMP.xcodeproj
 
 The Xcode project is generated from `project.yml` and is not checked in.
 
-Both targets share a Keychain group, so a normal build must be signed with your team; a free
-personal team is enough for local runs. With `Config/Local.xcconfig` in place, every generated
-project picks the team up automatically. Without it, build unsigned the way CI does; that build
-runs, but cannot create or use Secure Enclave keys or run SMP Agent:
+A development team is optional: without one, Xcode signs ad-hoc ("Sign to Run Locally") and
+everything works, including Secure Enclave keys and SMP Agent. With a team in
+`Config/Local.xcconfig` (a free personal team is enough), rebuilds keep the same signing
+identity, so macOS does not ask again whether SMP Agent may use its keychain item after each
+rebuild. To build from the command line the way CI does:
 
 ```sh
 xcodebuild build -project SMP.xcodeproj -scheme SMP -configuration Debug \

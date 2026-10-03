@@ -213,3 +213,31 @@ struct IdentityAgentProposalTests {
             == "Host web\n    User a\n\nHost *\n    ServerAliveInterval 30\n    IdentityAgent \"~/agent.sock\"\n")
     }
 }
+
+@MainActor
+@Suite("Secure Enclave keys without SMP Agent")
+struct SecureEnclaveWithoutAgentTests {
+    @Test func reportsTheMissingAgentAndCreatesNothing() async throws {
+        let home = FileManager.default.temporaryDirectory.appending(path: "smp-noagent-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: home) }
+        try FileManager.default.createDirectory(at: home.appending(path: ".ssh"), withIntermediateDirectories: true)
+        let services = ServiceContainer.make(
+            environment: SSHEnvironment(homeDirectory: home, userName: "test", agentSocketPath: "/nonexistent.sock"),
+            supportDirectory: home.appending(path: "support"),
+            keychain: InMemoryKeychainService(),
+            metadata: try GRDBMetadataStore.inMemory(),
+            authenticator: FakeAuthenticator(),
+            secureEnclave: AgentKeyClient(socketURL: home.appending(path: "missing.sock"), timeoutSeconds: 1),
+            agentHelper: FakeAgentHelper(status: .notRegistered)
+        )
+        let model = LibraryModel(services: services, defaults: UserDefaults(suiteName: "smp-na-\(UUID())") ?? .standard)
+        await model.reload()
+        #expect(model.secureEnclaveProblem?.code == .agentNotRunning)
+        #expect(!model.items.contains { $0.isSecureEnclave })
+
+        await #expect(throws: SMPError.self) {
+            try await model.createSecureEnclaveKey(name: "id_se", comment: "", policy: .everyUse, savePublicKey: true)
+        }
+        #expect(!FileManager.default.fileExists(atPath: home.appending(path: ".ssh/id_se.pub").path))
+    }
+}
