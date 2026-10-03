@@ -73,6 +73,35 @@ advisory lock (lock files live in Application Support, never in `~/.ssh`) → re
 changed since it was read → timestamped backup in `Application Support/Backups` → write to a
 temporary file → atomic rename. Symlinked configs (dotfile managers) are written through.
 
+## Hosts, known_hosts, tunnels and deployment
+
+- **Host editor.** `SSHConfigDocument.blocks()` exposes `Host`/`Match` blocks; edits
+  (`setValues`, `setPatterns`, `removeBlock`, `duplicateBlock`) touch only the lines involved, so
+  comments, ordering and formatting survive. Every change is staged as a `ConfigChange`: the user
+  sees a line diff (`TextDiff`) and the problems `ssh -G -F <temporary copy>` reports, and only then
+  is the file written through `SafeFileWriter`. The raw editor highlights unknown keywords.
+  Favorites, notes, tags and last-connected dates live in the metadata database, keyed by alias;
+  the config file stays the source of truth.
+- **Connection test.** `ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -T <alias> true`;
+  stderr is classified (authentication, unknown/changed host key, DNS, refused, timeout,
+  unreachable) into a plain-language explanation. Git hosts' "no shell access" greetings count as
+  success. Nothing is ever prompted and `known_hosts` is never modified by a test.
+- **Connect.** Terminal and iTerm2 via Apple Events (`ssh <alias>` with the alias shell-quoted);
+  Ghostty and WezTerm via launch arguments; Warp via a launch configuration and its URL scheme.
+- **known_hosts.** `KnownHostsDocument` is lossless, understands markers, `[host]:port`, negated
+  patterns and hashed entries (`|1|salt|HMAC-SHA1`). New keys are fetched with `ssh-keyscan` but
+  only added after the user pasted a matching fingerprint or explicitly confirmed it was checked
+  another way; a changed host key can only be replaced with a verified fingerprint. New entries
+  follow the file's style (hashed if most entries are hashed).
+- **Tunnels.** `ssh -N -o BatchMode=yes -o ExitOnForwardFailure=yes …` per profile, managed by
+  `TunnelService`; failures keep ssh's last error message. All tunnels stop when SMP quits.
+- **Deploying keys.** Like `ssh-copy-id`: a short POSIX `sh` script runs on the server
+  (`exec sh -c '<script>'`) and the key line arrives on stdin. It creates `~/.ssh` (700) and
+  `authorized_keys` (600), is idempotent, and removal deletes only the exact line after making
+  `authorized_keys.smp-backup`. An optional login test with only the new key (`IdentitiesOnly`,
+  no agent) confirms it works. A server password, if needed, goes through the askpass pipe with
+  public-key authentication disabled so it can only answer a password prompt.
+
 ## Archive
 
 `ArchiveService` stores archived keys in `Application Support/Archive`: a public JSON manifest
@@ -141,8 +170,8 @@ release. The metadata store never contains secrets.
 | `Tag` | id, name, color (many-to-many with keys and hosts) |
 | `KeyGroup` | id, name, sort index, member keys |
 | `SecureEnclaveKey` | key record id, Keychain reference, access control, require-every-use |
-| `HostProfile` | config alias (the `~/.ssh/config` block remains the source of truth), tags, group, favorite, preferred terminal, last connected |
-| `TunnelProfile` | id, name, host alias, forwards (local/remote/dynamic), auto-start |
+| `HostMetadata` | config alias (the `~/.ssh/config` block remains the source of truth), favorite, notes, last connected; tags via `hostTag` |
+| `TunnelProfile` | id, name, host alias, forwards (local/remote/dynamic, stored as JSON) |
 | `ProviderAccount` | id, provider type, base URL, username, Keychain token reference, scopes, last sync |
 | `Deployment` | key record, target (provider account or `user@host:port`), remote key id, usage (auth/signing), deployed/verified dates, status |
 | `RotationJob` | id, old key, new key, state (generated → deployed → configUpdated → verified → retired), step log, timestamps; resumable |
