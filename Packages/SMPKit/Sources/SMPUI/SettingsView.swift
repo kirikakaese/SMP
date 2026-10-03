@@ -5,15 +5,19 @@ import UniformTypeIdentifiers
 /// The Settings window.
 public struct SettingsView: View {
     private let library: LibraryModel
+    private let appLock: AppLockModel
 
-    public init(library: LibraryModel) {
+    public init(library: LibraryModel, appLock: AppLockModel) {
         self.library = library
+        self.appLock = appLock
     }
 
     public var body: some View {
         TabView {
             GeneralSettingsView(library: library)
                 .tabItem { Label("General", systemImage: "gearshape") }
+            AppLockSettingsView(appLock: appLock)
+                .tabItem { Label("App Lock", systemImage: "lock") }
             KeyFoldersSettingsView(library: library)
                 .tabItem { Label("Key Folders", systemImage: "folder") }
         }
@@ -37,6 +41,33 @@ struct GeneralSettingsView: View {
                 Text("SMP collects no telemetry.")
                     .foregroundStyle(.secondary)
             }
+            LabeledContent("Introduction") {
+                Button("Show at Next Launch") { OnboardingState.setCompleted(false) }
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
+
+struct AppLockSettingsView: View {
+    @Bindable var appLock: AppLockModel
+
+    var body: some View {
+        Form {
+            if appLock.isAvailable {
+                Toggle("Lock SMP with Touch ID or password", isOn: $appLock.settings.isEnabled)
+                IdleLockPicker(settings: $appLock.settings)
+                    .disabled(!appLock.settings.isEnabled)
+                Button("Lock Now") { appLock.lock() }
+                    .disabled(!appLock.settings.isEnabled)
+            } else {
+                Text("The app lock needs a login password on this Mac.")
+                    .foregroundStyle(.secondary)
+            }
+            Text("SMP also locks when your screen locks or the Mac goes to sleep. Deleting or exporting keys "
+                + "always asks again, whether the lock is on or not.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .formStyle(.grouped)
     }
