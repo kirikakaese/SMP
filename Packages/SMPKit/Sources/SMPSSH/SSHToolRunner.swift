@@ -7,6 +7,8 @@ public enum SSHTool: String, Sendable, CaseIterable {
     case sshAdd = "ssh-add"
     case ssh = "ssh"
     case sshKeyscan = "ssh-keyscan"
+    /// Used only to read and set the commit-signing options in the user's global git config.
+    case git = "git"
 
     /// The copy that ships with macOS. SMP deliberately does not pick up Homebrew builds via `PATH`.
     public var systemPath: URL {
