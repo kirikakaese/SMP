@@ -14,6 +14,7 @@ struct SMPApp: App {
     @State private var agent: AgentModel
     @State private var providers: ProvidersModel
     @State private var security: SecurityModel
+    @State private var appLock: AppLockModel
 
     init() {
         let services = ServiceContainer.live()
@@ -28,6 +29,14 @@ struct SMPApp: App {
         _agent = State(initialValue: AgentModel(services: services))
         _providers = State(initialValue: ProvidersModel(services: services))
         _security = State(initialValue: SecurityModel(services: services))
+        // On by default, but not before the first-run introduction has been seen.
+        let appLock = AppLockModel(
+            authenticator: services.authenticator,
+            isAvailable: DeviceAuthenticator.isAvailable(),
+            startsLocked: OnboardingState.isCompleted()
+        )
+        appLock.startMonitoring()
+        _appLock = State(initialValue: appLock)
         // Tunnels are child ssh processes; don't leave them running after SMP quits.
         _ = NotificationCenter.default.addObserver(
             forName: NSApplication.willTerminateNotification,
@@ -47,7 +56,8 @@ struct SMPApp: App {
                 tunnels: tunnels,
                 agent: agent,
                 providers: providers,
-                security: security
+                security: security,
+                appLock: appLock
             )
                 .environment(\.services, services)
                 .frame(minWidth: 960, minHeight: 560)
@@ -58,12 +68,17 @@ struct SMPApp: App {
                     AboutPanel.show()
                 }
             }
+            CommandGroup(after: .appSettings) {
+                Button("Lock SMP") { appLock.lock() }
+                    .keyboardShortcut("l", modifiers: [.command, .control])
+                    .disabled(!appLock.isAvailable || !appLock.settings.isEnabled)
+            }
             SidebarCommands()
             LibraryCommands(model: library)
         }
 
         Settings {
-            SettingsView(library: library)
+            SettingsView(library: library, appLock: appLock)
         }
     }
 }

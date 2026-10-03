@@ -38,6 +38,7 @@ Until 1.0, only the latest release receives security fixes.
 | --- | --- |
 | Secrets leaking through process arguments (visible to `ps`) | Passphrases go through a private askpass pipe or stdin. Argument arrays only, never shell strings. |
 | Secrets leaking through logs, crash reports or analytics | No telemetry. Unified logging never receives secrets; paths are logged as `.private`. |
+| Someone using the Mac while SMP is open | The app lock (on by default) hides SMP after 5 idle minutes, on screen lock and sleep, until Touch ID or the login password confirms the user. |
 | A backup file falling into the wrong hands | Backups are AES-256-GCM encrypted with a key derived from the user's passphrase (PBKDF2-HMAC-SHA256, 600,000 rounds, random salt); file names are encrypted too. SMP never stores the passphrase. |
 | A crafted backup writing outside `~/.ssh` | Restore writes only to `~/.ssh`, folders SMP watches and the two SSH config files, never overwrites, and shows every file before writing. |
 | Secrets lingering in memory | `SecureBytes` buffers are locked against swapping and zeroed after use. |
