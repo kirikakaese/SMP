@@ -1,9 +1,14 @@
 name: Strings
 
+concurrency:
+  group: strings-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   workflow_dispatch:
+  pull_request:
   push:
-    branches: ['feature/localization*']
+    branches: [main]
 
 permissions:
   contents: read
@@ -33,5 +38,6 @@ jobs:
             SWIFT_EMIT_LOC_STRINGS=YES \
             ONLY_ACTIVE_ARCH=YES \
             -quiet
-      - name: List keys
-        run: python3 scripts/extract_strings.py build
+      - name: Check the String Catalog
+        # Fails when a string in the code is missing from the catalog or has no German translation.
+        run: python3 scripts/extract_strings.py build App/Resources/Localizable.xcstrings
