@@ -9,23 +9,26 @@ built as MVVM on top of a protocol-based services layer.
 SMP/
 ├─ project.yml              XcodeGen spec for the app target (SMP.xcodeproj is generated)
 ├─ App/                     Thin app target: @main, AppDelegate, Info.plist, entitlements
-├─ AgentHelper/             (milestone 5) login-item helper running the built-in agent
+│  └─ AgentHelper/          Login-item helper (SMPAgent.app, menu bar extra) running the built-in agent
 └─ Packages/SMPKit/         All logic, as one Swift package with several modules
    ├─ Sources/SMPCore       Models, SMPError, SecureBytes, SSHEnvironment, logging
    ├─ Sources/SMPSSH        SSHToolRunner, ProcessExecutor, askpass broker, wire-format reader/writer,
    │                        public key parsing + fingerprints, randomart, private key header inspection,
-   │                        PuTTY conversion, lossless SSHConfigDocument; later: known_hosts, agent codec
+   │                        PuTTY conversion, lossless SSHConfigDocument, known_hosts, agent protocol codec
    ├─ Sources/SMPPersistence  GRDB metadata store (tags, groups, notes, favorites, expiry)
    ├─ Sources/SMPServices   KeychainService, KeyDiscoveryService, AgentService, KeyService,
    │                        ArchiveService, ConfigService, SafeFileWriter, DeviceAuthenticator,
    │                        FileWatcherService (FSEvents), KeyFolderSettings, ServiceContainer;
    │                        later: Config, KnownHosts, Provider, Audit services
+   ├─ Sources/SMPAgent      The built-in agent: socket server, request handler, Touch ID approval,
+   │                        forwarding to the system agent (no UI; used by the helper)
    ├─ Sources/SMPUI         SwiftUI views and view models (LibraryModel, sidebar, list, detail, settings)
    ├─ Sources/SMPTestFixtures  test-only key fixtures (not part of any product)
    └─ Tests/                Swift Testing suites per module
 ```
 
-Dependency direction: `SMPCore` ← `SMPSSH` ← `SMPServices` ← `SMPUI` ← `App`.
+Dependency direction: `SMPCore` ← `SMPSSH` ← `SMPServices` ← `SMPUI` ← `App`, and
+`SMPServices` ← `SMPAgent` ← `App/AgentHelper`.
 Provider clients (`SMPProviders`) will be added as a separate module in milestone 6.
 
 ## Key discovery
@@ -102,6 +105,36 @@ temporary file → atomic rename. Symlinked configs (dotfile managers) are writt
   no agent) confirms it works. A server password, if needed, goes through the askpass pipe with
   public-key authentication disabled so it can only answer a password prompt.
 
+## Built-in agent and Secure Enclave keys
+
+- **Secure Enclave keys** are ECDSA P-256 keys created with CryptoKit. The private key never leaves
+  the Secure Enclave; SMP stores only the encrypted, device-bound key reference as a Keychain
+  item (data protection keychain, `…AfterFirstUnlockThisDeviceOnly`, never synchronized) in an
+  access group shared by the app and the helper. The item's generic attribute holds the public
+  `SecureEnclaveKeyInfo` (name, comment, signing policy, public point). With the Touch ID policy
+  the key's access control includes `.userPresence`; that requirement is fixed at creation.
+  SMP writes the public key to `~/.ssh/<name>.pub` so `IdentityFile` can select it.
+- **SMP Agent** (`App/AgentHelper`, bundle id `com.kirikakaese.smp.agent`) is a login item
+  registered with `SMAppService`. It listens on
+  `~/Library/Application Support/com.kirikakaese.smp/agent.sock` (socket 0600, folder 0700) and
+  speaks the SSH agent protocol (`SSHAgentCodec`). `AgentRequestHandler`:
+  - lists Secure Enclave keys first, then the system agent's keys (from the launchd
+    `SSH_AUTH_SOCK`; SMP's own socket is never used as upstream);
+  - signs for Secure Enclave keys after `LocalSignatureAuthorizer` approved the request
+    (Touch ID / password via `LAContext`, reused for the key's reuse window; the evaluated context
+    is handed to the Secure Enclave so there is one prompt);
+  - forwards other signature requests to the system agent, after Touch ID if
+    "Ask for Touch ID before using keys from the macOS agent" is on (shared `UserDefaults` suite);
+  - refuses requests that carry secrets (add identity, smartcard PINs, lock/unlock) so private
+    keys and passphrases never pass through SMP; forwards the rest unchanged.
+  The requesting process is identified with `LOCAL_PEERPID` and shown in the Touch ID prompt and
+  the menu bar's activity list. Reuse windows end when the screen locks or the Mac sleeps.
+- **Using it:** SSH → Agent proposes `IdentityAgent "<socket>"` in a `Host *` block of
+  `~/.ssh/config` through the usual diff review, and checks with `ssh -G` that it took effect.
+- **Security keys (FIDO2):** creation uses `ssh-keygen -t ed25519-sk/ecdsa-sk`; resident keys can be
+  downloaded with `ssh-keygen -K` (PIN through askpass) into `~/.ssh`. The OpenSSH shipped with
+  macOS needs a FIDO provider library for both.
+
 ## Archive
 
 `ArchiveService` stores archived keys in `Application Support/Archive`: a public JSON manifest
@@ -156,7 +189,7 @@ key's cipher is not `none`).
 | Private keys | `~/.ssh` files (or the encrypted archive) |
 | Key passphrases | macOS Keychain through OpenSSH's own `UseKeychain` / `--apple-use-keychain` |
 | Provider tokens | Keychain (`KeychainService`, `…ThisDeviceOnly`, never synchronized) |
-| Secure Enclave keys | Secure Enclave; only an opaque reference in the Keychain |
+| Secure Enclave keys | Secure Enclave; only an encrypted, device-bound reference in the Keychain (shared access group) |
 | Archive / backup keys | Keychain |
 
 In memory, secrets are held in `SecureBytes`, which are locked against swapping and zeroed on
