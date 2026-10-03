@@ -38,6 +38,8 @@ jobs:
           xcode-version: latest-stable
       - name: Toolchain
         run: swift --version && /usr/bin/ssh -V
+      - name: Install PuTTY (for PuTTYgen compatibility tests)
+        run: brew install putty
       - name: Build
         run: swift build --package-path Packages/SMPKit
       - name: Test

@@ -4,6 +4,7 @@ import SwiftUI
 /// The main window: sidebar / key list / key detail.
 public struct RootView: View {
     @Bindable private var model: LibraryModel
+    @Environment(\.undoManager) private var undoManager
 
     public init(model: LibraryModel) {
         self.model = model
@@ -26,6 +27,20 @@ public struct RootView: View {
                 ContentUnavailableView("No Selection", systemImage: "key", description: Text("Select a key."))
             }
         }
+        .sheet(item: $model.activeSheet) { sheet in
+            LibrarySheetHost(model: model, sheet: sheet)
+        }
+        .overlay(alignment: .bottom) {
+            if let notice = model.notice {
+                NoticeBanner(text: notice) { model.notice = nil }
+            }
+        }
+        .dropDestination(for: URL.self) { urls, _ in
+            guard let url = urls.first, model.activeSheet == nil else { return false }
+            model.activeSheet = .importKey(url)
+            return true
+        }
+        .onChange(of: undoManager, initial: true) { model.windowUndoManager = undoManager }
         .task {
             await model.reload()
             model.startWatching()
