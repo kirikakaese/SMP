@@ -9,6 +9,7 @@ public enum SidebarSelection: Hashable, Sendable {
     case tag(Int64)
     case group(Int64)
     case ssh(SSHSection)
+    case provider(UUID)
 }
 
 /// The SSH sections below the key library.
@@ -402,7 +403,7 @@ public final class LibraryModel {
             return item.tagIDs.contains(id)
         case .group(let id):
             return item.groupIDs.contains(id)
-        case .ssh:
+        case .ssh, .provider:
             return false
         case nil:
             return !item.isArchived

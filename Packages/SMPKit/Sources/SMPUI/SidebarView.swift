@@ -24,11 +24,13 @@ extension TagColor {
 /// The library sidebar: fixed sections, then user tags and groups.
 struct SidebarView: View {
     @Bindable var model: LibraryModel
+    let providers: ProvidersModel
 
     @State private var isAddingTag = false
     @State private var newGroupName = ""
     @State private var isAddingGroup = false
     @State private var pendingDeletion: SidebarSelection?
+    @State private var pendingAccountRemoval: ProviderAccount?
 
     var body: some View {
         List(selection: $model.sidebarSelection) {
@@ -44,6 +46,24 @@ struct SidebarView: View {
                     Label(section.title, systemImage: section.systemImage)
                         .tag(SidebarSelection.ssh(section))
                 }
+            }
+            Section("Providers") {
+                ForEach(providers.accounts) { account in
+                    Label(account.displayName, systemImage: account.kind.systemImage)
+                        .badge(providers.keys(for: account).count)
+                        .tag(SidebarSelection.provider(account.id))
+                        .contextMenu {
+                            Button("Refresh") { Task { await providers.refresh(account) } }
+                            Button("Remove from SMP…", role: .destructive) { pendingAccountRemoval = account }
+                        }
+                }
+                Button {
+                    providers.isAddingAccount = true
+                } label: {
+                    Label("Add Account…", systemImage: "plus.circle")
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
             }
             if !model.tags.isEmpty {
                 Section("Tags") {
@@ -116,6 +136,27 @@ struct SidebarView: View {
             }
         } message: {
             Text("Keys are not deleted. Only the assignment is removed.")
+        }
+        .confirmationDialog(
+            "Remove \(pendingAccountRemoval?.displayName ?? "") from SMP?",
+            isPresented: Binding(
+                get: { pendingAccountRemoval != nil }, set: { if !$0 { pendingAccountRemoval = nil } }
+            )
+        ) {
+            Button("Remove", role: .destructive) {
+                if let account = pendingAccountRemoval {
+                    if model.sidebarSelection == .provider(account.id) {
+                        model.sidebarSelection = .library(.allKeys)
+                    }
+                    providers.removeAccount(account)
+                }
+                pendingAccountRemoval = nil
+            }
+        } message: {
+            Text("SMP deletes the account's token from the Keychain. Keys on the provider stay as they are.")
+        }
+        .sheet(isPresented: Binding(get: { providers.isAddingAccount }, set: { providers.isAddingAccount = $0 })) {
+            AddProviderAccountSheet(providers: providers)
         }
     }
 
