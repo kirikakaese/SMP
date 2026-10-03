@@ -7,6 +7,8 @@ public protocol MetadataStoring: Sendable {
     func allMetadata() throws -> [String: KeyMetadata]
     func metadata(for fingerprint: String) throws -> KeyMetadata?
     func save(_ metadata: KeyMetadata) throws
+    /// Removes the key's metadata and its tag and group assignments.
+    func deleteMetadata(for fingerprint: String) throws
 
     func allTags() throws -> [KeyTag]
     func createTag(named name: String, color: TagColor) throws -> KeyTag
@@ -107,6 +109,14 @@ public final class GRDBMetadataStore: MetadataStoring, Sendable {
     public func save(_ metadata: KeyMetadata) throws {
         try database.write { db in
             try KeyMetadataRecord(metadata).save(db)
+        }
+    }
+
+    public func deleteMetadata(for fingerprint: String) throws {
+        try database.write { db in
+            _ = try KeyMetadataRecord.deleteOne(db, key: fingerprint)
+            try KeyTagRecord.filter(Column("fingerprint") == fingerprint).deleteAll(db)
+            try GroupMemberRecord.filter(Column("fingerprint") == fingerprint).deleteAll(db)
         }
     }
 

@@ -43,7 +43,10 @@ Until 1.0, only the latest release receives security fixes.
 | Corrupting config files | Timestamped backups, atomic writes, file locking, and change detection before saving. |
 | Malicious input (pasted keys, API responses, config files) | All external input is validated and parsed defensively. |
 | Unwanted use of agent keys by other local processes | Built-in agent prompts with Touch ID and shows the requesting process. Per-key "confirm every use". |
-| Loss of keys through accidental deletion | Impact report, encrypted archive, typed confirmation and re-authentication before permanent deletion. |
+| Loss of keys through accidental deletion | Impact report, encrypted archive (AES-256-GCM, key in the Keychain) with undo, typed confirmation and Touch ID / password before permanent deletion. |
+| A key the user believes is protected is silently stored without passphrase | After every operation that sets a passphrase, SMP re-reads the key header; an unprotected result is deleted and reported. |
+| Private key export | Requires Touch ID / password; the file is copied without passing through SMP's memory. |
+| Leftover key material after deletion | Files are overwritten with zeros before unlinking. On APFS (copy-on-write, SSD) this cannot guarantee erasure; FileVault is the real protection. |
 | Token theft from disk | Provider tokens are stored only in the Keychain, never synchronized. |
 
 ### Out of scope

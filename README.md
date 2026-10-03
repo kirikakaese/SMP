@@ -4,8 +4,9 @@
 deploying, auditing and deleting SSH keys and SSH host configurations. It aims to feel like a
 first-party Apple utility: fast, safe and keyboard-friendly.
 
-> **Status:** early development. The key library (discovery, live folder watching, details,
-> search, tags and groups) works; the remaining features below are planned.
+> **Status:** early development. The key library and the full key lifecycle (create, import incl.
+> PuTTY conversion, export, rename, passphrase and comment changes, format upgrade, archive with
+> undo, and safe permanent deletion) work; the remaining features below are planned.
 
 ## Features (planned)
 

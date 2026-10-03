@@ -15,6 +15,16 @@ public struct SMPError: Error, Sendable, Equatable {
         case invalidArgument
         case keychain
         case fileSystem
+        /// A file changed on disk after SMP read it; nothing was written.
+        case fileChangedOnDisk
+        /// A file or key with the requested name already exists.
+        case alreadyExists
+        /// A key operation (generate, import, convert, change passphrase …) failed.
+        case keyOperationFailed
+        /// The passphrase was wrong or missing.
+        case passphraseRequired
+        /// Touch ID / password re-authentication failed or was cancelled.
+        case authenticationFailed
     }
 
     public let code: Code
@@ -79,5 +89,39 @@ extension SMPError {
 
     public static func invalidArgument(_ message: String) -> SMPError {
         SMPError(.invalidArgument, whatHappened: message)
+    }
+}
+
+extension SMPError {
+    public static func fileChangedOnDisk(_ name: String) -> SMPError {
+        SMPError(
+            .fileChangedOnDisk,
+            whatHappened: "\(name) was changed by another program after SMP read it. Nothing was saved.",
+            howToFix: "Review the file, then try again. SMP reloads it before saving."
+        )
+    }
+
+    public static func alreadyExists(_ name: String) -> SMPError {
+        SMPError(
+            .alreadyExists,
+            whatHappened: "A file named “\(name)” already exists.",
+            howToFix: "Choose another name, or confirm that the existing key should be archived and replaced."
+        )
+    }
+
+    public static func wrongPassphrase(_ keyName: String) -> SMPError {
+        SMPError(
+            .passphraseRequired,
+            whatHappened: "The passphrase for “\(keyName)” is missing or incorrect.",
+            howToFix: "Enter the key's current passphrase and try again."
+        )
+    }
+
+    public static func keyOperationFailed(
+        _ whatHappened: String,
+        howToFix: String? = nil,
+        details: String? = nil
+    ) -> SMPError {
+        SMPError(.keyOperationFailed, whatHappened: whatHappened, howToFix: howToFix, details: details)
     }
 }

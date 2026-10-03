@@ -12,11 +12,12 @@ SMP/
 ├─ AgentHelper/             (milestone 5) login-item helper running the built-in agent
 └─ Packages/SMPKit/         All logic, as one Swift package with several modules
    ├─ Sources/SMPCore       Models, SMPError, SecureBytes, SSHEnvironment, logging
-   ├─ Sources/SMPSSH        SSHToolRunner, ProcessExecutor, askpass broker, wire-format reader,
-   │                        public key parsing + fingerprints, randomart, private key header inspection;
-   │                        later: config/known_hosts parsers, agent codec
+   ├─ Sources/SMPSSH        SSHToolRunner, ProcessExecutor, askpass broker, wire-format reader/writer,
+   │                        public key parsing + fingerprints, randomart, private key header inspection,
+   │                        PuTTY conversion, lossless SSHConfigDocument; later: known_hosts, agent codec
    ├─ Sources/SMPPersistence  GRDB metadata store (tags, groups, notes, favorites, expiry)
-   ├─ Sources/SMPServices   KeychainService, KeyDiscoveryService, AgentService (status),
+   ├─ Sources/SMPServices   KeychainService, KeyDiscoveryService, AgentService, KeyService,
+   │                        ArchiveService, ConfigService, SafeFileWriter, DeviceAuthenticator,
    │                        FileWatcherService (FSEvents), KeyFolderSettings, ServiceContainer;
    │                        later: Config, KnownHosts, Provider, Audit services
    ├─ Sources/SMPUI         SwiftUI views and view models (LibraryModel, sidebar, list, detail, settings)
@@ -43,6 +44,51 @@ fingerprints and passphrase status without asking for a passphrase.
 
 Metadata (tags, groups, notes, favorites, expiry) is stored per SHA256 fingerprint, so it
 survives renames and moves, and applies to every copy of the same key.
+
+## Key lifecycle (`KeyService`)
+
+All operations run `ssh-keygen` through `SSHToolRunner`. Passphrases go through the askpass
+pipe; an empty passphrase is passed as `-N ""` or `-P ""`, which is not a secret.
+
+- **Create / import:** files are written into a private staging folder
+  (`~/.ssh/.smp-staging.XXXXXX`, mode 0700), checked, given the right permissions
+  (600 private, 644 public, 700 for `~/.ssh`), then atomically renamed into place. An existing
+  key with the same name is only replaced on explicit request, and is archived first.
+- **Verification after every passphrase change:** the private key's header is read back.
+  If a passphrase was requested but the key is unencrypted (OpenSSH treats a failed prompt as
+  an empty passphrase), the key is deleted and an error is shown.
+- **Import** validates the key with `ssh-keygen -y`. PuTTY files are converted by
+  `PuTTYKeyConverter`: it verifies the file's MAC (v2: HMAC-SHA-1, v3: HMAC-SHA-256), assembles
+  an `openssh-key-v1` file in `SecureBytes`, and checks Ed25519 seeds against the public key.
+  Encrypted `.ppk` files must be exported from PuTTYgen first.
+- **Rename** moves private key, public key and certificate together and updates `IdentityFile`
+  references in `~/.ssh/config` and included files, rolling back if anything fails.
+
+## Config files
+
+`SSHConfigDocument` is a lossless, line-based model: unchanged documents render byte-for-byte
+identical. `ConfigService` follows `Include` (globs, `~`, relative to `~/.ssh`) and finds
+`IdentityFile` references (`~`, `%d`, `%u`, relative paths). `SafeFileWriter` writes text files:
+advisory lock (lock files live in Application Support, never in `~/.ssh`) → refuse if the file
+changed since it was read → timestamped backup in `Application Support/Backups` → write to a
+temporary file → atomic rename. Symlinked configs (dotfile managers) are written through.
+
+## Archive
+
+`ArchiveService` stores archived keys in `Application Support/Archive`: a public JSON manifest
+and an AES-256-GCM sealed payload (the manifest id is authenticated data). The archive key is
+generated on first use and kept in the Keychain. Archiving decrypts the result and compares it
+with the files on disk before the originals are deleted. Restoring never overwrites; on a name
+conflict the key is restored as `<name>_restored`.
+
+## Deletion and export
+
+Permanent deletion shows an impact report (config references, agent, git signing), lets the
+user decide what happens to each config reference, requires typing the key name and Touch ID or
+the login password (`LocalAuthentication`), removes the key from the agent and its Keychain
+passphrase (`ssh-add -d --apple-use-keychain`), then overwrites and unlinks the files.
+Exporting a private key also requires re-authentication; the file is copied by the kernel and
+never read into SMP's memory.
 
 ## Services and dependency injection
 
