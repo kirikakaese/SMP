@@ -9,7 +9,7 @@ built as MVVM on top of a protocol-based services layer.
 SMP/
 ├─ project.yml              XcodeGen spec for the app target (SMP.xcodeproj is generated)
 ├─ App/                     Thin app target: @main, AppDelegate, Info.plist, entitlements
-│  └─ AgentHelper/          Login-item helper (SMPAgent.app, menu bar extra) running the built-in agent
+│  └─ AgentHelper/          Login-item helper (SMPAgentHelper.app, “SMP Agent”, menu bar extra) running the built-in agent
 └─ Packages/SMPKit/         All logic, as one Swift package with several modules
    ├─ Sources/SMPCore       Models, SMPError, SecureBytes, SSHEnvironment, logging
    ├─ Sources/SMPSSH        SSHToolRunner, ProcessExecutor, askpass broker, wire-format reader/writer,

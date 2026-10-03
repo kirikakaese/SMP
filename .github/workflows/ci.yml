@@ -69,7 +69,7 @@ jobs:
       - name: Verify universal binaries and the embedded agent helper
         run: |
           app=build/Build/Products/Release/SMP.app
-          for binary in "$app/Contents/MacOS/SMP" "$app/Contents/Library/LoginItems/SMPAgent.app/Contents/MacOS/SMPAgent"; do
+          for binary in "$app/Contents/MacOS/SMP" "$app/Contents/Library/LoginItems/SMPAgentHelper.app/Contents/MacOS/SMPAgentHelper"; do
             lipo -archs "$binary" | tee /dev/stderr | grep -q "x86_64 arm64\|arm64 x86_64"
           done
-          /usr/libexec/PlistBuddy -c "Print :LSUIElement" "$app/Contents/Library/LoginItems/SMPAgent.app/Contents/Info.plist" | grep -q true
+          /usr/libexec/PlistBuddy -c "Print :LSUIElement" "$app/Contents/Library/LoginItems/SMPAgentHelper.app/Contents/Info.plist" | grep -q true
