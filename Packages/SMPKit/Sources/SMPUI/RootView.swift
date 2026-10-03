@@ -10,7 +10,9 @@ public struct RootView: View {
     @Bindable private var agent: AgentModel
     @Bindable private var providers: ProvidersModel
     @Bindable private var security: SecurityModel
+    @Bindable private var appLock: AppLockModel
     @Environment(\.undoManager) private var undoManager
+    @State private var showsOnboarding = !OnboardingState.isCompleted()
 
     public init(
         model: LibraryModel,
@@ -19,7 +21,8 @@ public struct RootView: View {
         tunnels: TunnelsModel,
         agent: AgentModel,
         providers: ProvidersModel,
-        security: SecurityModel
+        security: SecurityModel,
+        appLock: AppLockModel
     ) {
         self.model = model
         self.hosts = hosts
@@ -28,6 +31,7 @@ public struct RootView: View {
         self.agent = agent
         self.providers = providers
         self.security = security
+        self.appLock = appLock
     }
 
     private var providerAccount: ProviderAccount? {
@@ -43,6 +47,34 @@ public struct RootView: View {
     }
 
     public var body: some View {
+        Group {
+            // While locked, the workspace (and every sheet it presents) is removed entirely.
+            if appLock.isLocked {
+                LockView(model: appLock)
+            } else {
+                workspace
+            }
+        }
+        .onChange(of: undoManager, initial: true) { model.windowUndoManager = undoManager }
+        .task {
+            await model.reload()
+            model.startWatching()
+            security.runAudit(library: model)
+        }
+        .task {
+            // The only automatic network traffic: refresh provider accounts once at launch.
+            await providers.refreshAll()
+        }
+        .errorAlert($model.lastError)
+        .errorAlert($hosts.lastError)
+        .errorAlert($knownHosts.lastError)
+        .errorAlert($tunnels.lastError)
+        .errorAlert($agent.lastError)
+        .errorAlert($providers.lastError)
+        .errorAlert($security.lastError)
+    }
+
+    private var workspace: some View {
         NavigationSplitView {
             SidebarView(model: model, providers: providers, security: security)
         } content: {
@@ -90,23 +122,12 @@ public struct RootView: View {
             model.activeSheet = .importKey(url)
             return true
         }
-        .onChange(of: undoManager, initial: true) { model.windowUndoManager = undoManager }
-        .task {
-            await model.reload()
-            model.startWatching()
-            security.runAudit(library: model)
+        .sheet(isPresented: $showsOnboarding) {
+            OnboardingView(library: model, security: security, appLock: appLock, agent: agent) {
+                OnboardingState.setCompleted(true)
+                showsOnboarding = false
+            }
         }
-        .task {
-            // The only automatic network traffic: refresh provider accounts once at launch.
-            await providers.refreshAll()
-        }
-        .errorAlert($model.lastError)
-        .errorAlert($hosts.lastError)
-        .errorAlert($knownHosts.lastError)
-        .errorAlert($tunnels.lastError)
-        .errorAlert($agent.lastError)
-        .errorAlert($providers.lastError)
-        .errorAlert($security.lastError)
     }
 
     @ViewBuilder private var sshContent: some View {

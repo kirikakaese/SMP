@@ -11,6 +11,13 @@ public protocol DeviceAuthenticating: Sendable {
 public struct DeviceAuthenticator: DeviceAuthenticating {
     public init() {}
 
+    /// Whether this Mac can ask for Touch ID or the login password at all (it cannot without a
+    /// login password). Features like the app lock must stay off when it cannot.
+    public static func isAvailable() -> Bool {
+        var error: NSError?
+        return LAContext().canEvaluatePolicy(.deviceOwnerAuthentication, error: &error)
+    }
+
     public func authenticate(reason: String) async throws {
         let context = LAContext()
         context.localizedFallbackTitle = "Use Password"
