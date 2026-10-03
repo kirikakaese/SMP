@@ -42,7 +42,7 @@ targets:
       - package: SMPKit
         product: SMPUI
       # The agent helper is embedded as a login item and registered with SMAppService.
-      - target: SMPAgent
+      - target: SMPAgentHelper
         embed: true
         codeSign: true
         copy:
@@ -58,7 +58,7 @@ targets:
         CODE_SIGN_STYLE: Automatic
         COMBINE_HIDPI_IMAGES: YES
 
-  SMPAgent:
+  SMPAgentHelper:
     type: application
     platform: macOS
     sources:
@@ -72,7 +72,7 @@ targets:
         product: SMPAgent
     settings:
       base:
-        PRODUCT_NAME: SMPAgent
+        PRODUCT_NAME: SMPAgentHelper
         PRODUCT_BUNDLE_IDENTIFIER: com.kirikakaese.smp.agent
         INFOPLIST_FILE: App/AgentHelper/Info.plist
         GENERATE_INFOPLIST_FILE: NO
