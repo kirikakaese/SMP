@@ -8,6 +8,11 @@ options:
   createIntermediateGroups: true
   developmentLanguage: en
 
+# Signing team comes from the git-ignored Config/Local.xcconfig (see Config/Signing.xcconfig).
+configFiles:
+  Debug: Config/Signing.xcconfig
+  Release: Config/Signing.xcconfig
+
 settings:
   base:
     SWIFT_VERSION: "6.0"

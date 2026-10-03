@@ -4,8 +4,11 @@ Thanks for your interest in SSH Management Platform.
 
 ## Development setup
 
-1. Install Xcode 16 or later and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
-2. Run `xcodegen generate` and open `SMP.xcodeproj`, or work on the package directly with
+1. Install Xcode 16 or later (the Command Line Tools alone cannot run the tests) and
+   [XcodeGen](https://github.com/yonaskolb/XcodeGen).
+2. Copy `Config/Local.xcconfig.example` to `Config/Local.xcconfig` and set your Team ID. The file is
+   git-ignored; never commit it.
+3. Run `xcodegen generate` and open `SMP.xcodeproj`, or work on the package directly with
    `swift build --package-path Packages/SMPKit`.
 
 ## Before opening a pull request

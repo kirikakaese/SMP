@@ -1,0 +1,8 @@
+// Signing settings shared by every target. Your own team lives in Config/Local.xcconfig,
+// which git ignores; copy Config/Local.xcconfig.example to create it. Without it the
+// project still generates, and an unsigned build works (CODE_SIGNING_ALLOWED=NO), but
+// Secure Enclave keys and SMP Agent need a signed build.
+
+DEVELOPMENT_TEAM =
+
+#include? "Local.xcconfig"
