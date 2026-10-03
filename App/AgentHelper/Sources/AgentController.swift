@@ -18,9 +18,13 @@ final class AgentController {
 
     @ObservationIgnored private var server: AgentServer?
     @ObservationIgnored private let authorizer = LocalSignatureAuthorizer()
-    @ObservationIgnored private let store = SecureEnclaveKeyStore(
-        accessGroup: SecureEnclaveKeyStore.bundleAccessGroup()
-    )
+    /// The only place Secure Enclave keys are stored; the app manages them through the agent.
+    @ObservationIgnored private let store = SecureEnclaveKeyStore()
+    /// Only the SMP app this helper is embedded in may create, change or delete keys.
+    @ObservationIgnored private let peerVerifier: any PeerVerifying = {
+        if let verifier = CodeSignaturePeerVerifier(helperBundle: .main) { return verifier }
+        return FixedPeerVerifier(allows: false)
+    }()
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
     @ObservationIgnored private var reminderTimer: Timer?
     private static let shownRemindersKey = "reminders.shown"
@@ -65,11 +69,15 @@ final class AgentController {
                 store: store,
                 upstream: upstream,
                 authorizer: authorizer,
+                peerVerifier: peerVerifier,
                 settings: {
                     AgentSettings.load(from: UserDefaults(suiteName: AgentPaths.sharedDefaultsSuite) ?? .standard)
                 },
                 record: { [weak self] entry in
                     Task { @MainActor [weak self] in self?.record(entry) }
+                },
+                keysChanged: { [weak self] in
+                    Task { @MainActor [weak self] in self?.refreshKeys() }
                 }
             )
             let server = AgentServer(socketURL: socket, handler: handler)
