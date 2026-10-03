@@ -6,6 +6,8 @@ import SMPSSH
 /// Sheets and dialogs presented by the library window.
 public enum LibrarySheet: Identifiable, Sendable {
     case newKey
+    case newSecureEnclaveKey
+    case downloadResidentKeys
     /// Import, optionally pre-filled with a dropped or chosen file.
     case importKey(URL?)
     case rename(LibraryItem)
@@ -19,6 +21,8 @@ public enum LibrarySheet: Identifiable, Sendable {
     public var id: String {
         switch self {
         case .newKey: "new"
+        case .newSecureEnclaveKey: "new-secure-enclave"
+        case .downloadResidentKeys: "download-resident"
         case .importKey: "import"
         case .rename(let item): "rename-\(item.id)"
         case .changePassphrase(let item): "passphrase-\(item.id)"
@@ -165,7 +169,10 @@ extension LibraryModel {
     /// Moves keys into the encrypted archive. Registers an undo action that restores them.
     public func archive(_ items: [LibraryItem], undoManager: UndoManager?) async {
         var archivedIDs: [UUID] = []
-        for item in items where item.archive == nil {
+        if items.contains(where: \.isSecureEnclave) {
+            notice = "Secure Enclave keys cannot be archived: they can never leave this Mac."
+        }
+        for item in items where item.archive == nil && !item.isSecureEnclave {
             do {
                 if item.isLoadedInAgent, let file = item.key.publicKeyFile?.url ?? item.key.privateKeyFile?.url {
                     try? await services.agent.remove(keyFile: file, removeFromKeychain: false)
@@ -243,6 +250,11 @@ extension LibraryModel {
         for item in items {
             if let archive = item.archive {
                 try services.archive.deleteArchived(id: archive.id)
+            } else if let enclaveKey = item.secureEnclave {
+                try services.secureEnclave.delete(id: enclaveKey.id)
+                if !item.isVirtualSecureEnclaveEntry {
+                    try await services.keys.deletePermanently(item.key, configEdits: configEdits[item.id] ?? [])
+                }
             } else {
                 try await services.keys.deletePermanently(item.key, configEdits: configEdits[item.id] ?? [])
             }

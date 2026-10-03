@@ -20,12 +20,17 @@ struct KeyDetailView: View {
                 archivedSection(archive)
             }
             header
-            if !item.key.issues.isEmpty || item.isExpired() {
+            if let enclaveKey = item.secureEnclave {
+                SecureEnclaveSection(model: model, item: item, key: enclaveKey)
+            }
+            if !item.issues.isEmpty || item.isExpired() {
                 attentionSection
             }
             fingerprintSection
             detailsSection
-            filesSection
+            if !item.isVirtualSecureEnclaveEntry {
+                filesSection
+            }
             organizeSection
         }
         .formStyle(.grouped)
@@ -66,7 +71,7 @@ struct KeyDetailView: View {
 
     private var attentionSection: some View {
         Section("Needs Attention") {
-            ForEach(Array(item.key.issues.enumerated()), id: \.offset) { _, issue in
+            ForEach(Array(item.issues.enumerated()), id: \.offset) { _, issue in
                 Label(issue.summary, systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange)
             }

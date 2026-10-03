@@ -12,8 +12,11 @@ public struct LibraryCommands: Commands {
         CommandGroup(replacing: .newItem) {
             Button("New Key…") { model.activeSheet = .newKey }
                 .keyboardShortcut("n")
+            Button("New Secure Enclave Key…") { model.activeSheet = .newSecureEnclaveKey }
+                .keyboardShortcut("n", modifiers: [.command, .option])
             Button("Import Key…") { model.activeSheet = .importKey(nil) }
                 .keyboardShortcut("i")
+            Button("Download Keys from Security Key…") { model.activeSheet = .downloadResidentKeys }
         }
         CommandMenu("Key") {
             KeyMenuContent(model: model)

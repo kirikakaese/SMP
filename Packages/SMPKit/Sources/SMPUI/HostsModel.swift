@@ -145,6 +145,20 @@ public final class HostsModel {
         }
     }
 
+    /// Proposes routing ssh through SMP's agent: `IdentityAgent` in a `Host *` block of ~/.ssh/config.
+    /// Specific hosts that set their own `IdentityAgent` earlier in the file keep it.
+    public func proposeIdentityAgent(_ value: String) {
+        guard let file = mainConfigFile ?? emptyMainFile() else { return }
+        var document = file.document
+        let catchAll = document.blocks().filter { !$0.isMatch && $0.patterns == ["*"] }
+        if let block = catchAll.first(where: { $0.value(of: "IdentityAgent") != nil }) ?? catchAll.last {
+            document.setValues([value], for: "IdentityAgent", inBlockAt: block.headerLine)
+        } else {
+            document.appendHostBlock(patterns: ["*"], options: [("IdentityAgent", value)])
+        }
+        stage(ConfigChange(file: file, newText: document.render(), summary: "Use SMP's agent for all hosts"))
+    }
+
     /// Proposes replacing a whole file with text edited in the raw editor.
     public func proposeRawText(_ text: String, for file: LoadedConfigFile) {
         stage(ConfigChange(file: file, newText: text, summary: "Edit \(file.url.lastPathComponent)"))
