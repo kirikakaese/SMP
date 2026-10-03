@@ -15,6 +15,7 @@ struct SMPApp: App {
     @State private var providers: ProvidersModel
     @State private var security: SecurityModel
     @State private var appLock: AppLockModel
+    @State private var updates = UpdateModel()
 
     init() {
         let services = ServiceContainer.live()
@@ -67,6 +68,8 @@ struct SMPApp: App {
                 Button("About \(AboutPanel.productName)") {
                     AboutPanel.show()
                 }
+                Button("Check for Updates…") { updates.checkNow() }
+                    .disabled(!updates.canCheck)
             }
             CommandGroup(after: .appSettings) {
                 Button("Lock SMP") { appLock.lock() }
@@ -78,7 +81,10 @@ struct SMPApp: App {
         }
 
         Settings {
-            SettingsView(library: library, appLock: appLock)
+            SettingsView(library: library, appLock: appLock) {
+                UpdateSettingsView(model: updates)
+                    .tabItem { Label("Updates", systemImage: "arrow.down.circle") }
+            }
         }
     }
 }

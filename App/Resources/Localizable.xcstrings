@@ -1315,6 +1315,16 @@
         }
       }
     },
+    "Check": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suchen"
+          }
+        }
+      }
+    },
     "Check Again": {
       "localizations": {
         "de": {
@@ -1335,6 +1345,16 @@
         }
       }
     },
+    "Check Now": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jetzt suchen"
+          }
+        }
+      }
+    },
     "Check SSH Security": {
       "localizations": {
         "de": {
@@ -1351,6 +1371,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sicherheit prüfen"
+          }
+        }
+      }
+    },
+    "Check for Updates…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nach Updates suchen …"
+          }
+        }
+      }
+    },
+    "Check for updates automatically": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatisch nach Updates suchen"
           }
         }
       }
@@ -1965,6 +2005,16 @@
         }
       }
     },
+    "Daily": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Täglich"
+          }
+        }
+      }
+    },
     "Date Created": {
       "localizations": {
         "de": {
@@ -2221,6 +2271,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Schlüssel vom Sicherheitsschlüssel laden …"
+          }
+        }
+      }
+    },
+    "Download and install updates automatically": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updates automatisch laden und installieren"
           }
         }
       }
@@ -3025,6 +3085,16 @@
         }
       }
     },
+    "Include beta versions": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Betaversionen einbeziehen"
+          }
+        }
+      }
+    },
     "Included": {
       "localizations": {
         "de": {
@@ -3301,6 +3371,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bekannte Host-Schlüssel werden verworfen"
+          }
+        }
+      }
+    },
+    "Last checked": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zuletzt gesucht"
           }
         }
       }
@@ -3648,6 +3728,16 @@
         }
       }
     },
+    "Monthly": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monatlich"
+          }
+        }
+      }
+    },
     "More": {
       "localizations": {
         "de": {
@@ -3704,6 +3794,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Erfordert Aufmerksamkeit"
+          }
+        }
+      }
+    },
+    "Never": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nie"
           }
         }
       }
@@ -7859,6 +7959,16 @@
         }
       }
     },
+    "This build of SMP was not made by the release workflow, so it does not update itself.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Version von SMP wurde nicht vom Release-Workflow erstellt und aktualisiert sich daher nicht selbst."
+          }
+        }
+      }
+    },
     "This can mean the server was reinstalled, or that someone is intercepting the connection. Verify the new fingerprint with the server's admin before replacing the stored key.": {
       "localizations": {
         "de": {
@@ -8219,12 +8329,32 @@
         }
       }
     },
+    "Updates": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updates"
+          }
+        }
+      }
+    },
     "Updates both the private and the public key file.": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Aktualisiert die private und die öffentliche Schlüsseldatei."
+          }
+        }
+      }
+    },
+    "Updates come from SMP's GitHub releases and are installed only if they are signed with SMP's release key. When an update is installed automatically, it takes effect the next time SMP quits.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updates kommen aus den GitHub-Releases von SMP und werden nur installiert, wenn sie mit dem Release-Schlüssel von SMP signiert sind. Ein automatisch installiertes Update wird wirksam, wenn SMP das nächste Mal beendet wird."
           }
         }
       }
@@ -8565,6 +8695,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Schwach"
+          }
+        }
+      }
+    },
+    "Weekly": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wöchentlich"
           }
         }
       }

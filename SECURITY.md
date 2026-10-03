@@ -70,7 +70,21 @@ Until 1.0, only the latest release receives security fixes.
 - A compromised macOS installation or a compromised `/usr/bin/ssh*`.
 - Physical attacks on an unlocked Mac.
 
-## Hardened Runtime entitlements
+## Signing, updates and entitlements
 
-SMP uses the Hardened Runtime without exceptions. Every entitlement is documented in
-[docs/ENTITLEMENTS.md](docs/ENTITLEMENTS.md).
+Releases are **ad-hoc signed** and not notarized: the project has no paid Apple Developer account.
+What that means:
+
+- macOS cannot tell who made SMP, so Gatekeeper blocks the first launch until you allow it.
+  Compare the download with `SHA256SUMS.txt` on the release page (Homebrew does this for you).
+- The ad-hoc signature still seals the app: macOS refuses to run a modified bundle.
+- Xcode turns the Hardened Runtime off for ad-hoc signatures, and turning it on would break
+  loading the embedded Sparkle framework (library validation needs a Team ID). Release builds
+  therefore run without it. Builds signed with your own team (Config/Local.xcconfig) keep it.
+- **Updates** come from the GitHub releases through Sparkle and are installed only with a valid
+  EdDSA signature made with SMP's release key, whose private half exists only as a GitHub
+  Actions secret. An attacker who controls the download location cannot ship an update.
+- After an update the new ad-hoc signature differs, so macOS may ask once whether SMP Agent may
+  use its keychain item.
+
+Every entitlement is documented in [docs/ENTITLEMENTS.md](docs/ENTITLEMENTS.md).
