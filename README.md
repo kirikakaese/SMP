@@ -10,8 +10,9 @@ first-party Apple utility: fast, safe and keyboard-friendly.
 > connection tests, connect in your terminal, `known_hosts` manager, tunnels, deploying keys to
 > servers) and the agent (Secure Enclave keys with Touch ID, a proxy to the macOS ssh-agent,
 > menu bar activity, resident keys from FIDO2 security keys) and provider accounts (GitHub, GitLab,
-> Bitbucket, Gitea/Forgejo: list, upload and remove keys, matched by fingerprint) work; the
-> remaining features below are planned.
+> Bitbucket, Gitea/Forgejo: list, upload and remove keys, matched by fingerprint) and the security
+> tools (audit with one-click fixes, guided key rotation, SSH commit signing setup, expiry and
+> rotation reminders) work; the remaining features below are planned.
 
 ## Features (planned)
 
