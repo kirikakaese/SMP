@@ -52,7 +52,10 @@ Until 1.0, only the latest release receives security fixes.
 | Accepting a malicious host key (MITM) | Host keys fetched with `ssh-keyscan` are only added after the user pasted a matching fingerprint or explicitly confirmed an out-of-band check. A changed host key can only be replaced with a verified fingerprint. Connection tests, tunnels and deployments use `StrictHostKeyChecking=yes` and never modify `known_hosts`. |
 | Locking yourself out of a server | Deployment never replaces `authorized_keys`; removal deletes one exact line after a backup on the server, and asks for confirmation. |
 | Server password exposure during deployment | The password is passed through the askpass pipe only, public-key authentication is disabled for that connection so it can only answer a password prompt, and it is never stored. |
-| Token theft from disk | Provider tokens are stored only in the Keychain, never synchronized. |
+| Token theft from disk | Provider tokens are stored only in the Keychain (`…ThisDeviceOnly`, never synchronized) and wiped from memory after each request. |
+| Token sent to the wrong server | HTTPS only; an ephemeral session without cookies or cache; redirects are refused and pagination links to other hosts are rejected. |
+| Malicious provider responses | Responses are size-capped and decoded into typed models; keys are parsed and fingerprinted locally before they are matched. |
+| Unintended removal of keys on a provider | Removal asks for Touch ID or the login password and shows the local key and hosts that depend on it. |
 
 ### Out of scope
 
