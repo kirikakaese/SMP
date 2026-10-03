@@ -39,11 +39,20 @@ public protocol MetadataStoring: Sendable {
     func allTunnels() throws -> [TunnelProfile]
     func saveTunnel(_ tunnel: TunnelProfile) throws
     func deleteTunnel(id: UUID) throws
+
+    // Provider accounts (tokens live in the Keychain) and the last known keys on them
+    func allProviderAccounts() throws -> [ProviderAccount]
+    func saveProviderAccount(_ account: ProviderAccount) throws
+    /// Deletes the account and its cached keys.
+    func deleteProviderAccount(id: UUID) throws
+    func providerKeys() throws -> [RemoteKey]
+    /// Replaces the cached keys of one account (after a refresh).
+    func replaceProviderKeys(_ keys: [RemoteKey], for accountID: UUID) throws
 }
 
 /// `MetadataStoring` backed by SQLite through GRDB.
 public final class GRDBMetadataStore: MetadataStoring, Sendable {
-    private let database: DatabaseQueue
+    let database: DatabaseQueue
 
     /// Opens (and migrates) the store at `url`. The file is created with mode 0600.
     public convenience init(url: URL) throws {
@@ -119,6 +128,23 @@ public final class GRDBMetadataStore: MetadataStoring, Sendable {
                 table.column("name", .text).notNull()
                 table.column("hostAlias", .text).notNull()
                 table.column("forwards", .blob).notNull()
+            }
+        }
+        migrator.registerMigration("v3-providers") { db in
+            try db.create(table: ProviderAccountRecord.databaseTableName) { table in
+                table.primaryKey("id", .text)
+                table.column("kind", .text).notNull()
+                table.column("serverURL", .text).notNull()
+                table.column("username", .text).notNull()
+                table.column("loginEmail", .text)
+                table.column("lastSyncedAt", .datetime)
+            }
+            try db.create(table: ProviderKeyRecord.databaseTableName) { table in
+                table.primaryKey("id", .text)
+                table.column("accountID", .text).notNull()
+                    .references(ProviderAccountRecord.databaseTableName, onDelete: .cascade)
+                table.column("fingerprint", .text).indexed()
+                table.column("data", .blob).notNull()
             }
         }
         return migrator
