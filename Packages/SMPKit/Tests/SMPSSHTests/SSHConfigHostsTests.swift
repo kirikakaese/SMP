@@ -84,7 +84,8 @@ struct SSHConfigHostsTests {
 
     @Test func duplicatesAndRenamesBlocks() throws {
         var document = SSHConfigDocument(text: Self.sample)
-        let header = try #require(document.duplicateBlock(at: 1, as: ["web-staging"]))
+        let copy = document.duplicateBlock(at: 1, as: ["web-staging"])
+        let header = try #require(copy)
         #expect(document.block(at: header)?.alias == "web-staging")
         #expect(document.block(at: header)?.values(of: "IdentityFile") == ["~/.ssh/a", "~/.ssh/b"])
         #expect(document.render().hasSuffix("""
