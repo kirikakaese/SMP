@@ -31,7 +31,8 @@ first-party Apple utility: fast, safe and keyboard-friendly.
   setup and expiry reminders.
 - **Shortcuts:** copy a public key, list keys, connect to a host, start or stop a tunnel and check
   your security score from Shortcuts, Spotlight or Siri.
-- **Backup & restore:** encrypted `.smpbackup` bundles.
+- **Backup & restore:** one passphrase-encrypted `.smpbackup` file with your keys, SSH settings and
+  SMP's tags and notes; restoring shows every file first and never overwrites anything.
 
 ## Requirements
 
