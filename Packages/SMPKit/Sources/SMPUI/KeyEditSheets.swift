@@ -223,6 +223,8 @@ struct UpgradeFormatSheet: View {
     @State private var isWorking = false
     @State private var error: SMPError?
 
+    private var legacyFormat: String { item.key.privateKeyInfo?.format.displayName ?? "" }
+
     var body: some View {
         EditSheet(
             title: "Upgrade Key Format",
@@ -233,8 +235,8 @@ struct UpgradeFormatSheet: View {
             onConfirm: upgrade
         ) {
             Section {
-                Text("Converts the key from the legacy \(item.key.privateKeyInfo?.format.displayName ?? """"
-                    ) format \
+                Text("""
+                    Converts the key from the legacy \(legacyFormat) format \
                     to the OpenSSH format, which protects the passphrase with a stronger key derivation (bcrypt). \
                     The key itself and its fingerprint stay the same.
                     """)
