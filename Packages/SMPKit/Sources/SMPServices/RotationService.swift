@@ -17,10 +17,12 @@ public struct RotationService: Sendable {
     /// aliases whose `IdentityFile` points at it.
     public func plan(for key: DiscoveredKey) throws -> RotationJob {
         guard let fingerprint = key.fingerprint else {
-            throw SMPError.invalidArgument("SMP cannot rotate a key whose public key is unknown.")
+            throw SMPError.invalidArgument(String(localized: "SMP cannot rotate a key whose public key is unknown."))
         }
         guard key.privateKeyFile != nil else {
-            throw SMPError.invalidArgument("Only keys with a private key file on this Mac can be rotated here.")
+            throw SMPError.invalidArgument(String(localized: """
+                Only keys with a private key file on this Mac can be rotated here.
+                """))
         }
         var targets: [RotationJob.Target] = []
         let accounts = try services.providers.accounts()
@@ -118,7 +120,7 @@ public struct RotationService: Sendable {
                 switch job.targets[index].kind {
                 case .provider(let accountID, let usages, _):
                     guard let account = accounts.first(where: { $0.id == accountID }) else {
-                        throw SMPError.invalidArgument("The provider account was removed from SMP.")
+                        throw SMPError.invalidArgument(String(localized: "The provider account was removed from SMP."))
                     }
                     let title = job.newKeyName + (job.oldComment.isEmpty ? "" : " (\(job.oldComment))")
                     _ = try await services.providers.upload(newKey, title: title, usages: usages, to: account)
@@ -208,7 +210,7 @@ public struct RotationService: Sendable {
                 switch job.targets[index].kind {
                 case .provider(let accountID, _, let oldIDs):
                     guard let account = accounts.first(where: { $0.id == accountID }) else {
-                        throw SMPError.invalidArgument("The provider account was removed from SMP.")
+                        throw SMPError.invalidArgument(String(localized: "The provider account was removed from SMP."))
                     }
                     for key in cached where key.accountID == accountID && oldIDs.contains(key.remoteID) {
                         try await services.providers.delete(key, from: account)

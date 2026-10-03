@@ -12,8 +12,8 @@ public enum SecuritySection: String, CaseIterable, Identifiable, Hashable, Senda
 
     public var title: String {
         switch self {
-        case .audit: "Audit"
-        case .signing: "Commit Signing"
+        case .audit: String(localized: "Audit")
+        case .signing: String(localized: "Commit Signing")
         }
     }
 
@@ -81,7 +81,7 @@ public final class SecurityModel {
             do {
                 try services.auditFixer.setPermissions(path: path, mode: mode, allowedRoots: library.watchedFolders)
                 let name = URL(fileURLWithPath: path).lastPathComponent
-                notice = "Permissions of \(name) set to \(String(mode, radix: 8))."
+                notice = String(localized: "Permissions of \(name) set to \(String(mode, radix: 8)).")
                 await library.reload()
                 runAudit(library: library)
             } catch {
@@ -131,7 +131,9 @@ public final class SecurityModel {
         guard let publicKey = item.key.publicKey, let file = item.key.publicKeyFile?.url,
               !item.isVirtualSecureEnclaveEntry
         else {
-            throw SMPError.invalidArgument("“\(item.displayName)” has no public key file git can use.")
+            throw SMPError.invalidArgument(String(localized: """
+                “\(item.displayName)” has no public key file git can use.
+                """))
         }
         return try await services.gitSigning.plan(
             publicKeyFile: file, publicKey: publicKey, email: email, signTags: signTags
@@ -141,7 +143,7 @@ public final class SecurityModel {
     public func applySigning(_ plan: GitSigningPlan) async {
         do {
             try await services.gitSigning.apply(plan)
-            notice = "git now signs your commits with SSH."
+            notice = String(localized: "git now signs your commits with SSH.")
             await loadGitState()
         } catch {
             lastError = error.asSMPError

@@ -40,7 +40,7 @@ public struct UnixSocketAgentClient: AgentUpstream {
         defer { close(fd) }
         guard UnixSocket.writeMessage(fd, payload) else { throw UnixSocket.posixError("forward the request") }
         guard let response = UnixSocket.readMessage(fd) else {
-            throw SMPError(.toolFailed, whatHappened: "The system ssh-agent did not answer.")
+            throw SMPError(.toolFailed, whatHappened: String(localized: "The system ssh-agent did not answer."))
         }
         return response
     }

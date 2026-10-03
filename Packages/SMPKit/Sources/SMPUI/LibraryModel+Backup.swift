@@ -36,7 +36,7 @@ extension LibraryModel {
         let manifest = try await Task.detached {
             try backup.createBackup(files: sources, passphrase: passphrase, to: url)
         }.value
-        notice = "Backup saved: \(manifest.keyCount) keys and your SSH settings."
+        notice = String(localized: "Backup saved: \(manifest.keyCount) keys and your SSH settings.")
         return manifest
     }
 

@@ -85,12 +85,12 @@ public struct KeyService: KeyManaging {
             arguments = ["-t", "ed25519"]
         case .ecdsa(let bits):
             guard [256, 384, 521].contains(bits) else {
-                throw SMPError.invalidArgument("ECDSA keys use 256, 384 or 521 bits.")
+                throw SMPError.invalidArgument(String(localized: "ECDSA keys use 256, 384 or 521 bits."))
             }
             arguments = ["-t", "ecdsa", "-b", String(bits)]
         case .rsa(let bits):
             guard bits >= 3072, bits <= 16384 else {
-                throw SMPError.invalidArgument("RSA keys must have at least 3072 bits.")
+                throw SMPError.invalidArgument(String(localized: "RSA keys must have at least 3072 bits."))
             }
             arguments = ["-t", "rsa", "-b", String(bits)]
         case .ed25519SK:
@@ -104,7 +104,9 @@ public struct KeyService: KeyManaging {
             if options.verifyRequired { arguments += ["-O", "verify-required"] }
             if !options.application.isEmpty {
                 guard options.application.hasPrefix("ssh:") else {
-                    throw SMPError.invalidArgument("The security key application must start with “ssh:”.")
+                    throw SMPError.invalidArgument(String(localized: """
+                        The security key application must start with “ssh:”.
+                        """))
                 }
                 arguments += ["-O", "application=\(options.application)"]
             }
@@ -186,8 +188,10 @@ public struct KeyService: KeyManaging {
             guard let embedded else {
                 throw SMPError(
                     .passphraseRequired,
-                    whatHappened: "This key is protected by a passphrase.",
-                    howToFix: "Enter the key's passphrase so SMP can check it and derive the public key."
+                    whatHappened: String(localized: "This key is protected by a passphrase."),
+                    howToFix: String(localized: """
+                        Enter the key's passphrase so SMP can check it and derive the public key.
+                        """)
                 )
             }
             return embedded
@@ -204,7 +208,9 @@ public struct KeyService: KeyManaging {
         }
         let publicKey = try SSHPublicKey(line: derived.standardOutputString)
         if let embedded, embedded.blob != publicKey.blob {
-            throw SMPError.keyOperationFailed("The key file is inconsistent: its public and private parts don't match.")
+            throw SMPError.keyOperationFailed(String(localized: """
+                The key file is inconsistent: its public and private parts don't match.
+                """))
         }
         return publicKey
     }
@@ -215,7 +221,9 @@ public struct KeyService: KeyManaging {
         guard var publicKey = try? SSHPublicKey(line: firstLine) else {
             throw SMPError.keyOperationFailed(
                 "This doesn't look like an SSH key.",
-                howToFix: "SMP imports OpenSSH, PEM, PKCS#8 and PuTTY private keys, and OpenSSH public keys."
+                howToFix: String(localized: """
+                    SMP imports OpenSSH, PEM, PKCS#8 and PuTTY private keys, and OpenSSH public keys.
+                    """)
             )
         }
         if publicKey.comment.isEmpty, let comment = request.comment {
@@ -261,7 +269,9 @@ public struct KeyService: KeyManaging {
         do {
             for (source, target) in moves {
                 guard Darwin.rename(source.path, target.path) == 0 else {
-                    throw SMPError(.fileSystem, whatHappened: "SMP could not rename \(source.lastPathComponent).",
+                    throw SMPError(.fileSystem, whatHappened: String(localized: """
+                        SMP could not rename \(source.lastPathComponent).
+                        """),
                                    details: String(cString: strerror(errno)))
                 }
                 done.append((source, target))

@@ -91,16 +91,16 @@ public final class AgentServer: @unchecked Sendable {
         guard info.st_mode & S_IFMT == S_IFSOCK else {
             throw SMPError(
                 .fileSystem,
-                whatHappened: "SMP's agent could not start because a file is in the way.",
-                howToFix: "Remove \(path) and try again."
+                whatHappened: String(localized: "SMP's agent could not start because a file is in the way."),
+                howToFix: String(localized: "Remove \(path) and try again.")
             )
         }
         if let fd = try? UnixSocket.connect(to: path, timeoutSeconds: 1) {
             close(fd)
             throw SMPError(
                 .alreadyExists,
-                whatHappened: "Another copy of SMP's agent is already running.",
-                howToFix: "Quit the other copy, or keep using it."
+                whatHappened: String(localized: "Another copy of SMP's agent is already running."),
+                howToFix: String(localized: "Quit the other copy, or keep using it.")
             )
         }
         unlink(path)

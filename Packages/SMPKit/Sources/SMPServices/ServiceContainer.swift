@@ -134,8 +134,12 @@ public struct ServiceContainer: Sendable {
             Log.app.error("Metadata store could not be opened; using a temporary in-memory store")
             issue = SMPError(
                 .fileSystem,
-                whatHappened: "SMP could not open its library database. Tags, groups and notes will not be saved.",
-                howToFix: "Check that ~/Library/Application Support/com.kirikakaese.smp is writable, then restart SMP.",
+                whatHappened: String(localized: """
+                    SMP could not open its library database. Tags, groups and notes will not be saved.
+                    """),
+                howToFix: String(localized: """
+                    Check that ~/Library/Application Support/com.kirikakaese.smp is writable, then restart SMP.
+                    """),
                 details: error.localizedDescription
             )
             metadata = inMemoryMetadata()

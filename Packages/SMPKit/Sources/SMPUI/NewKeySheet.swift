@@ -12,11 +12,11 @@ struct NewKeySheet: View {
 
         var title: String {
             switch self {
-            case .ed25519: "Ed25519 (recommended)"
+            case .ed25519: String(localized: "Ed25519 (recommended)")
             case .ecdsa: "ECDSA"
             case .rsa: "RSA"
-            case .ed25519SK: "Ed25519 on security key (FIDO2)"
-            case .ecdsaSK: "ECDSA on security key (FIDO2)"
+            case .ed25519SK: String(localized: "Ed25519 on security key (FIDO2)")
+            case .ecdsaSK: String(localized: "ECDSA on security key (FIDO2)")
             }
         }
     }
@@ -77,7 +77,9 @@ struct NewKeySheet: View {
                 Button("Cancel") { dismiss() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button(isWorking ? "Creating…" : "Create Key") { Task { await create() } }
+                Button(isWorking
+                    ? String(localized: "Creating…")
+                    : String(localized: "Create Key")) { Task { await create() } }
                     .disabled(!canCreate)
             }
         }
@@ -207,7 +209,7 @@ struct NewKeySheet: View {
 
     private var tagSummary: String {
         let names = model.tags.filter { options.tagIDs.contains($0.id) }.map(\.name)
-        return names.isEmpty ? "None" : names.joined(separator: ", ")
+        return names.isEmpty ? String(localized: "None") : names.joined(separator: ", ")
     }
 
     private var keyType: KeyGenerationRequest.KeyType {

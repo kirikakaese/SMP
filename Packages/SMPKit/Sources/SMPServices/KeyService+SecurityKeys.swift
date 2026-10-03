@@ -41,7 +41,9 @@ extension KeyService {
                 for suffix in ["", ".pub"] {
                     let from = staging.url.appending(path: name + suffix).path
                     guard Darwin.rename(from, staging.url.appending(path: target + suffix).path) == 0 else {
-                        throw SMPError(.fileSystem, whatHappened: "SMP could not name the downloaded key.")
+                        throw SMPError(.fileSystem, whatHappened: String(localized: """
+                            SMP could not name the downloaded key.
+                            """))
                     }
                 }
             }

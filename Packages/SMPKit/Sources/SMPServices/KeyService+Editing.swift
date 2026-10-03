@@ -13,7 +13,9 @@ extension KeyService {
     ) async throws {
         let (file, info) = try privateKey(of: key)
         guard info.format != .putty else {
-            throw SMPError.keyOperationFailed("PuTTY keys must be imported before their passphrase can be changed.")
+            throw SMPError.keyOperationFailed(String(localized: """
+                PuTTY keys must be imported before their passphrase can be changed.
+                """))
         }
         var arguments = ["-p", "-a", String(max(16, kdfRounds)), "-f", file.path]
         var responses: [SecureBytes] = []
@@ -46,7 +48,7 @@ extension KeyService {
         guard info.format == .openSSH else {
             throw SMPError.keyOperationFailed(
                 "Comments can only be changed for keys in the OpenSSH format.",
-                howToFix: "Upgrade the key to the OpenSSH format first."
+                howToFix: String(localized: "Upgrade the key to the OpenSSH format first.")
             )
         }
         var arguments = ["-c", "-C", comment, "-f", file.path]
@@ -95,7 +97,7 @@ extension KeyService {
             throw failure(result, action: "upgrade the key format", keyName: key.name)
         }
         guard let upgraded = try PrivateKeyInspector.inspect(fileAt: file), upgraded.format == .openSSH else {
-            throw SMPError.keyOperationFailed("The key was not converted to the OpenSSH format.")
+            throw SMPError.keyOperationFailed(String(localized: "The key was not converted to the OpenSSH format."))
         }
         try verifyEncryption(of: file, expected: encrypted)
     }
@@ -134,7 +136,7 @@ extension KeyService {
 
     public func exportPrivateKey(_ key: DiscoveredKey, to destination: URL) throws {
         guard let source = key.privateKeyFile?.url else {
-            throw SMPError.keyOperationFailed("“\(key.name)” has no private key to export.")
+            throw SMPError.keyOperationFailed(String(localized: "“\(key.name)” has no private key to export."))
         }
         // The file is copied by the kernel; its contents never pass through SMP's memory.
         if FileManager.default.fileExists(atPath: destination.path) {
@@ -146,7 +148,7 @@ extension KeyService {
 
     public func exportPublicKey(_ key: DiscoveredKey, to destination: URL) throws {
         guard let publicKey = key.publicKey else {
-            throw SMPError.keyOperationFailed("The public key of “\(key.name)” is not available.")
+            throw SMPError.keyOperationFailed(String(localized: "The public key of “\(key.name)” is not available."))
         }
         try writePublicKey(publicKey, to: destination, replacing: true)
     }

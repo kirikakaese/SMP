@@ -8,7 +8,9 @@ public enum UnixSocket {
     public static func address(for path: String) throws -> sockaddr_un {
         let bytes = Array(path.utf8)
         guard bytes.count <= AgentPaths.maxSocketPathLength else {
-            throw SMPError.invalidArgument("The socket path is too long for macOS (\(bytes.count) bytes).")
+            throw SMPError.invalidArgument(String(localized: """
+                The socket path is too long for macOS (\(bytes.count) bytes).
+                """))
         }
         var address = sockaddr_un()
         address.sun_family = sa_family_t(AF_UNIX)
@@ -90,6 +92,8 @@ public enum UnixSocket {
 
     public static func posixError(_ action: String) -> SMPError {
         let reason = String(cString: strerror(errno))
-        return SMPError(.fileSystem, whatHappened: "SMP's agent could not \(action).", details: reason)
+        return SMPError(.fileSystem, whatHappened: String(localized: """
+            SMP's agent could not \(action).
+            """), details: reason)
     }
 }

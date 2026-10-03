@@ -14,13 +14,13 @@ public enum SidebarItem: String, Hashable, CaseIterable, Identifiable, Sendable 
 
     public var title: String {
         switch self {
-        case .allKeys: "All Keys"
-        case .favorites: "Favorites"
-        case .secureEnclave: "Secure Enclave"
-        case .hardware: "Hardware (FIDO)"
-        case .loadedInAgent: "Loaded in Agent"
-        case .needsAttention: "Needs Attention"
-        case .archived: "Archived"
+        case .allKeys: String(localized: "All Keys")
+        case .favorites: String(localized: "Favorites")
+        case .secureEnclave: String(localized: "Secure Enclave")
+        case .hardware: String(localized: "Hardware (FIDO)")
+        case .loadedInAgent: String(localized: "Loaded in Agent")
+        case .needsAttention: String(localized: "Needs Attention")
+        case .archived: String(localized: "Archived")
         }
     }
 

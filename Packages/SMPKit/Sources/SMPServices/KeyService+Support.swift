@@ -65,7 +65,7 @@ extension KeyService {
                     throw SMPError.alreadyExists(name)
                 }
                 guard Darwin.rename(staging.appending(path: name).path, target.path) == 0 else {
-                    throw SMPError(.fileSystem, whatHappened: "SMP could not save \(name).",
+                    throw SMPError(.fileSystem, whatHappened: String(localized: "SMP could not save \(name)."),
                                    details: String(cString: strerror(errno)))
                 }
                 moved.append(name)
@@ -85,7 +85,7 @@ extension KeyService {
 
     func readPublicKey(_ url: URL) throws -> SSHPublicKey {
         guard let key = KeyDiscoveryService.readPublicKey(url) else {
-            throw SMPError.keyOperationFailed("ssh-keygen did not produce a readable public key.")
+            throw SMPError.keyOperationFailed(String(localized: "ssh-keygen did not produce a readable public key."))
         }
         return key
     }
@@ -100,7 +100,7 @@ extension KeyService {
 
     func privateKey(of key: DiscoveredKey) throws -> (URL, PrivateKeyInfo) {
         guard let url = key.privateKeyFile?.url, let info = try PrivateKeyInspector.inspect(fileAt: url) else {
-            throw SMPError.keyOperationFailed("“\(key.name)” has no readable private key.")
+            throw SMPError.keyOperationFailed(String(localized: "“\(key.name)” has no readable private key."))
         }
         return (url, info)
     }
@@ -116,7 +116,7 @@ extension KeyService {
                 expected
                     ? "The passphrase could not be applied, so the unprotected key was deleted."
                     : "The key's passphrase could not be removed.",
-                howToFix: "Try again. If this keeps happening, please report it."
+                howToFix: String(localized: "Try again. If this keeps happening, please report it.")
             )
         }
     }
@@ -129,7 +129,9 @@ extension KeyService {
 
     func validate(comment: String) throws {
         guard comment.count <= 1_024, !comment.contains(where: \.isNewline) else {
-            throw SMPError.invalidArgument("The comment must be a single line of at most 1024 characters.")
+            throw SMPError.invalidArgument(String(localized: """
+                The comment must be a single line of at most 1024 characters.
+                """))
         }
     }
 
@@ -167,14 +169,18 @@ extension KeyService {
         if lowered.contains("securitykeyprovider") || lowered.contains("fido") || lowered.contains("sk_") {
             return SMPError(
                 .keyOperationFailed,
-                whatHappened: "SMP could not talk to your security key.",
-                howToFix: "The OpenSSH built into macOS needs a FIDO provider library for security keys. "
-                    + "Install one (for example via Homebrew) and enter its path under Security key options, "
-                    + "then plug in the key and touch it when it blinks.",
+                whatHappened: String(localized: "SMP could not talk to your security key."),
+                howToFix: String(localized: """
+                    The OpenSSH built into macOS needs a FIDO provider library for security keys. \
+                    Install one (for example via Homebrew) and enter its path under Security key options, \
+                    then plug in the key and touch it when it blinks.
+                    """),
                 details: stderr
             )
         }
-        return SMPError.keyOperationFailed("SMP could not \(action).", details: stderr.isEmpty ? nil : stderr)
+        return SMPError.keyOperationFailed(String(localized: """
+            SMP could not \(action).
+            """), details: stderr.isEmpty ? nil : stderr)
     }
 }
 
@@ -192,7 +198,9 @@ struct StagingDirectory {
         guard let created else {
             throw SMPError(
                 .fileSystem,
-                whatHappened: "SMP could not create a temporary folder in \(directory.lastPathComponent)."
+                whatHappened: String(localized: """
+                    SMP could not create a temporary folder in \(directory.lastPathComponent).
+                    """)
             )
         }
         url = URL(fileURLWithPath: created, isDirectory: true)

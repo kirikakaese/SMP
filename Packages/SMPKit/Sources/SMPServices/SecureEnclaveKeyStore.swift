@@ -67,8 +67,8 @@ public struct SecureEnclaveKeyStore: SecureEnclaveKeyStoring {
         guard isAvailable else {
             throw SMPError(
                 .keyOperationFailed,
-                whatHappened: "This Mac has no Secure Enclave.",
-                howToFix: "Secure Enclave keys need a Mac with Apple silicon or a T2 chip."
+                whatHappened: String(localized: "This Mac has no Secure Enclave."),
+                howToFix: String(localized: "Secure Enclave keys need a Mac with Apple silicon or a T2 chip.")
             )
         }
         var flags: SecAccessControlCreateFlags = [.privateKeyUsage]
@@ -79,7 +79,9 @@ public struct SecureEnclaveKeyStore: SecureEnclaveKeyStoring {
         guard let access = SecAccessControlCreateWithFlags(
             nil, kSecAttrAccessibleWhenUnlockedThisDeviceOnly, flags, &error
         ) else {
-            throw SMPError(.keyOperationFailed, whatHappened: "SMP could not set up the key's access rules.")
+            throw SMPError(.keyOperationFailed, whatHappened: String(localized: """
+                SMP could not set up the key's access rules.
+                """))
         }
         let privateKey: SecureEnclave.P256.Signing.PrivateKey
         do {
@@ -87,8 +89,10 @@ public struct SecureEnclaveKeyStore: SecureEnclaveKeyStoring {
         } catch {
             throw SMPError(
                 .keyOperationFailed,
-                whatHappened: "The Secure Enclave could not create a key.",
-                howToFix: "Try again. If it keeps failing, restart SMP Agent from its menu bar icon.",
+                whatHappened: String(localized: "The Secure Enclave could not create a key."),
+                howToFix: String(localized: """
+                    Try again. If it keeps failing, restart SMP Agent from its menu bar icon.
+                    """),
                 details: error.localizedDescription
             )
         }
@@ -133,7 +137,7 @@ public struct SecureEnclaveKeyStore: SecureEnclaveKeyStoring {
         var result: CFTypeRef?
         try Self.check(SecItemCopyMatching(query as CFDictionary, &result), action: "find the Secure Enclave key")
         guard let reference = result as? Data else {
-            throw SMPError(.keychain, whatHappened: "The Secure Enclave key reference is missing.")
+            throw SMPError(.keychain, whatHappened: String(localized: "The Secure Enclave key reference is missing."))
         }
         do {
             let key = try SecureEnclave.P256.Signing.PrivateKey(
@@ -144,8 +148,8 @@ public struct SecureEnclaveKeyStore: SecureEnclaveKeyStoring {
         } catch {
             throw SMPError(
                 .authenticationFailed,
-                whatHappened: "The Secure Enclave did not sign the request.",
-                howToFix: "Signing needs Touch ID or your password.",
+                whatHappened: String(localized: "The Secure Enclave did not sign the request."),
+                howToFix: String(localized: "Signing needs Touch ID or your password."),
                 details: error.localizedDescription
             )
         }
@@ -163,14 +167,16 @@ public struct SecureEnclaveKeyStore: SecureEnclaveKeyStoring {
         if status == errSecUserCanceled || status == errSecAuthFailed {
             throw SMPError(
                 .keychain,
-                whatHappened: "SMP Agent was not allowed to \(action).",
-                howToFix: "When macOS asks whether SMP Agent may use its keychain item, choose "
-                    + "“Always Allow”. This can happen once after an update.",
+                whatHappened: String(localized: "SMP Agent was not allowed to \(action)."),
+                howToFix: String(localized: """
+                    When macOS asks whether SMP Agent may use its keychain item, choose \
+                    “Always Allow”. This can happen once after an update.
+                    """),
                 details: "OSStatus \(status)"
             )
         }
         let message = SecCopyErrorMessageString(status, nil) as String? ?? "OSStatus \(status)"
-        throw SMPError(.keychain, whatHappened: "SMP could not \(action).", details: message)
+        throw SMPError(.keychain, whatHappened: String(localized: "SMP could not \(action)."), details: message)
     }
 }
 
@@ -210,7 +216,7 @@ public final class InMemorySecureEnclaveKeyStore: SecureEnclaveKeyStoring, @unch
 
     public func update(_ key: SecureEnclaveKeyInfo) throws {
         try lock.withLock {
-            guard let entry = entries[key.id] else { throw SMPError.invalidArgument("Unknown key.") }
+            guard let entry = entries[key.id] else { throw SMPError.invalidArgument(String(localized: "Unknown key.")) }
             entries[key.id] = (key, entry.key)
         }
     }
@@ -222,9 +228,9 @@ public final class InMemorySecureEnclaveKeyStore: SecureEnclaveKeyStoring, @unch
     public func sign(_ data: Data, with id: UUID, context: LAContext?) throws -> Data {
         try lock.withLock {
             guard !shouldFail else {
-                throw SMPError(.authenticationFailed, whatHappened: "Signing was cancelled.")
+                throw SMPError(.authenticationFailed, whatHappened: String(localized: "Signing was cancelled."))
             }
-            guard let entry = entries[id] else { throw SMPError.invalidArgument("Unknown key.") }
+            guard let entry = entries[id] else { throw SMPError.invalidArgument(String(localized: "Unknown key.")) }
             signatureCount += 1
             return try entry.key.signature(for: data).rawRepresentation
         }

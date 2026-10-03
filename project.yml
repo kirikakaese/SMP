@@ -7,6 +7,7 @@ options:
     macOS: "14.0"
   createIntermediateGroups: true
   developmentLanguage: en
+  knownRegions: [en, de, Base]
 
 # Signing team comes from the git-ignored Config/Local.xcconfig (see Config/Signing.xcconfig).
 configFiles:
@@ -39,6 +40,8 @@ targets:
     platform: macOS
     sources:
       - path: App/Sources
+      # English and German strings for the app and the SMPKit views it shows.
+      - path: App/Resources/Localizable.xcstrings
     dependencies:
       - package: SMPKit
         product: SMPCore
@@ -68,6 +71,7 @@ targets:
     platform: macOS
     sources:
       - path: App/AgentHelper/Sources
+      - path: App/Resources/Localizable.xcstrings
     dependencies:
       - package: SMPKit
         product: SMPCore
