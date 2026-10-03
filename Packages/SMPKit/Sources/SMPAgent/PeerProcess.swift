@@ -7,11 +7,15 @@ public struct PeerProcess: Sendable, Hashable {
     public let name: String
     /// The parent's name, which usually says more than "ssh" (e.g. "git").
     public let parentName: String?
+    /// The peer's audit token (`LOCAL_PEERTOKEN`), which identifies the process without the
+    /// reuse race a bare process ID has. Used to check the peer's code signature.
+    public let auditToken: Data?
 
-    public init(pid: pid_t, name: String, parentName: String?) {
+    public init(pid: pid_t, name: String, parentName: String?, auditToken: Data? = nil) {
         self.pid = pid
         self.name = name
         self.parentName = parentName
+        self.auditToken = auditToken
     }
 
     /// e.g. "git (ssh)" or "ssh".
@@ -31,8 +35,21 @@ public struct PeerProcess: Sendable, Hashable {
         return PeerProcess(
             pid: pid,
             name: processName(pid) ?? "process \(pid)",
-            parentName: parent.flatMap(processName)
+            parentName: parent.flatMap(processName),
+            auditToken: auditToken(of: fd)
         )
+    }
+
+    /// `LOCAL_PEERTOKEN` from `<sys/un.h>`.
+    private static let localPeerToken: Int32 = 0x006
+
+    static func auditToken(of fd: Int32) -> Data? {
+        var token = audit_token_t()
+        var length = socklen_t(MemoryLayout<audit_token_t>.size)
+        guard getsockopt(fd, SOL_LOCAL, localPeerToken, &token, &length) == 0,
+              Int(length) == MemoryLayout<audit_token_t>.size
+        else { return nil }
+        return withUnsafeBytes(of: token) { Data($0) }
     }
 
     static func processName(_ pid: pid_t) -> String? {

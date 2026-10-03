@@ -1,11 +1,11 @@
 import Darwin
 import Foundation
 import SMPCore
-import SMPSSH
 
-/// Blocking Unix domain socket helpers for the agent protocol.
-enum UnixSocket {
-    static func address(for path: String) throws -> sockaddr_un {
+/// Blocking Unix domain socket helpers for the agent protocol (used by SMP Agent and by the app
+/// to reach it).
+public enum UnixSocket {
+    public static func address(for path: String) throws -> sockaddr_un {
         let bytes = Array(path.utf8)
         guard bytes.count <= AgentPaths.maxSocketPathLength else {
             throw SMPError.invalidArgument("The socket path is too long for macOS (\(bytes.count) bytes).")
@@ -19,7 +19,7 @@ enum UnixSocket {
         return address
     }
 
-    static func makeSocket() throws -> Int32 {
+    public static func makeSocket() throws -> Int32 {
         let fd = socket(AF_UNIX, SOCK_STREAM, 0)
         guard fd >= 0 else { throw posixError("create a socket") }
         var one: Int32 = 1
@@ -29,7 +29,7 @@ enum UnixSocket {
     }
 
     /// Connects to the socket at `path`. The caller closes the descriptor.
-    static func connect(to path: String, timeoutSeconds: Int) throws -> Int32 {
+    public static func connect(to path: String, timeoutSeconds: Int) throws -> Int32 {
         var address = try address(for: path)
         let fd = try makeSocket()
         var timeout = timeval(tv_sec: timeoutSeconds, tv_usec: 0)
@@ -48,7 +48,7 @@ enum UnixSocket {
         return fd
     }
 
-    static func readFully(_ fd: Int32, count: Int) -> Data? {
+    public static func readFully(_ fd: Int32, count: Int) -> Data? {
         var buffer = [UInt8](repeating: 0, count: count)
         var received = 0
         while received < count {
@@ -62,7 +62,7 @@ enum UnixSocket {
         return Data(buffer)
     }
 
-    static func writeAll(_ fd: Int32, _ data: Data) -> Bool {
+    public static func writeAll(_ fd: Int32, _ data: Data) -> Bool {
         data.withUnsafeBytes { raw in
             var sent = 0
             while sent < raw.count {
@@ -77,18 +77,18 @@ enum UnixSocket {
 
     /// Reads one length-prefixed agent message and returns its payload, or `nil` at end of stream
     /// or for an oversized or empty message.
-    static func readMessage(_ fd: Int32) -> Data? {
+    public static func readMessage(_ fd: Int32) -> Data? {
         guard let header = readFully(fd, count: 4) else { return nil }
         let length = header.reduce(0) { ($0 << 8) | Int($1) }
         guard length > 0, length <= SSHAgentCodec.maxMessageLength else { return nil }
         return readFully(fd, count: length)
     }
 
-    static func writeMessage(_ fd: Int32, _ payload: Data) -> Bool {
+    public static func writeMessage(_ fd: Int32, _ payload: Data) -> Bool {
         writeAll(fd, SSHAgentCodec.frame(payload))
     }
 
-    static func posixError(_ action: String) -> SMPError {
+    public static func posixError(_ action: String) -> SMPError {
         let reason = String(cString: strerror(errno))
         return SMPError(.fileSystem, whatHappened: "SMP's agent could not \(action).", details: reason)
     }
