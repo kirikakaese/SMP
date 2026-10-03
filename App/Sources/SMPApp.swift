@@ -10,6 +10,7 @@ struct SMPApp: App {
     @State private var hosts: HostsModel
     @State private var knownHosts: KnownHostsModel
     @State private var tunnels: TunnelsModel
+    @State private var agent: AgentModel
 
     init() {
         let services = ServiceContainer.live()
@@ -18,6 +19,7 @@ struct SMPApp: App {
         _hosts = State(initialValue: HostsModel(services: services))
         _knownHosts = State(initialValue: KnownHostsModel(services: services))
         _tunnels = State(initialValue: TunnelsModel(services: services))
+        _agent = State(initialValue: AgentModel(services: services))
         // Tunnels are child ssh processes; don't leave them running after SMP quits.
         _ = NotificationCenter.default.addObserver(
             forName: NSApplication.willTerminateNotification,
@@ -30,7 +32,7 @@ struct SMPApp: App {
 
     var body: some Scene {
         WindowGroup(AboutPanel.productName, id: "main") {
-            RootView(model: library, hosts: hosts, knownHosts: knownHosts, tunnels: tunnels)
+            RootView(model: library, hosts: hosts, knownHosts: knownHosts, tunnels: tunnels, agent: agent)
                 .environment(\.services, services)
                 .frame(minWidth: 960, minHeight: 560)
         }

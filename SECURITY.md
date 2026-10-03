@@ -42,7 +42,9 @@ Until 1.0, only the latest release receives security fixes.
 | Malicious tool on `PATH` | OpenSSH tools are run from absolute `/usr/bin` paths with a minimal environment. |
 | Corrupting config files | Timestamped backups, atomic writes, file locking, and change detection before saving. |
 | Malicious input (pasted keys, API responses, config files) | All external input is validated and parsed defensively. |
-| Unwanted use of agent keys by other local processes | Built-in agent prompts with Touch ID and shows the requesting process. Per-key "confirm every use". |
+| Unwanted use of agent keys by other local processes | SMP's agent asks for Touch ID (per key: every use, or a short reuse window that ends on screen lock/sleep), names the requesting process in the prompt and logs every request in the menu bar. Optionally the same for keys forwarded to the macOS agent. The socket is mode 0600 in a 0700 folder. |
+| Secrets passing through SMP's agent | Requests that carry private keys, PINs or lock passphrases are refused, never relayed. Secure Enclave keys sign inside the Secure Enclave; the private key never exists in memory or on disk. |
+| Malformed agent requests | Messages are capped at 256 KiB and parsed with bounds-checked readers; anything unexpected is answered with SSH_AGENT_FAILURE. |
 | Loss of keys through accidental deletion | Impact report, encrypted archive (AES-256-GCM, key in the Keychain) with undo, typed confirmation and Touch ID / password before permanent deletion. |
 | A key the user believes is protected is silently stored without passphrase | After every operation that sets a passphrase, SMP re-reads the key header; an unprotected result is deleted and reported. |
 | Private key export | Requires Touch ID / password; the file is copied without passing through SMP's memory. |

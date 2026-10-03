@@ -9,6 +9,10 @@ struct LibrarySheetHost: View {
         switch sheet {
         case .newKey:
             NewKeySheet(model: model)
+        case .newSecureEnclaveKey:
+            NewSecureEnclaveKeySheet(model: model)
+        case .downloadResidentKeys:
+            DownloadResidentKeysSheet(model: model)
         case .importKey(let url):
             ImportKeySheet(model: model, initialURL: url)
         case .rename(let item):

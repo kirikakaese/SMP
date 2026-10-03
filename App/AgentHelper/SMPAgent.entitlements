@@ -2,13 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <!--
-  SMP runs with the Hardened Runtime and is intentionally NOT sandboxed (it needs ~/.ssh and the
-  ssh-agent socket). No Hardened Runtime exceptions are requested. Each entitlement must be
-  documented in docs/ENTITLEMENTS.md.
+  SMP Agent (login-item helper). Hardened Runtime, not sandboxed (it must reach the system
+  ssh-agent socket). Documented in docs/ENTITLEMENTS.md.
 -->
 <dict>
-	<key>com.apple.security.automation.apple-events</key>
-	<true/>
 	<key>keychain-access-groups</key>
 	<array>
 		<string>$(AppIdentifierPrefix)com.kirikakaese.smp.shared</string>

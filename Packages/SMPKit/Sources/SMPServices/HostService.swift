@@ -151,7 +151,7 @@ public struct HostService: HostServicing {
             throw SMPError.invalidArgument(problem)
         }
         let result = try await runner
-            .run(.ssh, arguments: ["-G", alias], options: ToolRunOptions(timeout: .seconds(10)))
+            .run(.ssh, arguments: configFileArguments + ["-G", alias], options: ToolRunOptions(timeout: .seconds(10)))
             .requireSuccess()
         return result.standardOutputString.split(whereSeparator: \.isNewline).compactMap { line in
             let parts = line.split(separator: " ", maxSplits: 1)
@@ -178,6 +178,16 @@ public struct HostService: HostServicing {
         } catch {
             return .failure(.other, details: error.localizedDescription)
         }
+    }
+
+    /// ssh reads `~/.ssh/config` from the account's real home folder, not `$HOME`. When SMP works on a
+    /// different home folder (tests), point ssh at that folder's config explicitly.
+    private var configFileArguments: [String] {
+        guard let entry = getpwuid(getuid()), let realHome = entry.pointee.pw_dir else { return [] }
+        let accountHome = URL(fileURLWithPath: String(cString: realHome)).standardizedFileURL.path
+        guard environment.homeDirectory.standardizedFileURL.path != accountHome else { return [] }
+        let config = environment.configFile
+        return ["-F", FileManager.default.fileExists(atPath: config.path) ? config.path : "/dev/null"]
     }
 
     /// The command a user would type to connect, e.g. `ssh myhost`.

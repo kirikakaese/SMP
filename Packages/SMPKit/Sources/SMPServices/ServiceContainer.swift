@@ -22,6 +22,8 @@ public struct ServiceContainer: Sendable {
     public var terminal: any TerminalLaunching
     public var tunnels: any TunnelServicing
     public var deploy: any DeployServicing
+    public var secureEnclave: any SecureEnclaveKeyStoring
+    public var agentHelper: any AgentHelperControlling
     /// Set when a service could not start normally (for example, the metadata store could not be
     /// opened and an in-memory store is used instead). Shown to the user.
     public var startupIssue: SMPError?
@@ -43,6 +45,8 @@ public struct ServiceContainer: Sendable {
         terminal: any TerminalLaunching,
         tunnels: any TunnelServicing,
         deploy: any DeployServicing,
+        secureEnclave: any SecureEnclaveKeyStoring,
+        agentHelper: any AgentHelperControlling,
         startupIssue: SMPError? = nil
     ) {
         self.environment = environment
@@ -61,6 +65,8 @@ public struct ServiceContainer: Sendable {
         self.terminal = terminal
         self.tunnels = tunnels
         self.deploy = deploy
+        self.secureEnclave = secureEnclave
+        self.agentHelper = agentHelper
         self.startupIssue = startupIssue
     }
 
@@ -72,6 +78,8 @@ public struct ServiceContainer: Sendable {
         keychain: any KeychainServicing,
         metadata: any MetadataStoring,
         authenticator: any DeviceAuthenticating,
+        secureEnclave: any SecureEnclaveKeyStoring = InMemorySecureEnclaveKeyStore(),
+        agentHelper: (any AgentHelperControlling)? = nil,
         startupIssue: SMPError? = nil
     ) -> ServiceContainer {
         let runner = SSHToolRunner(environment: environment)
@@ -96,6 +104,8 @@ public struct ServiceContainer: Sendable {
             terminal: TerminalLauncher(homeDirectory: environment.homeDirectory),
             tunnels: TunnelService(launcher: runner),
             deploy: DeployService(runner: runner),
+            secureEnclave: secureEnclave,
+            agentHelper: agentHelper ?? FakeAgentHelper(),
             startupIssue: startupIssue
         )
     }
@@ -124,6 +134,8 @@ public struct ServiceContainer: Sendable {
             keychain: KeychainService(),
             metadata: metadata,
             authenticator: DeviceAuthenticator(),
+            secureEnclave: SecureEnclaveKeyStore(accessGroup: SecureEnclaveKeyStore.bundleAccessGroup()),
+            agentHelper: AgentHelperService(runner: SSHToolRunner(environment: environment)),
             startupIssue: issue
         )
     }

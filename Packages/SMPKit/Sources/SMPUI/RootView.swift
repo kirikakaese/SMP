@@ -7,13 +7,21 @@ public struct RootView: View {
     @Bindable private var hosts: HostsModel
     @Bindable private var knownHosts: KnownHostsModel
     @Bindable private var tunnels: TunnelsModel
+    @Bindable private var agent: AgentModel
     @Environment(\.undoManager) private var undoManager
 
-    public init(model: LibraryModel, hosts: HostsModel, knownHosts: KnownHostsModel, tunnels: TunnelsModel) {
+    public init(
+        model: LibraryModel,
+        hosts: HostsModel,
+        knownHosts: KnownHostsModel,
+        tunnels: TunnelsModel,
+        agent: AgentModel
+    ) {
         self.model = model
         self.hosts = hosts
         self.knownHosts = knownHosts
         self.tunnels = tunnels
+        self.agent = agent
     }
 
     private var sshSection: SSHSection? {
@@ -28,6 +36,7 @@ public struct RootView: View {
             case .hosts: HostListView(model: hosts)
             case .knownHosts: KnownHostsListView(model: knownHosts)
             case .tunnels: TunnelListView(model: tunnels, hosts: hosts)
+            case .agent: AgentView(model: agent, hosts: hosts)
             case nil: KeyListView(model: model)
             }
         } detail: {
@@ -59,6 +68,7 @@ public struct RootView: View {
         .errorAlert($hosts.lastError)
         .errorAlert($knownHosts.lastError)
         .errorAlert($tunnels.lastError)
+        .errorAlert($agent.lastError)
     }
 
     @ViewBuilder private var detail: some View {
@@ -74,6 +84,8 @@ public struct RootView: View {
             KnownHostDetailView(model: knownHosts)
         case .tunnels:
             TunnelDetailView(model: tunnels, hosts: hosts)
+        case .agent:
+            AgentDetailView()
         case nil:
             keyDetail
         }
