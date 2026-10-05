@@ -185,7 +185,7 @@ jobs:
           sed -e "s/@VERSION@/$version/" -e "s/@SHA256@/$sha/" scripts/smp.rb.template > tap/Casks/smp.rb
           cd tap
           git config user.name "kirikakaese"
-          git config user.email "252577764+kirikakaese@users.noreply.github.com"
+          git config user.email "mail@kirikajung.de"
           git add Casks/smp.rb
           if git diff --cached --quiet; then
             echo "The cask is already up to date."
