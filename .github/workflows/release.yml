@@ -146,9 +146,15 @@ jobs:
           NOTES
           prerelease=""
           if [ "${{ steps.version.outputs.beta }}" = true ]; then prerelease="--prerelease"; fi
-          gh release create "$GITHUB_REF_NAME" \
-            "dist/SMP-$version.dmg" "dist/SMP-$version.zip" dist/appcast.xml dist/SHA256SUMS.txt \
-            --title "SMP $version" --notes-file notes.md --generate-notes $prerelease
+          assets=("dist/SMP-$version.dmg" "dist/SMP-$version.zip" dist/appcast.xml dist/SHA256SUMS.txt)
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            # A re-run of the same tag: replace the files, keep the release and its notes.
+            echo "The release $GITHUB_REF_NAME already exists; replacing its files."
+            gh release upload "$GITHUB_REF_NAME" "${assets[@]}" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "${assets[@]}" \
+              --title "SMP $version" --notes-file notes.md --generate-notes $prerelease
+          fi
           if [ -n "$prerelease" ]; then
             # The feed URL points at the latest stable release; give it the appcast with the beta.
             latest="$(gh release view --json tagName --jq .tagName 2>/dev/null || true)"
