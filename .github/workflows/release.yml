@@ -77,18 +77,24 @@ jobs:
             CODE_SIGN_IDENTITY=- \
             CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM= \
+            ENABLE_HARDENED_RUNTIME=NO \
             SPARKLE_PUBLIC_KEY="$SPARKLE_PUBLIC_KEY"
+
+      - name: Re-sign the app ad-hoc
+        run: scripts/adhoc_sign.sh build/Build/Products/Release/SMP.app
 
       - name: Verify the app
         run: |
           app=build/Build/Products/Release/SMP.app
-          codesign --verify --deep --strict --verbose=2 "$app"
           for binary in "$app/Contents/MacOS/SMP" \
                         "$app/Contents/Library/LoginItems/SMPAgentHelper.app/Contents/MacOS/SMPAgentHelper"; do
             lipo -archs "$binary" | grep -Eq "x86_64 arm64|arm64 x86_64"
           done
           test "$(plutil -extract CFBundleShortVersionString raw "$app/Contents/Info.plist")" = "${{ steps.version.outputs.version }}"
           test "$(plutil -extract SUPublicEDKey raw "$app/Contents/Info.plist")" = "$SPARKLE_PUBLIC_KEY"
+
+      - name: Launch the app
+        run: scripts/launch_test.sh build/Build/Products/Release/SMP.app
 
       - name: Package
         run: |
