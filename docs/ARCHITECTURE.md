@@ -326,9 +326,12 @@ release. The metadata store never contains secrets.
 ## Releases and updates
 
 - **Release workflow** (`.github/workflows/release.yml`, on tags `vX.Y.Z` or `vX.Y.Z-beta.N`):
-  builds a universal, ad-hoc signed app with `MARKETING_VERSION` from the tag and
-  `CURRENT_PROJECT_VERSION` = commit count (Sparkle compares the build number), verifies the
-  signature, architectures, version and update key, then packages `SMP-<version>.zip` (for
+  builds a universal app with `MARKETING_VERSION` from the tag and
+  `CURRENT_PROJECT_VERSION` = commit count (Sparkle compares the build number), without the
+  Hardened Runtime (with it, library validation refuses the ad-hoc signed Sparkle framework,
+  since ad-hoc signatures have no Team ID). It re-signs all code in the bundle ad-hoc, innermost
+  first, and verifies the signatures (no Team ID, no Hardened Runtime anywhere), architectures, version and update key.
+  It then starts the app for 15 seconds as a launch test, and packages `SMP-<version>.zip` (for
   Sparkle) and `SMP-<version>.dmg` (for people and Homebrew) with SHA-256 checksums.
 - **Appcast:** `sign_update` (from the latest Sparkle release) signs the zip with the EdDSA key
   from the `SPARKLE_PRIVATE_KEY` secret; `scripts/appcast.py` adds the entry to the previous
