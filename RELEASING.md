@@ -314,10 +314,11 @@ Click the red step in the workflow run to read its error. The most common ones:
 | **Verify the app** fails at `SUPublicEDKey` | The variable has extra characters, for example `<string>` or a space | Fix the variable's value, then **Re-run jobs** |
 | **Sign the update** fails | The secret isn't the exported private key | Repeat Step A4 (it overwrites the secret), then **Re-run jobs** |
 | `TAP_TOKEN is not set` (a notice, not an error) | Part B is skipped | Nothing, or do Part B before the next release |
-| **Update the Homebrew tap** fails with `403` or `Authentication failed` | The token expired or can't write to the tap | Make a new token (Step B2) and replace `TAP_TOKEN` (Step B3) |
-| `release already exists` | An earlier run already published this version | Delete the release and the tag (below) and push the tag again |
+| **Update the Homebrew tap** fails with `Permission to kirikakaese/homebrew-tap.git denied` or `403` | The token can read the tap but not write to it: **Repository access** isn't *Only select repositories → homebrew-tap*, or **Contents** isn't *Read and write* | On [your fine-grained tokens](https://github.com/settings/personal-access-tokens), click the token, then **Edit**. Fix both settings as in Step B2 and click **Update**. The token itself stays the same, so `TAP_TOKEN` needn't change. Then **Re-run jobs** |
+| **Update the Homebrew tap** fails with `Authentication failed` | The token expired or was deleted | Make a new token (Step B2), replace `TAP_TOKEN` (Step B3), then **Re-run jobs** |
 
-**Re-run jobs** works when the code is fine and only a setting was missing. If the code needs
+**Re-run jobs** works when the code is fine and only a setting was missing. If the release was
+already published, a re-run replaces its files instead of failing. If the code needs
 fixing, first delete the release and the tag:
 
 1. If a release was created, open it on the [Releases](https://github.com/kirikakaese/SMP/releases)
