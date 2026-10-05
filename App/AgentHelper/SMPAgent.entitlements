@@ -2,7 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <!--
-  SMP Agent (login-item helper). Hardened Runtime, not sandboxed (it must reach the system
+  SMP Agent (login-item helper). Not sandboxed (it must reach the system
   ssh-agent socket). It needs no entitlements: Secure Enclave keys live in the login keychain,
   which ad-hoc signed builds can use. Documented in docs/ENTITLEMENTS.md.
 -->

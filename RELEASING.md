@@ -249,13 +249,16 @@ Pushing the tag is what starts the release. Nothing happens on GitHub until then
    minutes. The steps are:
    1. **Version:** checks the tag. The build number is the number of commits, so it always grows.
    2. **Check the signing setup:** stops with a clear message if Part A is missing.
-   3. **Build:** a universal app (Apple silicon and Intel), ad-hoc signed.
-   4. **Verify the app:** signature, both architectures, version number and update key.
-   5. **Package:** `SMP-<version>.dmg`, `SMP-<version>.zip` and `SHA256SUMS.txt`.
-   6. **Sign the update and write the appcast:** signs the zip with your private key and adds it to
+   3. **Build:** a universal app (Apple silicon and Intel).
+   4. **Re-sign the app ad-hoc:** every part, including the Sparkle framework, gets the same
+      ad-hoc signature, so macOS agrees to load them together.
+   5. **Verify the app:** signatures, both architectures, version number and update key.
+   6. **Launch the app:** starts SMP for 15 seconds to prove it opens.
+   7. **Package:** `SMP-<version>.dmg`, `SMP-<version>.zip` and `SHA256SUMS.txt`.
+   8. **Sign the update and write the appcast:** signs the zip with your private key and adds it to
       `appcast.xml`, the list of versions SMP's updater reads.
-   7. **Publish the release:** creates the GitHub release with all files and notes.
-   8. **Update the Homebrew tap:** stable releases only, and only if Part B is done.
+   9. **Publish the release:** creates the GitHub release with all files and notes.
+   10. **Update the Homebrew tap:** stable releases only, and only if Part B is done.
 
 ✅ **Done when** the run has a green check mark. If it is red, see
 [If something goes wrong](#if-something-goes-wrong).
@@ -312,6 +315,7 @@ Click the red step in the workflow run to read its error. The most common ones:
 | `Add the repository secret SPARKLE_PRIVATE_KEY` | Step A4 is missing or the name is misspelled | Do Step A4, then **Re-run jobs** |
 | `Release tags must look like v1.2.3 or v1.2.3-beta.1` | The tag has the wrong format | Delete the tag (below) and push a correct one |
 | **Verify the app** fails at `SUPublicEDKey` | The variable has extra characters, for example `<string>` or a space | Fix the variable's value, then **Re-run jobs** |
+| **Verify the app** says something `is not ad-hoc signed`, or **Launch the app** says `SMP quit within 15 seconds` | The bundle's signatures don't fit together, so macOS would refuse to start SMP | Nothing to change in the settings: the code needs a fix. Delete the tag (below) and report the error |
 | **Sign the update** fails | The secret isn't the exported private key | Repeat Step A4 (it overwrites the secret), then **Re-run jobs** |
 | `TAP_TOKEN is not set` (a notice, not an error) | Part B is skipped | Nothing, or do Part B before the next release |
 | **Update the Homebrew tap** fails with `Permission to kirikakaese/homebrew-tap.git denied` or `403` | The token can read the tap but not write to it: **Repository access** isn't *Only select repositories → homebrew-tap*, or **Contents** isn't *Read and write* | On [your fine-grained tokens](https://github.com/settings/personal-access-tokens), click the token, then **Edit**. Fix both settings as in Step B2 and click **Update**. The token itself stays the same, so `TAP_TOKEN` needn't change. Then **Re-run jobs** |

@@ -2,8 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <!--
-  SMP runs with the Hardened Runtime and is intentionally NOT sandboxed (it needs ~/.ssh and the
-  ssh-agent socket). No Hardened Runtime exceptions are requested. Each entitlement must be
+  SMP is intentionally NOT sandboxed (it needs ~/.ssh and the ssh-agent socket). Team-signed builds
+  use the Hardened Runtime without exceptions; ad-hoc release builds run without it (SECURITY.md). Each entitlement must be
   documented in docs/ENTITLEMENTS.md.
 -->
 <dict>
