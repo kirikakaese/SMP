@@ -1,9 +1,10 @@
 #!/bin/bash
 # Re-signs SMP.app ad-hoc, innermost code first, and checks the result.
 #
-# Sparkle.framework arrives signed with the Sparkle project's Team ID. macOS refuses to load it into
-# an app whose signature has a different Team ID (an ad-hoc signature has none), so every piece of
-# code in the bundle gets the same ad-hoc signature, without the Hardened Runtime.
+# With the Hardened Runtime, macOS only loads frameworks signed with the app's own Team ID (library
+# validation). An ad-hoc signature has no Team ID, so an ad-hoc signed SMP with the Hardened Runtime
+# can't load Sparkle.framework and quits at launch. Every piece of code in the bundle therefore gets
+# the same ad-hoc signature without the Hardened Runtime, whatever the build left behind.
 #
 # Usage: scripts/adhoc_sign.sh path/to/SMP.app
 set -euo pipefail

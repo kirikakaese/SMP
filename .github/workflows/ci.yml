@@ -99,12 +99,16 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM= \
             ENABLE_HARDENED_RUNTIME=NO
-      - name: Diagnostic (temporary) - launch before re-signing
+      - name: Diagnostic (temporary) - the 0.9.0 crash with the Hardened Runtime on
         continue-on-error: true
         run: |
-          codesign --display --verbose=2 build/Build/Products/Release/SMP.app/Contents/Frameworks/Sparkle.framework 2>&1 | grep -E 'TeamIdentifier|flags'
-          codesign --display --verbose=2 build/Build/Products/Release/SMP.app 2>&1 | grep -E 'TeamIdentifier|flags'
-          scripts/launch_test.sh build/Build/Products/Release/SMP.app 10
+          rm -rf /tmp/runtime && mkdir /tmp/runtime && ditto build/Build/Products/Release/SMP.app /tmp/runtime/SMP.app
+          codesign --force --sign - --options runtime --entitlements App/SMP.entitlements /tmp/runtime/SMP.app
+          if scripts/launch_test.sh /tmp/runtime/SMP.app 10; then
+            echo "UNEXPECTED: launched with the Hardened Runtime"
+          else
+            echo "REPRODUCED: refused to launch with the Hardened Runtime, as 0.9.0 did"
+          fi
       - name: Re-sign the app ad-hoc
         run: scripts/adhoc_sign.sh build/Build/Products/Release/SMP.app
       - name: Launch the app

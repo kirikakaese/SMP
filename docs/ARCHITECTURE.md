@@ -328,9 +328,9 @@ release. The metadata store never contains secrets.
 - **Release workflow** (`.github/workflows/release.yml`, on tags `vX.Y.Z` or `vX.Y.Z-beta.N`):
   builds a universal app with `MARKETING_VERSION` from the tag and
   `CURRENT_PROJECT_VERSION` = commit count (Sparkle compares the build number), without the
-  Hardened Runtime. It re-signs all code in the bundle ad-hoc, innermost first (Sparkle arrives
-  signed with its own Team ID, which macOS won't load into an app without one), and verifies the
-  signatures (no Team ID, no Hardened Runtime anywhere), architectures, version and update key.
+  Hardened Runtime (with it, library validation refuses the ad-hoc signed Sparkle framework,
+  since ad-hoc signatures have no Team ID). It re-signs all code in the bundle ad-hoc, innermost
+  first, and verifies the signatures (no Team ID, no Hardened Runtime anywhere), architectures, version and update key.
   It then starts the app for 15 seconds as a launch test, and packages `SMP-<version>.zip` (for
   Sparkle) and `SMP-<version>.dmg` (for people and Homebrew) with SHA-256 checksums.
 - **Appcast:** `sign_update` (from the latest Sparkle release) signs the zip with the EdDSA key

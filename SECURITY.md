@@ -78,11 +78,11 @@ What that means:
 - macOS cannot tell who made SMP, so Gatekeeper blocks the first launch until you allow it.
   Compare the download with `SHA256SUMS.txt` on the release page (Homebrew does this for you).
 - The ad-hoc signature still seals the app: macOS refuses to run a modified bundle.
-- Release builds run without the Hardened Runtime. With it, macOS only loads frameworks that
-  carry the app's own Team ID (library validation), and an ad-hoc signature has no Team ID. The
-  release workflow therefore turns it off and re-signs every piece of code in the bundle ad-hoc,
-  including the Sparkle framework, which arrives signed with the Sparkle project's Team ID. It
-  then starts the app once to prove it launches. Builds signed with your own team
+- Release builds run without the Hardened Runtime. With it, macOS only loads frameworks signed
+  with the app's own Team ID (library validation), and an ad-hoc signature has none, so SMP
+  could not load the embedded Sparkle framework (SMP 0.9.0 quit at launch for this reason). The
+  release workflow turns it off, re-signs every piece of code in the bundle ad-hoc, checks that
+  none has a Team ID or the Hardened Runtime, and starts the app once to prove it launches. Builds signed with your own team
   (Config/Local.xcconfig) keep the Hardened Runtime.
 - **Updates** come from the GitHub releases through Sparkle and are installed only with a valid
   EdDSA signature made with SMP's release key, whose private half exists only as a GitHub
