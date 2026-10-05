@@ -1,8 +1,8 @@
 # Entitlements
 
 SMP is distributed outside the Mac App Store, ad-hoc signed (no paid Apple Developer account, so
-no notarization; Xcode disables the Hardened Runtime for ad-hoc signatures, see SECURITY.md). It therefore uses no entitlement that needs a
-provisioning profile. It is intentionally **not sandboxed**: it needs direct access to `~/.ssh`, the
+no notarization; release builds run without the Hardened Runtime, see SECURITY.md). It therefore
+uses no entitlement that needs a provisioning profile. It is intentionally **not sandboxed**: it needs direct access to `~/.ssh`, the
 `ssh-agent` socket and `/usr/bin` OpenSSH tools.
 
 ## Current entitlements

@@ -73,3 +73,39 @@ jobs:
             lipo -archs "$binary" | tee /dev/stderr | grep -q "x86_64 arm64\|arm64 x86_64"
           done
           /usr/libexec/PlistBuddy -c "Print :LSUIElement" "$app/Contents/Library/LoginItems/SMPAgentHelper.app/Contents/Info.plist" | grep -q true
+
+  launch:
+    name: App launch (ad-hoc signed)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      # Signed the same way as a release, so a bundle macOS won't start fails here, before a tag.
+      - name: Build (ad-hoc signed, as in a release)
+        run: |
+          xcodebuild build \
+            -project SMP.xcodeproj \
+            -scheme SMP \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM= \
+            ENABLE_HARDENED_RUNTIME=NO
+      - name: Diagnostic (temporary) - launch before re-signing
+        continue-on-error: true
+        run: |
+          codesign --display --verbose=2 build/Build/Products/Release/SMP.app/Contents/Frameworks/Sparkle.framework 2>&1 | grep -E 'TeamIdentifier|flags'
+          codesign --display --verbose=2 build/Build/Products/Release/SMP.app 2>&1 | grep -E 'TeamIdentifier|flags'
+          scripts/launch_test.sh build/Build/Products/Release/SMP.app 10
+      - name: Re-sign the app ad-hoc
+        run: scripts/adhoc_sign.sh build/Build/Products/Release/SMP.app
+      - name: Launch the app
+        run: scripts/launch_test.sh build/Build/Products/Release/SMP.app
