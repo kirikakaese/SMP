@@ -81,8 +81,8 @@ What that means:
 - Release builds run without the Hardened Runtime. With it, macOS only loads frameworks signed
   with the app's own Team ID (library validation), and an ad-hoc signature has none, so SMP
   could not load the embedded Sparkle framework (SMP 0.9.0 quit at launch for this reason). The
-  release workflow turns it off, re-signs every piece of code in the bundle ad-hoc, checks that
-  none has a Team ID or the Hardened Runtime, and starts the app once to prove it launches. Builds signed with your own team
+  release workflow turns it off, re-signs every piece of code in the bundle ad-hoc, refuses to
+  publish if any code still has a Team ID or the Hardened Runtime, and starts the app once. Builds signed with your own team
   (Config/Local.xcconfig) keep the Hardened Runtime.
 - **Updates** come from the GitHub releases through Sparkle and are installed only with a valid
   EdDSA signature made with SMP's release key, whose private half exists only as a GitHub

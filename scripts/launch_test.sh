@@ -1,6 +1,7 @@
 #!/bin/bash
 # Starts SMP.app and checks that it is still running after a while. Catches anything that stops SMP
-# from starting at all, such as a framework macOS refuses to load.
+# from starting at all. GitHub's Macs don't enforce library validation, so the check that kept SMP
+# 0.9.0 from starting (Hardened Runtime + ad-hoc frameworks) is guarded by adhoc_sign.sh instead.
 #
 # Usage: scripts/launch_test.sh path/to/SMP.app [seconds]
 set -euo pipefail
