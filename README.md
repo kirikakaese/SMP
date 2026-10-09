@@ -32,6 +32,9 @@ first-party Apple utility: fast, safe and keyboard-friendly.
 - **App lock:** Touch ID or your password when SMP opens and after 5 idle minutes (adjustable).
 - **Shortcuts:** copy a public key, list keys, connect to a host, start or stop a tunnel and check
   your security score from Shortcuts, Spotlight or Siri.
+- **App icon:** four keys (modern, classic, symbol, security key) on graphite, blue, silver or a pride
+  flag (Rainbow, Progress Pride, Transgender, Nonbinary, Bisexual, Pansexual, Lesbian, Asexual,
+  Aromantic), chosen in Settings → App Icon.
 - **Backup & restore:** one passphrase-encrypted `.smpbackup` file with your keys, SSH settings and
   SMP's tags and notes; restoring shows every file first and never overwrites anything.
 

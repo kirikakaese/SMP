@@ -985,6 +985,16 @@
         }
       }
     },
+    "App Icon": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App-Symbol"
+          }
+        }
+      }
+    },
     "App Lock": {
       "localizations": {
         "de": {
@@ -1125,6 +1135,26 @@
         }
       }
     },
+    "Aromantic": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aromantisch"
+          }
+        }
+      }
+    },
+    "Asexual": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asexuell"
+          }
+        }
+      }
+    },
     "Ask for Touch ID before using keys from the macOS agent": {
       "localizations": {
         "de": {
@@ -1245,12 +1275,32 @@
         }
       }
     },
+    "Bisexual": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bisexuell"
+          }
+        }
+      }
+    },
     "Bitbucket needs the email address of your Atlassian account.": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
             "value": "Bitbucket braucht die E-Mail-Adresse deines Atlassian-Accounts."
+          }
+        }
+      }
+    },
+    "Blue": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blau"
           }
         }
       }
@@ -1615,6 +1665,16 @@
         }
       }
     },
+    "Classic": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klassisch"
+          }
+        }
+      }
+    },
     "Close": {
       "localizations": {
         "de": {
@@ -1631,6 +1691,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Farbe"
+          }
+        }
+      }
+    },
+    "Colors": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Farben"
           }
         }
       }
@@ -2805,6 +2875,16 @@
         }
       }
     },
+    "Graphite": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Graphit"
+          }
+        }
+      }
+    },
     "Group": {
       "localizations": {
         "de": {
@@ -3455,6 +3535,16 @@
         }
       }
     },
+    "Lesbian": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lesbisch"
+          }
+        }
+      }
+    },
     "Library": {
       "localizations": {
         "de": {
@@ -3724,6 +3814,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rechte %@. Andere Benutzer könnten den Schlüssel kopieren, und ssh verweigert seine Verwendung."
+          }
+        }
+      }
+    },
+    "Modern": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modern"
           }
         }
       }
@@ -4144,6 +4244,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Keine (jedes Mal fragen)"
+          }
+        }
+      }
+    },
+    "Nonbinary": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nichtbinär"
           }
         }
       }
@@ -4627,6 +4737,16 @@
         }
       }
     },
+    "Pansexual": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pansexuell"
+          }
+        }
+      }
+    },
     "Passphrase": {
       "localizations": {
         "de": {
@@ -4747,6 +4867,16 @@
         }
       }
     },
+    "Pride": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pride"
+          }
+        }
+      }
+    },
     "Privacy": {
       "localizations": {
         "de": {
@@ -4803,6 +4933,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fortschritt"
+          }
+        }
+      }
+    },
+    "Progress Pride": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Progress Pride"
           }
         }
       }
@@ -4963,6 +5103,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "RSA-Schlüssel müssen mindestens 3072 Bit haben."
+          }
+        }
+      }
+    },
+    "Rainbow": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regenbogen"
           }
         }
       }
@@ -5413,6 +5563,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Wiederherstellen"
+          }
+        }
+      }
+    },
+    "Restore Default": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Standard wiederherstellen"
           }
         }
       }
@@ -6336,6 +6496,16 @@
         }
       }
     },
+    "SMP shows this icon in the Dock while it's running. Finder and Launchpad keep the standard icon.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SMP zeigt dieses Symbol im Dock, solange es läuft. Finder und Launchpad zeigen weiterhin das Standardsymbol."
+          }
+        }
+      }
+    },
     "SMP stays locked until you confirm with Touch ID or your password.": {
       "localizations": {
         "de": {
@@ -6639,6 +6809,16 @@
         }
       }
     },
+    "Security Key": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sicherheitsschlüssel"
+          }
+        }
+      }
+    },
     "Security key PIN": {
       "localizations": {
         "de": {
@@ -6929,6 +7109,16 @@
         }
       }
     },
+    "Silver": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Silber"
+          }
+        }
+      }
+    },
     "Size": {
       "localizations": {
         "de": {
@@ -7195,6 +7385,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Stark"
+          }
+        }
+      }
+    },
+    "Symbol": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Symbol"
           }
         }
       }
@@ -8115,6 +8315,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Berühre deinen Sicherheitsschlüssel, wenn er blinkt …"
+          }
+        }
+      }
+    },
+    "Transgender": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transgender"
           }
         }
       }
