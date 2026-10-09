@@ -256,6 +256,19 @@ Shortcuts is the same one SMP's window shows. The logic is in `SMPServices/Short
 (tested in the package). Actions only read and return public data (public key lines,
 fingerprints, aliases, tunnel names, the audit score); none touches private keys.
 
+## App icon
+
+The bundle carries one icon (`App/Resources/Assets.xcassets`, the modern key on graphite), which
+Finder, Launchpad and the Dock show while SMP isn't running. macOS has no alternate app icons, so
+the icon chosen in Settings → App Icon (`AppIconModel`, stored in `UserDefaults`) is set as
+`NSApplication.applicationIconImage` once launching has finished and on every change; choosing the
+standard icon again sets it to `nil`, which restores the bundle's icon. Changing the icon file in
+the bundle would also change Finder, but it would break the bundle's signature, so SMP doesn't.
+
+`AppIconArtwork` draws every key and style in code (SwiftUI `Canvas`), so no extra images ship.
+`design/app-icon/icons.py` holds the same geometry as SVG and renders the bundle's PNGs; change
+both together.
+
 ## Services and dependency injection
 
 Every service is a protocol (`SSHToolRunning`, `KeychainServicing`, …) with a live

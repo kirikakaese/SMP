@@ -2,35 +2,54 @@ import SMPCore
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// The Settings window. The app adds tabs SMPKit doesn't know about (Updates) through `extraTabs`.
+/// The size of a settings tab. The window resizes to the selected tab.
+public enum SettingsTab {
+    public static let width: CGFloat = 520
+    public static let height: CGFloat = 340
+}
+
+/// The Settings window. The app adds tabs SMPKit doesn't know about (Updates) through `extraTabs`;
+/// each tab sets its own size, usually `SettingsTab.width` by `SettingsTab.height`.
 public struct SettingsView<ExtraTabs: View>: View {
     private let library: LibraryModel
     private let appLock: AppLockModel
+    private let appIcon: AppIconModel
     private let extraTabs: ExtraTabs
 
-    public init(library: LibraryModel, appLock: AppLockModel, @ViewBuilder extraTabs: () -> ExtraTabs) {
+    public init(
+        library: LibraryModel,
+        appLock: AppLockModel,
+        appIcon: AppIconModel,
+        @ViewBuilder extraTabs: () -> ExtraTabs
+    ) {
         self.library = library
         self.appLock = appLock
+        self.appIcon = appIcon
         self.extraTabs = extraTabs()
     }
 
     public var body: some View {
         TabView {
             GeneralSettingsView(library: library)
+                .frame(width: SettingsTab.width, height: SettingsTab.height)
                 .tabItem { Label("General", systemImage: "gearshape") }
             AppLockSettingsView(appLock: appLock)
+                .frame(width: SettingsTab.width, height: SettingsTab.height)
                 .tabItem { Label("App Lock", systemImage: "lock") }
             KeyFoldersSettingsView(library: library)
+                .frame(width: SettingsTab.width, height: SettingsTab.height)
                 .tabItem { Label("Key Folders", systemImage: "folder") }
+            AppIconSettingsView(model: appIcon)
+                .frame(width: SettingsTab.width, height: 560)
+                .tabItem { Label("App Icon", systemImage: "app.badge") }
             extraTabs
         }
-        .frame(width: 520, height: 340)
     }
 }
 
 extension SettingsView where ExtraTabs == EmptyView {
-    public init(library: LibraryModel, appLock: AppLockModel) {
-        self.init(library: library, appLock: appLock) { EmptyView() }
+    public init(library: LibraryModel, appLock: AppLockModel, appIcon: AppIconModel) {
+        self.init(library: library, appLock: appLock, appIcon: appIcon) { EmptyView() }
     }
 }
 

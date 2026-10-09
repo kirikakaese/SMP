@@ -15,6 +15,7 @@ struct SMPApp: App {
     @State private var providers: ProvidersModel
     @State private var security: SecurityModel
     @State private var appLock: AppLockModel
+    @State private var appIcon: AppIconModel
     @State private var updates = UpdateModel()
 
     init() {
@@ -38,6 +39,16 @@ struct SMPApp: App {
         )
         appLock.startMonitoring()
         _appLock = State(initialValue: appLock)
+        let appIcon = AppIconModel()
+        _appIcon = State(initialValue: appIcon)
+        // macOS shows the bundle's icon until launching has finished; the chosen one replaces it then.
+        _ = NotificationCenter.default.addObserver(
+            forName: NSApplication.didFinishLaunchingNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            MainActor.assumeIsolated { appIcon.apply() }
+        }
         // Tunnels are child ssh processes; don't leave them running after SMP quits.
         _ = NotificationCenter.default.addObserver(
             forName: NSApplication.willTerminateNotification,
@@ -81,8 +92,9 @@ struct SMPApp: App {
         }
 
         Settings {
-            SettingsView(library: library, appLock: appLock) {
+            SettingsView(library: library, appLock: appLock, appIcon: appIcon) {
                 UpdateSettingsView(model: updates)
+                    .frame(width: SettingsTab.width, height: SettingsTab.height)
                     .tabItem { Label("Updates", systemImage: "arrow.down.circle") }
             }
         }
