@@ -1,20 +1,18 @@
+<p align="center">
+  <img src="App/Resources/Assets.xcassets/AppIcon.appiconset/icon_128x128@2x.png" width="128" height="128" alt="SMP app icon: a gold key on a graphite tile">
+</p>
+
 # SSH Management Platform (SMP)
 
 **SSH Management Platform** (short: **SMP**) is a native macOS app for creating, organizing,
 deploying, auditing and deleting SSH keys and SSH host configurations. It aims to feel like a
 first-party Apple utility: fast, safe and keyboard-friendly.
 
-> **Status:** early development. The key library, the full key lifecycle (create, import incl.
-> PuTTY conversion, export, rename, passphrase and comment changes, format upgrade, archive with
-> undo, and safe permanent deletion) and the host tools (`~/.ssh/config` editor with diff review,
-> connection tests, connect in your terminal, `known_hosts` manager, tunnels, deploying keys to
-> servers) and the agent (Secure Enclave keys with Touch ID, a proxy to the macOS ssh-agent,
-> menu bar activity, resident keys from FIDO2 security keys) and provider accounts (GitHub, GitLab,
-> Bitbucket, Gitea/Forgejo: list, upload and remove keys, matched by fingerprint) and the security
-> tools (audit with one-click fixes, guided key rotation, SSH commit signing setup, expiry and
-> rotation reminders) work; the remaining features below are planned.
+> **Status:** beta (0.9). Every feature below works; the 0.9 releases collect fixes and polish on
+> the way to 1.0. Please [open an issue](https://github.com/kirikakaese/SMP/issues) if something
+> doesn't work for you.
 
-## Features (planned)
+## Features
 
 - **Key library:** discovers keys in `~/.ssh` and other folders, watches them live, and shows
   fingerprints, randomart, permissions, usage and expiry. Supports tags, groups, favorites and search.
@@ -102,7 +100,7 @@ open build/Build/Products/Debug/SMP.app
 ## Project layout
 
 ```
-App/                 App target (entry point, Info.plist, entitlements)
+App/                 App target (entry point, Info.plist, entitlements, app icon, translations)
 Config/              Build settings (signing team via the git-ignored Local.xcconfig)
 Packages/SMPKit/     All logic, as a Swift package
   Sources/SMPCore      Models, errors, secret-handling primitives
@@ -110,7 +108,9 @@ Packages/SMPKit/     All logic, as a Swift package
   Sources/SMPPersistence  Metadata store (tags, groups, notes) built on GRDB
   Sources/SMPServices  Protocol-based services (Keychain, keys, agent, config, ...)
   Sources/SMPUI        SwiftUI views
+design/app-icon/     The app icon as SVG (the source of the bundle's icon)
 docs/                Architecture, entitlements and design notes
+scripts/             Release and CI helpers (signing, appcast, string catalog checks)
 ```
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for details.
@@ -122,8 +122,9 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for details.
 - OpenSSH tools are always run from `/usr/bin` with argument arrays, never through a shell.
   Passphrases reach them through a private pipe, never through command-line arguments or
   environment variables.
-- There is no telemetry. The only network requests go to the provider servers you add, when SMP
-  launches, when you open an account or when you upload or remove a key.
+- There is no telemetry. SMP only connects to the provider servers you add (when SMP launches,
+  when you open an account and when you upload or remove a key) and to GitHub to check for updates
+  (adjustable in Settings → Updates).
 - The app is intentionally not sandboxed, so it can read `~/.ssh` and reach the `ssh-agent`
   socket. Release builds are ad-hoc signed (see SECURITY.md for what that means).
 
